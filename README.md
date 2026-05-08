@@ -1,4 +1,5 @@
 # SpatialScore: Towards Unified Evaluation for Multimodal Spatial Understanding (CVPR 2026)
+11
 This repository contains the official PyTorch implementation of SpatialScore: https://arxiv.org/abs/2505.17012/.
 
 Our new version paper has been accepted by CVPR 2026, and we are working on updating our up-to-date code and data!
