@@ -80,6 +80,36 @@ And we will update the agent system and inference code soon.
 
 To be updated soon...
 
+## LangGraph SpatialAgent (new package)
+
+A new independent package now exists at [`spatial_agent/`](./spatial_agent) for a LangGraph-based **ReAct-only** SpatialAgent implementation. It does not modify the old `version_0/SpatialAgent` AutoGen control flow.
+
+Highlights:
+
+- ReAct state graph built with LangGraph
+- model adapter abstraction
+- default local HuggingFace Qwen VL adapter
+- OpenAI-compatible API adapter
+- centralized tool registry with structured `ToolResult`
+- per-run JSON traces under `.artifacts/spatial_agent/`
+- same-host `lmms-eval` plugin for VSI-Bench evaluation
+
+Quick start:
+
+```bash
+python3 -m spatial_agent \
+  --question "Which option is correct?" \
+  --question-type multi_choice \
+  --input-modality single_image \
+  --options A,B,C,D \
+  --image-path /path/to/image.jpg \
+  --llm-backend hf \
+  --model-path /path/to/Qwen2.5-VL-7B-Instruct
+```
+
+See [`spatial_agent/README.md`](./spatial_agent/README.md) for current tool availability and runtime limitations.
+For the same-host `VSI-Bench` workflow, see [`docs/spatial_agent_vsibench.md`](./docs/spatial_agent_vsibench.md).
+
 ## Citation
 If you use this code and data for your research or project, please cite:
 

@@ -72,6 +72,7 @@ llvmlite==0.44.0
 lxml==5.4.0
 markdown-it-py==3.0.0
 MarkupSafe @ file:///croot/markupsafe_1738584038848/work
+langgraph>=0.2.60,<0.4
 matplotlib==3.10.1
 matplotlib-inline==0.1.7
 mdurl==0.1.2

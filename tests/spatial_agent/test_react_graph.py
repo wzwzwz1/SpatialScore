@@ -1,0 +1,167 @@
+from spatial_agent.adapters.mock import MockLLMAdapter
+from spatial_agent.agent import SpatialAgent
+from spatial_agent.runtime.config import SpatialAgentConfig
+from spatial_agent.tools.base import BaseSpatialTool
+from spatial_agent.tools.registry import ToolRegistry
+
+
+class EchoTool(BaseSpatialTool):
+    name = "EchoTool"
+    description = "Returns the input payload for testing."
+    args_schema = {"type": "object", "properties": {"value": {"type": "string"}}, "required": ["value"]}
+    returns_schema = {"type": "object"}
+
+    def invoke(self, **kwargs):
+        return self.success(payload={"echo": kwargs["value"]})
+
+
+def test_graph_finish_path_returns_answer():
+    adapter = MockLLMAdapter(
+        responses=[
+            {"thought": "Enough evidence.", "action": None, "finish": {"answer": "A"}},
+        ]
+    )
+    agent = SpatialAgent(
+        llm_adapter=adapter,
+        tool_registry=ToolRegistry(),
+        config=SpatialAgentConfig(),
+    )
+
+    result = agent.invoke(
+        {
+            "task_id": "task-1",
+            "question": "Which option is correct?",
+            "question_type": "multi_choice",
+            "input_modality": "single_image",
+            "image_paths": [],
+            "options": ["A", "B"],
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["final_answer"] == "A"
+    assert result["tool_calls"] == []
+
+
+def test_graph_tool_round_trip_records_observation():
+    adapter = MockLLMAdapter(
+        responses=[
+            {
+                "thought": "Need to inspect an observation first.",
+                "action": {"name": "EchoTool", "arguments": {"value": "hello"}},
+                "finish": None,
+            },
+            {"thought": "Now I know enough.", "action": None, "finish": {"answer": "done"}},
+        ]
+    )
+
+    registry = ToolRegistry()
+    registry.register(EchoTool())
+
+    agent = SpatialAgent(
+        llm_adapter=adapter,
+        tool_registry=registry,
+        config=SpatialAgentConfig(),
+    )
+
+    result = agent.invoke(
+        {
+            "task_id": "task-2",
+            "question": "Use a tool and finish.",
+            "question_type": "open_ended",
+            "input_modality": "single_image",
+            "image_paths": [],
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["final_answer"] == "done"
+    assert len(result["tool_calls"]) == 1
+    assert result["tool_calls"][0]["tool_name"] == "EchoTool"
+    assert result["tool_observations"][0]["payload"]["echo"] == "hello"
+
+
+def test_graph_repair_path_recovers_after_malformed_response():
+    adapter = MockLLMAdapter(
+        responses=[
+            '{"thought": "bad json"',
+            {"thought": "Recovered.", "action": None, "finish": {"answer": "yes"}},
+        ]
+    )
+
+    agent = SpatialAgent(
+        llm_adapter=adapter,
+        tool_registry=ToolRegistry(),
+        config=SpatialAgentConfig(),
+    )
+
+    result = agent.invoke(
+        {
+            "task_id": "task-3",
+            "question": "Recover from malformed output.",
+            "question_type": "judgment",
+            "input_modality": "single_image",
+            "image_paths": [],
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["final_answer"] == "yes"
+    assert result["reasoning_trace"][0]["stage"] == "repair"
+
+
+def test_graph_writes_trace_file(tmp_path):
+    adapter = MockLLMAdapter(
+        responses=[
+            {"thought": "Enough evidence.", "action": None, "finish": {"answer": "B"}},
+        ]
+    )
+    config = SpatialAgentConfig(artifact_dir=str(tmp_path))
+    agent = SpatialAgent(
+        llm_adapter=adapter,
+        tool_registry=ToolRegistry(),
+        config=config,
+    )
+
+    result = agent.invoke(
+        {
+            "task_id": "task-trace",
+            "question": "Persist the trace.",
+            "question_type": "multi_choice",
+            "input_modality": "single_image",
+            "image_paths": [],
+            "options": ["A", "B"],
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["trace_path"].endswith("task-trace.json")
+
+
+def test_graph_fails_after_exceeding_repair_limit():
+    adapter = MockLLMAdapter(
+        responses=[
+            '{"thought": "bad json"',
+            '{"thought": "still bad json"',
+            '{"thought": "again bad json"',
+        ]
+    )
+    config = SpatialAgentConfig(max_repairs=1)
+    agent = SpatialAgent(
+        llm_adapter=adapter,
+        tool_registry=ToolRegistry(),
+        config=config,
+    )
+
+    result = agent.invoke(
+        {
+            "task_id": "task-4",
+            "question": "Fail after too many malformed outputs.",
+            "question_type": "open_ended",
+            "input_modality": "single_image",
+            "image_paths": [],
+        }
+    )
+
+    assert result["status"] == "failed"
+    assert "repair" in result["error"].lower()

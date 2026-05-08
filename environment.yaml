@@ -163,6 +163,7 @@ dependencies:
       - lightgbm==4.6.0
       - llvmlite==0.44.0
       - lxml==5.4.0
+      - langgraph>=0.2.60,<0.4
       - markdown-it-py==3.0.0
       - matplotlib==3.10.1
       - matplotlib-inline==0.1.7
