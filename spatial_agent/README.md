@@ -67,6 +67,13 @@ python3 -m spatial_agent \
 
 ### 2. OpenAI-compatible API
 
+先设置环境变量：
+
+```bash
+export OPENAI_API_KEY=your_api_key_here
+export OPENAI_API_BASE_URL=https://yunwu.ai/v1
+```
+
 ```bash
 python3 -m spatial_agent \
   --question "Which option is correct?" \
@@ -76,8 +83,19 @@ python3 -m spatial_agent \
   --image-path /path/to/image.jpg \
   --llm-backend openai_compatible \
   --model-name gpt-4o-mini \
-  --api-base-url https://api.openai.com/v1 \
   --tool-config-path /disk/wangzhe/SpatialScore/docs/tool_config.server.template.json
+```
+
+如果你不想使用默认环境变量名，也可以显式传：
+
+```bash
+python3 -m spatial_agent \
+  --question "Which option is correct?" \
+  --image-path /path/to/image.jpg \
+  --llm-backend openai_compatible \
+  --model-name gpt-4o-mini \
+  --api-base-url-env OPENAI_API_BASE_URL \
+  --api-key-env OPENAI_API_KEY
 ```
 
 这些 adapter 和部分工具都使用懒加载。如果 `torch`、`transformers`、OpenCV、checkpoint 或模型路径没有准备好，主图仍然可以运行，只是相关工具会返回结构化的 `unavailable` observation。

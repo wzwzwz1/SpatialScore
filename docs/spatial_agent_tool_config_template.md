@@ -9,6 +9,13 @@
 - Orient Anything
 - Grounding DINO
 
+如果你走 API 模式调用 LLM，推荐把 **token** 和 **base_url** 都放进环境变量，而不是写在命令里：
+
+```bash
+export OPENAI_API_KEY=你的令牌
+export OPENAI_API_BASE_URL=https://yunwu.ai/v1
+```
+
 ## 1. 推荐放法
 
 建议你在服务器上准备一个 Python 配置文件，或者直接复制仓库里的 JSON 模板：

@@ -9,6 +9,8 @@
 ```bash
 export PYTHONPATH=/disk/wangzhe/SpatialScore:$PYTHONPATH
 export LMMS_EVAL_PLUGINS=lmms_eval_spatialagent_plugin
+export OPENAI_API_KEY=your_api_key_here
+export OPENAI_API_BASE_URL=https://yunwu.ai/v1
 ```
 
 然后进入 `/Users/wz/code/thinking-in-space` 执行：
@@ -16,7 +18,7 @@ export LMMS_EVAL_PLUGINS=lmms_eval_spatialagent_plugin
 ```bash
 python -m lmms_eval \
   --model spatial_agent_api \
-  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,api_base_url=https://api.openai.com/v1,video_num_frames=16,tool_config_path=/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
+  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,video_num_frames=16,tool_config_path=/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
   --tasks vsibench \
   --batch_size 1 \
   --log_samples \

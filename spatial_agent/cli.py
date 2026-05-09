@@ -46,6 +46,7 @@ def main() -> int:
     parser.add_argument("--model-path", help="Local HuggingFace Qwen VL checkpoint path.")
     parser.add_argument("--model-name", help="Remote API model name for OpenAI-compatible backends.")
     parser.add_argument("--api-base-url", help="Base URL for OpenAI-compatible APIs.")
+    parser.add_argument("--api-base-url-env", default="OPENAI_API_BASE_URL", help="Environment variable name for API base URL lookup.")
     parser.add_argument("--api-key", help="API key for OpenAI-compatible APIs.")
     parser.add_argument("--api-key-env", default="OPENAI_API_KEY", help="Environment variable name for API key lookup.")
     parser.add_argument("--api-timeout", type=int, default=120)
@@ -63,6 +64,7 @@ def main() -> int:
         api_model_name=args.model_name,
         api_base_url=args.api_base_url,
         api_key=args.api_key,
+        api_base_url_env=args.api_base_url_env,
         api_key_env=args.api_key_env,
         api_timeout=args.api_timeout,
         max_steps=args.max_steps,

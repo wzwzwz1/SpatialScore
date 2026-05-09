@@ -22,12 +22,14 @@ class OpenAICompatibleAdapter(LLMAdapter):
         model_name: str,
         api_base_url: Optional[str] = None,
         api_key: Optional[str] = None,
+        api_base_url_env: str = "OPENAI_API_BASE_URL",
         api_key_env: str = "OPENAI_API_KEY",
         timeout: int = 120,
     ) -> None:
         self.model_name = model_name
         self.api_base_url = api_base_url
         self.api_key = api_key
+        self.api_base_url_env = api_base_url_env
         self.api_key_env = api_key_env
         self.timeout = timeout
         self._client = None
@@ -37,6 +39,7 @@ class OpenAICompatibleAdapter(LLMAdapter):
             return self._client
 
         resolved_key = self.api_key or os.getenv(self.api_key_env)
+        resolved_base_url = self.api_base_url or os.getenv(self.api_base_url_env)
         if not resolved_key:
             raise AdapterResponseError(
                 f"No API key configured. Set SpatialAgentConfig.api_key or environment variable {self.api_key_env}."
@@ -50,8 +53,8 @@ class OpenAICompatibleAdapter(LLMAdapter):
             ) from exc
 
         client_kwargs = {"api_key": resolved_key, "timeout": self.timeout}
-        if self.api_base_url:
-            client_kwargs["base_url"] = self.api_base_url
+        if resolved_base_url:
+            client_kwargs["base_url"] = resolved_base_url
         self._client = OpenAI(**client_kwargs)
         return self._client
 

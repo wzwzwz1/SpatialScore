@@ -17,6 +17,7 @@ def create_llm_adapter(config):
             model_name=config.api_model_name,
             api_base_url=config.api_base_url,
             api_key=config.api_key,
+            api_base_url_env=config.api_base_url_env,
             api_key_env=config.api_key_env,
             timeout=config.api_timeout,
         )

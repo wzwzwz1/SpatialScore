@@ -50,12 +50,19 @@ export LMMS_EVAL_PLUGINS=lmms_eval_spatialagent_plugin
 
 ```bash
 export OPENAI_API_KEY=your_api_key_here
+export OPENAI_API_BASE_URL=https://yunwu.ai/v1
 ```
 
 如果你用的不是 `OPENAI_API_KEY` 这个环境变量名，也可以在 `model_args` 里传：
 
 ```text
 api_key_env=你的变量名
+```
+
+如果你用的不是 `OPENAI_API_BASE_URL` 这个环境变量名，也可以在 `model_args` 里传：
+
+```text
+api_base_url_env=你的变量名
 ```
 
 ## 4. 先做 smoke test
@@ -73,7 +80,7 @@ cd /Users/wz/code/thinking-in-space
 ```bash
 python -m lmms_eval \
   --model spatial_agent_api \
-  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,api_base_url=https://api.openai.com/v1,video_num_frames=16,artifact_dir=/tmp/spatial_agent_runs,tool_config_path=/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
+  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,video_num_frames=16,artifact_dir=/tmp/spatial_agent_runs,tool_config_path=/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
   --tasks vsibench \
   --batch_size 1 \
   --limit 2 \
@@ -103,7 +110,7 @@ python -m lmms_eval \
 ```bash
 python -m lmms_eval \
   --model spatial_agent_api \
-  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,api_base_url=https://api.openai.com/v1,video_num_frames=16,artifact_dir=/tmp/spatial_agent_runs,tool_config_path=/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
+  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,video_num_frames=16,artifact_dir=/tmp/spatial_agent_runs,tool_config_path=/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
   --tasks vsibench \
   --batch_size 1 \
   --log_samples \
@@ -136,6 +143,7 @@ python -m lmms_eval \
 - `model_path=/path/to/local/model`
 - `model_name=<远端模型名>`
 - `api_base_url=<OpenAI-compatible base URL>`
+- `api_base_url_env=<从哪个环境变量读取 base URL>`
 - `api_key=<可选，直接传 key>`
 - `api_key_env=<从哪个环境变量读取 key>`
 - `api_timeout=<秒>`
@@ -151,7 +159,7 @@ python -m lmms_eval \
 ```bash
 python -m lmms_eval \
   --model spatial_agent_api \
-  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,api_base_url=https://api.openai.com/v1,video_num_frames=24,video_frame_dir=/tmp/vsi_frames,artifact_dir=/tmp/spatial_agent_runs,keep_video_frames=true,tool_config_path=/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
+  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,video_num_frames=24,video_frame_dir=/tmp/vsi_frames,artifact_dir=/tmp/spatial_agent_runs,keep_video_frames=true,tool_config_path=/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
   --tasks vsibench \
   --batch_size 1 \
   --limit 2 \
@@ -214,3 +222,20 @@ python -m lmms_eval \
 - 如果你想检查 agent 的实际输入帧，建议设成 `keep_video_frames=true`
 - 如果你还需要把空间工具链一起配好，可以继续看：
   - [`/disk/wangzhe/SpatialScore/docs/spatial_agent_tool_config_template.md`](/disk/wangzhe/SpatialScore/docs/spatial_agent_tool_config_template.md)
+
+## 10. 用云雾中转站的推荐写法
+
+如果你走 `yunwu.ai` 这类 OpenAI-compatible 中转站，推荐直接在环境变量里写：
+
+```bash
+export OPENAI_API_KEY=你的云雾令牌
+export OPENAI_API_BASE_URL=https://yunwu.ai/v1
+```
+
+然后 `model_args` 里只保留：
+
+```text
+llm_backend=openai_compatible,model_name=你的模型名,...
+```
+
+这样命令行会更短，也更方便切换不同中转站。
