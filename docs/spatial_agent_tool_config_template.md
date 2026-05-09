@@ -13,7 +13,7 @@
 
 建议你在服务器上准备一个 Python 配置文件，或者直接复制仓库里的 JSON 模板：
 
-- [`/Users/wz/code/SpatialScore/docs/tool_config.server.template.json`](/Users/wz/code/SpatialScore/docs/tool_config.server.template.json)
+- [`/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json`](/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json)
 
 如果你希望在 Python 里构造，也可以这样写：
 
@@ -263,8 +263,8 @@ tool_config = {
 ## 7. 相关文档
 
 - SpatialAgent 主说明：
-  - [`/Users/wz/code/SpatialScore/spatial_agent/README.md`](/Users/wz/code/SpatialScore/spatial_agent/README.md)
+  - [`/disk/wangzhe/SpatialScore/spatial_agent/README.md`](/disk/wangzhe/SpatialScore/spatial_agent/README.md)
 - VSI-Bench 评测说明：
-  - [`/Users/wz/code/SpatialScore/docs/spatial_agent_vsibench.md`](/Users/wz/code/SpatialScore/docs/spatial_agent_vsibench.md)
+  - [`/disk/wangzhe/SpatialScore/docs/spatial_agent_vsibench.md`](/disk/wangzhe/SpatialScore/docs/spatial_agent_vsibench.md)
 - 可直接复制的 JSON 模板：
-  - [`/Users/wz/code/SpatialScore/docs/tool_config.server.template.json`](/Users/wz/code/SpatialScore/docs/tool_config.server.template.json)
+  - [`/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json`](/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json)

@@ -5,7 +5,7 @@
 适用前提：
 
 - benchmark 仓库在 `/Users/wz/code/thinking-in-space`
-- agent 仓库在 `/Users/wz/code/SpatialScore`
+- agent 仓库在 `/disk/wangzhe/SpatialScore`
 - 两者运行在同一台服务器
 
 这个接法的目标是：**尽量不修改 `thinking-in-space` 内部代码**。  
@@ -42,7 +42,7 @@
 在你运行 `VSI-Bench` 的 shell 里先执行：
 
 ```bash
-export PYTHONPATH=/Users/wz/code/SpatialScore:$PYTHONPATH
+export PYTHONPATH=/disk/wangzhe/SpatialScore:$PYTHONPATH
 export LMMS_EVAL_PLUGINS=lmms_eval_spatialagent_plugin
 ```
 
@@ -73,7 +73,7 @@ cd /Users/wz/code/thinking-in-space
 ```bash
 python -m lmms_eval \
   --model spatial_agent_api \
-  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,api_base_url=https://api.openai.com/v1,video_num_frames=16,artifact_dir=/tmp/spatial_agent_runs,tool_config_path=/Users/wz/code/SpatialScore/docs/tool_config.server.template.json \
+  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,api_base_url=https://api.openai.com/v1,video_num_frames=16,artifact_dir=/tmp/spatial_agent_runs,tool_config_path=/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
   --tasks vsibench \
   --batch_size 1 \
   --limit 2 \
@@ -86,7 +86,7 @@ python -m lmms_eval \
 ```bash
 python -m lmms_eval \
   --model spatial_agent_api \
-  --model_args llm_backend=hf,model_path=/path/to/Qwen2.5-VL-7B-Instruct,video_num_frames=16,artifact_dir=/tmp/spatial_agent_runs,tool_config_path=/Users/wz/code/SpatialScore/docs/tool_config.server.template.json \
+  --model_args llm_backend=hf,model_path=/path/to/Qwen2.5-VL-7B-Instruct,video_num_frames=16,artifact_dir=/tmp/spatial_agent_runs,tool_config_path=/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
   --tasks vsibench \
   --batch_size 1 \
   --limit 2 \
@@ -103,7 +103,7 @@ python -m lmms_eval \
 ```bash
 python -m lmms_eval \
   --model spatial_agent_api \
-  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,api_base_url=https://api.openai.com/v1,video_num_frames=16,artifact_dir=/tmp/spatial_agent_runs,tool_config_path=/Users/wz/code/SpatialScore/docs/tool_config.server.template.json \
+  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,api_base_url=https://api.openai.com/v1,video_num_frames=16,artifact_dir=/tmp/spatial_agent_runs,tool_config_path=/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
   --tasks vsibench \
   --batch_size 1 \
   --log_samples \
@@ -115,7 +115,7 @@ python -m lmms_eval \
 ```bash
 python -m lmms_eval \
   --model spatial_agent_api \
-  --model_args llm_backend=hf,model_path=/path/to/Qwen2.5-VL-7B-Instruct,video_num_frames=16,artifact_dir=/tmp/spatial_agent_runs,tool_config_path=/Users/wz/code/SpatialScore/docs/tool_config.server.template.json \
+  --model_args llm_backend=hf,model_path=/path/to/Qwen2.5-VL-7B-Instruct,video_num_frames=16,artifact_dir=/tmp/spatial_agent_runs,tool_config_path=/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
   --tasks vsibench \
   --batch_size 1 \
   --log_samples \
@@ -151,7 +151,7 @@ python -m lmms_eval \
 ```bash
 python -m lmms_eval \
   --model spatial_agent_api \
-  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,api_base_url=https://api.openai.com/v1,video_num_frames=24,video_frame_dir=/tmp/vsi_frames,artifact_dir=/tmp/spatial_agent_runs,keep_video_frames=true,tool_config_path=/Users/wz/code/SpatialScore/docs/tool_config.server.template.json \
+  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,api_base_url=https://api.openai.com/v1,video_num_frames=24,video_frame_dir=/tmp/vsi_frames,artifact_dir=/tmp/spatial_agent_runs,keep_video_frames=true,tool_config_path=/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
   --tasks vsibench \
   --batch_size 1 \
   --limit 2 \
@@ -213,4 +213,4 @@ python -m lmms_eval \
 - 如果 `keep_video_frames=false`，每个样本结束后采样帧会被清理掉
 - 如果你想检查 agent 的实际输入帧，建议设成 `keep_video_frames=true`
 - 如果你还需要把空间工具链一起配好，可以继续看：
-  - [`/Users/wz/code/SpatialScore/docs/spatial_agent_tool_config_template.md`](/Users/wz/code/SpatialScore/docs/spatial_agent_tool_config_template.md)
+  - [`/disk/wangzhe/SpatialScore/docs/spatial_agent_tool_config_template.md`](/disk/wangzhe/SpatialScore/docs/spatial_agent_tool_config_template.md)

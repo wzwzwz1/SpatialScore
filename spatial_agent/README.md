@@ -62,7 +62,7 @@ python3 -m spatial_agent \
   --image-path /path/to/image.jpg \
   --llm-backend hf \
   --model-path /path/to/Qwen2.5-VL-7B-Instruct \
-  --tool-config-path /Users/wz/code/SpatialScore/docs/tool_config.server.template.json
+  --tool-config-path /disk/wangzhe/SpatialScore/docs/tool_config.server.template.json
 ```
 
 ### 2. OpenAI-compatible API
@@ -77,7 +77,7 @@ python3 -m spatial_agent \
   --llm-backend openai_compatible \
   --model-name gpt-4o-mini \
   --api-base-url https://api.openai.com/v1 \
-  --tool-config-path /Users/wz/code/SpatialScore/docs/tool_config.server.template.json
+  --tool-config-path /disk/wangzhe/SpatialScore/docs/tool_config.server.template.json
 ```
 
 这些 adapter 和部分工具都使用懒加载。如果 `torch`、`transformers`、OpenCV、checkpoint 或模型路径没有准备好，主图仍然可以运行，只是相关工具会返回结构化的 `unavailable` observation。
@@ -168,8 +168,8 @@ config = SpatialAgentConfig(
 
 如果你想直接抄服务器模板，用下面这份专门文档：
 
-- [`/Users/wz/code/SpatialScore/docs/spatial_agent_tool_config_template.md`](/Users/wz/code/SpatialScore/docs/spatial_agent_tool_config_template.md)
-- [`/Users/wz/code/SpatialScore/docs/tool_config.server.template.json`](/Users/wz/code/SpatialScore/docs/tool_config.server.template.json)
+- [`/disk/wangzhe/SpatialScore/docs/spatial_agent_tool_config_template.md`](/disk/wangzhe/SpatialScore/docs/spatial_agent_tool_config_template.md)
+- [`/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json`](/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json)
 
 ## VSI-Bench 同机评测
 
@@ -181,7 +181,7 @@ lmms_eval_spatialagent_plugin/
 
 如果你要在同一台服务器上，用 `thinking-in-space` 的 `VSI-Bench` 直接调这个 agent，而不修改 benchmark 内部实现，请看：
 
-- [`/Users/wz/code/SpatialScore/docs/spatial_agent_vsibench.md`](/Users/wz/code/SpatialScore/docs/spatial_agent_vsibench.md)
+- [`/disk/wangzhe/SpatialScore/docs/spatial_agent_vsibench.md`](/disk/wangzhe/SpatialScore/docs/spatial_agent_vsibench.md)
 
 ## Trace 输出
 

@@ -7,7 +7,7 @@
 先设置环境变量：
 
 ```bash
-export PYTHONPATH=/Users/wz/code/SpatialScore:$PYTHONPATH
+export PYTHONPATH=/disk/wangzhe/SpatialScore:$PYTHONPATH
 export LMMS_EVAL_PLUGINS=lmms_eval_spatialagent_plugin
 ```
 
@@ -16,7 +16,7 @@ export LMMS_EVAL_PLUGINS=lmms_eval_spatialagent_plugin
 ```bash
 python -m lmms_eval \
   --model spatial_agent_api \
-  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,api_base_url=https://api.openai.com/v1,video_num_frames=16,tool_config_path=/Users/wz/code/SpatialScore/docs/tool_config.server.template.json \
+  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,api_base_url=https://api.openai.com/v1,video_num_frames=16,tool_config_path=/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
   --tasks vsibench \
   --batch_size 1 \
   --log_samples \
@@ -31,4 +31,4 @@ llm_backend=hf,model_path=/path/to/Qwen2.5-VL-7B-Instruct
 
 完整操作说明请看：
 
-- [`/Users/wz/code/SpatialScore/docs/spatial_agent_vsibench.md`](/Users/wz/code/SpatialScore/docs/spatial_agent_vsibench.md)
+- [`/disk/wangzhe/SpatialScore/docs/spatial_agent_vsibench.md`](/disk/wangzhe/SpatialScore/docs/spatial_agent_vsibench.md)
