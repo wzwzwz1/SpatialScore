@@ -80,21 +80,22 @@ And we will update the agent system and inference code soon.
 
 To be updated soon...
 
-## LangGraph SpatialAgent (new package)
+## LangGraph SpatialAgent（新包）
 
-A new independent package now exists at [`spatial_agent/`](./spatial_agent) for a LangGraph-based **ReAct-only** SpatialAgent implementation. It does not modify the old `version_0/SpatialAgent` AutoGen control flow.
+仓库中新增了一个独立的 [`spatial_agent/`](./spatial_agent) 包，用来实现基于 LangGraph 的 **ReAct-only** 版 SpatialAgent。  
+它不会修改旧的 `version_0/SpatialAgent` AutoGen 控制流。
 
-Highlights:
+主要特性：
 
-- ReAct state graph built with LangGraph
-- model adapter abstraction
-- default local HuggingFace Qwen VL adapter
-- OpenAI-compatible API adapter
-- centralized tool registry with structured `ToolResult`
-- per-run JSON traces under `.artifacts/spatial_agent/`
-- same-host `lmms-eval` plugin for VSI-Bench evaluation
+- 基于 LangGraph 的 ReAct 状态图
+- LLM adapter 抽象层
+- 默认支持本地 HuggingFace Qwen-VL
+- 支持 OpenAI-compatible API
+- 统一工具注册表与结构化 `ToolResult`
+- 每次运行都会把 trace 写到 `.artifacts/spatial_agent/`
+- 支持同机 `lmms-eval` / `VSI-Bench` 评测插件
 
-Quick start:
+快速启动：
 
 ```bash
 python3 -m spatial_agent \
@@ -107,8 +108,13 @@ python3 -m spatial_agent \
   --model-path /path/to/Qwen2.5-VL-7B-Instruct
 ```
 
-See [`spatial_agent/README.md`](./spatial_agent/README.md) for current tool availability and runtime limitations.
-For the same-host `VSI-Bench` workflow, see [`docs/spatial_agent_vsibench.md`](./docs/spatial_agent_vsibench.md).
+更多工具说明、服务器侧 `tool_config` 配置、运行限制等，请看：
+
+- [`spatial_agent/README.md`](./spatial_agent/README.md)
+
+如果你要在同一台服务器上跑 `VSI-Bench`，请看：
+
+- [`docs/spatial_agent_vsibench.md`](./docs/spatial_agent_vsibench.md)
 
 ## Citation
 If you use this code and data for your research or project, please cite:

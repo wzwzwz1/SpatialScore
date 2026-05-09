@@ -28,7 +28,7 @@ def test_default_registry_tools_return_structured_results():
         "GetObjectOrientation": {"image": "missing.jpg", "objects": "person"},
         "EstimateHomographyMatrix": {"image": ["missing-a.jpg", "missing-b.jpg"]},
         "LocalizeObjects": {"image": "missing.jpg", "objects": ["cat"]},
-        "EstimateObjectMotion": {},
+        "EstimateObjectMotion": {"images": ["missing-a.jpg", "missing-b.jpg"], "objects": ["cat"]},
     }
 
     for tool_name in registry.list_names():

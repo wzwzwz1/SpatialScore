@@ -8,9 +8,9 @@ from spatial_agent.tools.depth import EstimateObjectDepthTool
 from spatial_agent.tools.homography import EstimateHomographyMatrixTool
 from spatial_agent.tools.localization import LocalizeObjectsTool
 from spatial_agent.tools.mask import GetObjectMaskTool
+from spatial_agent.tools.motion import EstimateObjectMotionTool
 from spatial_agent.tools.optical_flow import EstimateOpticalFlowTool
 from spatial_agent.tools.orientation import GetObjectOrientationTool
-from spatial_agent.tools.placeholders import PlaceholderTool
 
 
 class ToolRegistry:
@@ -43,11 +43,6 @@ def build_default_tool_registry(config) -> ToolRegistry:
         GetObjectOrientationTool(config),
         EstimateHomographyMatrixTool(config),
         LocalizeObjectsTool(config),
-        PlaceholderTool(
-            name="EstimateObjectMotion",
-            description="Estimate object motion across frames.",
-            reason="Tool is declared by the paper but not yet implemented in the current release.",
-        ),
+        EstimateObjectMotionTool(config),
     ]
     return ToolRegistry(tools)
-

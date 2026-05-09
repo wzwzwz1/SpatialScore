@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Dict, Optional
 
 
@@ -21,3 +23,12 @@ class SpatialAgentConfig:
     video_frame_dir: Optional[str] = None
     keep_video_frames: bool = False
     tool_config: Dict[str, Dict[str, object]] = field(default_factory=dict)
+
+
+def load_tool_config(path: Optional[str]) -> Dict[str, Dict[str, object]]:
+    if not path:
+        return {}
+    content = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(content, dict):
+        raise ValueError("tool_config file must contain a JSON object at the top level.")
+    return content

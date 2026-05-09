@@ -7,7 +7,7 @@ from typing import List, Tuple
 from spatial_agent.factory import build_spatial_agent
 from spatial_agent.io.lmms_bridge import build_task_input_from_vsibench_doc
 from spatial_agent.io.video_sampling import sample_video_frames
-from spatial_agent.runtime.config import SpatialAgentConfig
+from spatial_agent.runtime.config import SpatialAgentConfig, load_tool_config
 
 from lmms_eval.api.instance import Instance
 from lmms_eval.api.model import lmms
@@ -32,6 +32,7 @@ class SpatialAgentAPI(lmms):
         video_frame_dir: str = "",
         artifact_dir: str = ".artifacts/spatial_agent",
         keep_video_frames: bool = False,
+        tool_config_path: str = "",
         **kwargs,
     ) -> None:
         super().__init__()
@@ -48,6 +49,7 @@ class SpatialAgentAPI(lmms):
             video_num_frames=video_num_frames,
             video_frame_dir=video_frame_dir or None,
             keep_video_frames=keep_video_frames,
+            tool_config=load_tool_config(tool_config_path or None),
         )
         self.agent = build_spatial_agent(self.config)
 

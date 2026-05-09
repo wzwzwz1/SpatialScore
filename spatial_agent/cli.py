@@ -5,7 +5,7 @@ import json
 from typing import List, Optional
 
 from spatial_agent.factory import build_spatial_agent
-from spatial_agent.runtime.config import SpatialAgentConfig
+from spatial_agent.runtime.config import SpatialAgentConfig, load_tool_config
 
 
 def _parse_options(raw: Optional[str]) -> Optional[List[str]]:
@@ -54,6 +54,7 @@ def main() -> int:
     parser.add_argument("--video-frame-dir", help="Optional directory for sampled video frames.")
     parser.add_argument("--keep-video-frames", action="store_true", help="Keep sampled video frames on disk.")
     parser.add_argument("--artifact-dir", default=".artifacts/spatial_agent")
+    parser.add_argument("--tool-config-path", help="JSON file path for tool_config.")
     args = parser.parse_args()
 
     config = SpatialAgentConfig(
@@ -69,6 +70,7 @@ def main() -> int:
         video_frame_dir=args.video_frame_dir,
         keep_video_frames=args.keep_video_frames,
         artifact_dir=args.artifact_dir,
+        tool_config=load_tool_config(args.tool_config_path),
     )
     agent = build_spatial_agent(config)
     result = agent.invoke(
