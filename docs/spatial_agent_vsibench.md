@@ -258,6 +258,63 @@ python -m spatial_agent.analysis \
 - `report.md`
 - `report.html`
 - `charts/*.png`
+
+## 12. 不进入 `thinking-in-space`，直接在 `SpatialScore` 里跑一条样本
+
+如果你只是想快速验证 agent 本身，而不是走完整 `lmms_eval` 流程，现在也可以直接在 `SpatialScore` 项目里抽一条 `VSI-Bench` 样本来跑。
+
+适合场景：
+
+- 先检查某条样本的 sampled frames、trace、tool 调用
+- 不想每次都从 `thinking-in-space` 入口启动
+- 想直接在 agent 仓库里做单样本调试
+
+进入 `SpatialScore` 仓库后执行：
+
+```bash
+cd /disk/wangzhe/SpatialScore
+python -m spatial_agent.vsibench_cli \
+  --doc-id 0 \
+  --split test \
+  --llm-backend openai_compatible \
+  --model-name gpt-4o-mini \
+  --artifact-dir /tmp/spatial_agent_runs \
+  --tool-config-path /disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
+  --keep-video-frames
+```
+
+如果你走本地模型：
+
+```bash
+cd /disk/wangzhe/SpatialScore
+python -m spatial_agent.vsibench_cli \
+  --doc-id 0 \
+  --split test \
+  --llm-backend hf \
+  --model-path /path/to/Qwen2.5-VL-7B-Instruct \
+  --artifact-dir /tmp/spatial_agent_runs \
+  --tool-config-path /disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
+  --keep-video-frames
+```
+
+说明：
+
+- `--doc-id` 是 `VSI-Bench` 对应 split 里的样本索引
+- `--split` 默认是 `test`
+- 这个入口会：
+  1. 直接从 Hugging Face `nyu-visionx/VSI-Bench` 读取样本
+  2. 按 `scene_name` 和 `dataset` 拼出本地缓存视频路径
+  3. 均匀抽帧
+  4. 构造 `SpatialAgent` 的 `task_input`
+  5. 输出完整运行结果 JSON
+
+如果你没有显式传 `--dataset-cache-dir`，默认会使用：
+
+```text
+$HF_HOME/vsibench
+```
+
+也就是和 `thinking-in-space` 当前 `vsibench` 任务一致的缓存布局。
 - `artifacts/`
 
 其中 `report.html` 会尽量把 trace 里的分割、深度、光流、运动轨迹等 artifact 一起带上，方便你直观看 agent 对场景的中间建模结果。
