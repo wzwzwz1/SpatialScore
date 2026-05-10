@@ -292,43 +292,170 @@ def _build_case_rows(report: Dict[str, Any], artifact_mapping: Dict[str, str], m
     return case_rows
 
 
-def _write_markdown(report: Dict[str, Any], chart_files: Dict[str, str], case_rows: List[Dict[str, Any]], output_dir: Path) -> Path:
+def _status_counts_line(summary: Dict[str, Any]) -> str:
+    counts = summary.get("status_counts", {})
+    if not counts:
+        return "(none)"
+    return ", ".join(f"{key}={value}" for key, value in sorted(counts.items()))
+
+
+def _format_metric_map(metric_map: Dict[str, float]) -> str:
+    if not metric_map:
+        return "(none)"
+    return ", ".join(f"{key}={value:.3f}" for key, value in metric_map.items())
+
+
+def _derive_findings(report: Dict[str, Any]) -> List[str]:
+    findings: List[str] = []
+    summary = report["summary"]
+    if summary.get("trace_coverage", 0.0) < 0.8:
+        findings.append("trace 覆盖率偏低，说明有一部分样本没有成功落盘到 SpatialAgent trace，建议先排查 artifact_dir 和 task_id 映射。")
+    else:
+        findings.append("trace 覆盖率较高，说明 benchmark 样本与 SpatialAgent 执行轨迹已经可以稳定对齐。")
+
+    if summary.get("average_tool_calls", 0.0) < 0.5:
+        findings.append("平均 tool 调用次数偏低，agent 可能主要在裸答，没有充分利用空间工具。")
+    else:
+        findings.append("平均每题至少发生了一次 tool 调用，说明 agent 已经在真实依赖工具信息而不是纯语言猜测。")
+
+    unavailable_tools = [name for name, payload in report["tools"].items() if payload.get("unavailable", 0) > 0]
+    if unavailable_tools:
+        findings.append(f"以下工具存在 unavailable 情况：{', '.join(unavailable_tools)}。优先检查 tool_config、checkpoint 路径和依赖安装。")
+
+    counting_samples = [sample for sample in report["samples"] if sample.get("question_type") == "object_counting"]
+    natural_language_counting = [
+        sample
+        for sample in counting_samples
+        if sample.get("prediction") and not str(sample["prediction"]).strip().isdigit()
+    ]
+    if natural_language_counting:
+        findings.append("计数题存在自然语言长句输出，建议把数值题最终答案收紧为纯数字，避免评测时因为格式问题丢分。")
+
+    if not findings:
+        findings.append("当前样本量较小，建议把 `--limit` 扩到 20 或更多，再观察题型分数和 tool 使用分布。")
+
+    return findings
+
+
+def _write_markdown(
+    report: Dict[str, Any],
+    chart_files: Dict[str, str],
+    case_rows: List[Dict[str, Any]],
+    output_dir: Path,
+    summary_path: Path,
+    csv_path: Path,
+    html_path: Path,
+) -> Path:
+    summary = report["summary"]
+    findings = _derive_findings(report)
     lines = [
-        "# VSI-Bench SpatialAgent Analysis",
+        "# VSI-Bench SpatialAgent 中文分析报告",
         "",
-        "## Summary",
+        "## 文件索引",
         "",
-        f"- sample_count: {report['summary']['sample_count']}",
-        f"- trace_coverage: {report['summary']['trace_coverage']:.3f}",
-        f"- success_rate: {report['summary']['success_rate']:.3f}",
-        f"- average_reasoning_steps: {report['summary']['average_reasoning_steps']:.3f}",
-        f"- average_tool_calls: {report['summary']['average_tool_calls']:.3f}",
+        f"- summary_json: {summary_path.name}",
+        f"- samples_csv: {csv_path.name}",
+        f"- report_markdown: report.md",
+        f"- report_html: {html_path.name}",
+        f"- charts_dir: charts/",
+        f"- artifacts_dir: artifacts/",
         "",
-        "## Charts",
+        "## 总览结论",
+        "",
+        f"- 样本数: {summary['sample_count']}",
+        f"- trace 覆盖率: {summary['trace_coverage']:.3f}",
+        f"- agent 执行成功率: {summary['success_rate']:.3f}",
+        f"- 平均推理步数: {summary['average_reasoning_steps']:.3f}",
+        f"- 平均 tool 调用次数: {summary['average_tool_calls']:.3f}",
+        f"- status 分布: {_status_counts_line(summary)}",
+        "",
+        "## 自动观察",
         "",
     ]
+    for finding in findings:
+        lines.append(f"- {finding}")
+
+    lines.extend(
+        [
+            "",
+            "## 题型统计",
+            "",
+            "| 题型 | 样本数 | trace 命中数 | 指标均值 |",
+            "| --- | ---: | ---: | --- |",
+        ]
+    )
+    for question_type, payload in sorted(report["question_types"].items()):
+        lines.append(
+            f"| {question_type} | {payload['count']} | {payload.get('trace_found', 0)} | {_format_metric_map(payload.get('metrics', {}))} |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Tool 统计",
+            "",
+            "| Tool | 调用次数 | success | unavailable | error |",
+            "| --- | ---: | ---: | ---: | ---: |",
+        ]
+    )
+    for tool_name, payload in sorted(report["tools"].items(), key=lambda item: item[1]["calls"], reverse=True):
+        lines.append(
+            f"| {tool_name} | {payload.get('calls', 0)} | {payload.get('success', 0)} | {payload.get('unavailable', 0)} | {payload.get('error', 0)} |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## 图表总览",
+            "",
+        ]
+    )
     for title, filename in chart_files.items():
         lines.extend([f"### {title}", "", f"![{title}](charts/{filename})", ""])
 
-    lines.extend(["## Case Studies", ""])
+    lines.extend(
+        [
+            "## 样本级明细",
+            "",
+        ]
+    )
     for sample in case_rows:
         lines.extend(
             [
                 f"### {sample['task_id']}",
                 "",
-                f"- question_type: {sample['question_type']}",
-                f"- status: {sample['status']}",
+                f"- 题型: {sample['question_type']}",
+                f"- 执行状态: {sample['status']}",
                 f"- ground_truth: {sample['ground_truth']}",
                 f"- prediction: {sample['prediction']}",
-                f"- tool_names: {', '.join(sample['tool_names']) if sample['tool_names'] else '(none)'}",
+                f"- tool 列表: {', '.join(sample['tool_names']) if sample['tool_names'] else '(none)'}",
+                f"- tool 调用次数: {sample['tool_call_count']}",
+                f"- 推理步数: {sample['reasoning_steps']}",
+                f"- 指标: {_format_metric_map(sample.get('score_fields', {}))}",
                 f"- error: {sample['error'] or '(none)'}",
+                "",
+                "问题：",
                 "",
                 sample["question"],
                 "",
             ]
         )
-        for artifact_path in sample["artifact_report_paths"]:
-            lines.extend([f"![artifact]({artifact_path})", ""])
+        if sample["artifact_report_paths"]:
+            lines.extend(["中间视觉产物：", ""])
+            for artifact_path in sample["artifact_report_paths"]:
+                lines.extend([f"![artifact]({artifact_path})", ""])
+        else:
+            lines.extend(["中间视觉产物：", "", "(none)", ""])
+
+    lines.extend(
+        [
+            "## 后续建议",
+            "",
+            "1. 先看 `Tool 统计` 和 `图表总览`，判断当前掉分是来自工具不可用、工具误用，还是最终答案格式问题。",
+            "2. 再看 `样本级明细` 里的 artifact 图片，确认分割、深度、光流、轨迹这些中间结果是否真的贴合场景。",
+            "3. 如果当前样本量很小，优先把 `--limit` 扩大到 20 或更多，再决定是改 tool_config、Prompt 还是工具实现。",
+        ]
+    )
 
     path = output_dir / "report.md"
     path.write_text("\n".join(lines), encoding="utf-8")
@@ -337,9 +464,19 @@ def _write_markdown(report: Dict[str, Any], chart_files: Dict[str, str], case_ro
 
 def _write_html(report: Dict[str, Any], chart_files: Dict[str, str], case_rows: List[Dict[str, Any]], output_dir: Path) -> Path:
     summary = report["summary"]
+    findings = _derive_findings(report)
     chart_html = "\n".join(
         f"<section><h2>{title}</h2><img src=\"charts/{filename}\" alt=\"{title}\" style=\"max-width: 100%; border: 1px solid #ddd; border-radius: 8px;\" /></section>"
         for title, filename in chart_files.items()
+    )
+
+    question_type_rows = "".join(
+        f"<tr><td>{question_type}</td><td>{payload['count']}</td><td>{payload.get('trace_found', 0)}</td><td>{_format_metric_map(payload.get('metrics', {}))}</td></tr>"
+        for question_type, payload in sorted(report["question_types"].items())
+    )
+    tool_rows = "".join(
+        f"<tr><td>{tool_name}</td><td>{payload.get('calls', 0)}</td><td>{payload.get('success', 0)}</td><td>{payload.get('unavailable', 0)}</td><td>{payload.get('error', 0)}</td></tr>"
+        for tool_name, payload in sorted(report["tools"].items(), key=lambda item: item[1]["calls"], reverse=True)
     )
 
     case_html_parts = []
@@ -352,38 +489,63 @@ def _write_html(report: Dict[str, Any], chart_files: Dict[str, str], case_rows: 
             f"""
             <article style="padding: 16px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 16px;">
               <h3>{sample['task_id']}</h3>
-              <p><strong>question_type:</strong> {sample['question_type']} | <strong>status:</strong> {sample['status']}</p>
+              <p><strong>题型:</strong> {sample['question_type']} | <strong>执行状态:</strong> {sample['status']}</p>
               <p><strong>ground_truth:</strong> {sample['ground_truth']} | <strong>prediction:</strong> {sample['prediction']}</p>
               <p><strong>tools:</strong> {", ".join(sample['tool_names']) if sample['tool_names'] else "(none)"}</p>
+              <p><strong>推理步数:</strong> {sample['reasoning_steps']} | <strong>tool 调用次数:</strong> {sample['tool_call_count']}</p>
+              <p><strong>指标:</strong> {_format_metric_map(sample.get('score_fields', {}))}</p>
               <p>{sample['question']}</p>
-              <div>{artifact_html}</div>
+              <div>{artifact_html if artifact_html else "(none)"}</div>
             </article>
             """
         )
+
+    finding_html = "".join(f"<li>{finding}</li>" for finding in findings)
 
     html = f"""
     <html>
       <head>
         <meta charset="utf-8" />
-        <title>VSI-Bench SpatialAgent Analysis</title>
+        <title>VSI-Bench SpatialAgent 中文分析报告</title>
         <style>
           body {{ font-family: Arial, sans-serif; margin: 32px; color: #222; }}
           .summary-grid {{ display: grid; grid-template-columns: repeat(5, minmax(140px, 1fr)); gap: 12px; }}
           .summary-card {{ border: 1px solid #ddd; border-radius: 10px; padding: 12px; background: #fafafa; }}
+          table {{ border-collapse: collapse; width: 100%; margin-bottom: 24px; }}
+          th, td {{ border: 1px solid #ddd; padding: 8px 10px; text-align: left; vertical-align: top; }}
+          th {{ background: #f5f5f5; }}
         </style>
       </head>
       <body>
-        <h1>VSI-Bench SpatialAgent Analysis</h1>
+        <h1>VSI-Bench SpatialAgent 中文分析报告</h1>
         <div class="summary-grid">
-          <div class="summary-card"><strong>sample_count</strong><br />{summary['sample_count']}</div>
-          <div class="summary-card"><strong>trace_coverage</strong><br />{summary['trace_coverage']:.3f}</div>
-          <div class="summary-card"><strong>success_rate</strong><br />{summary['success_rate']:.3f}</div>
-          <div class="summary-card"><strong>avg_steps</strong><br />{summary['average_reasoning_steps']:.3f}</div>
-          <div class="summary-card"><strong>avg_tool_calls</strong><br />{summary['average_tool_calls']:.3f}</div>
+          <div class="summary-card"><strong>样本数</strong><br />{summary['sample_count']}</div>
+          <div class="summary-card"><strong>trace 覆盖率</strong><br />{summary['trace_coverage']:.3f}</div>
+          <div class="summary-card"><strong>执行成功率</strong><br />{summary['success_rate']:.3f}</div>
+          <div class="summary-card"><strong>平均推理步数</strong><br />{summary['average_reasoning_steps']:.3f}</div>
+          <div class="summary-card"><strong>平均 tool 调用</strong><br />{summary['average_tool_calls']:.3f}</div>
         </div>
+        <section>
+          <h2>自动观察</h2>
+          <ul>{finding_html}</ul>
+        </section>
+        <section>
+          <h2>题型统计</h2>
+          <table>
+            <thead><tr><th>题型</th><th>样本数</th><th>trace 命中数</th><th>指标均值</th></tr></thead>
+            <tbody>{question_type_rows}</tbody>
+          </table>
+        </section>
+        <section>
+          <h2>Tool 统计</h2>
+          <table>
+            <thead><tr><th>Tool</th><th>调用次数</th><th>success</th><th>unavailable</th><th>error</th></tr></thead>
+            <tbody>{tool_rows}</tbody>
+          </table>
+        </section>
         {chart_html}
         <section>
-          <h2>Case Studies</h2>
+          <h2>样本级明细</h2>
           {''.join(case_html_parts)}
         </section>
       </body>
@@ -417,7 +579,8 @@ def write_analysis_report(report: Dict[str, Any], output_dir: str | Path, max_ca
     }
 
     case_rows = _build_case_rows(report, artifact_mapping=artifact_mapping, max_cases=max_cases)
-    markdown_path = _write_markdown(report, chart_files, case_rows, output_dir)
+    html_path = output_dir / "report.html"
+    markdown_path = _write_markdown(report, chart_files, case_rows, output_dir, summary_path, csv_path, html_path)
     html_path = _write_html(report, chart_files, case_rows, output_dir)
 
     return {

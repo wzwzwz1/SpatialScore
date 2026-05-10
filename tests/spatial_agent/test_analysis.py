@@ -200,3 +200,13 @@ def test_write_analysis_report_emits_outputs(tmp_path):
     assert (output_dir / "charts" / "question_type_counts.png").exists()
     assert (output_dir / "artifacts" / "depth.png").exists()
     assert "report_html" in paths
+
+    report_md = (output_dir / "report.md").read_text(encoding="utf-8")
+    assert "# VSI-Bench SpatialAgent 中文分析报告" in report_md
+    assert "## 文件索引" in report_md
+    assert "## 总览结论" in report_md
+    assert "## 题型统计" in report_md
+    assert "## Tool 统计" in report_md
+    assert "## 样本级明细" in report_md
+    assert "summary.json" in report_md
+    assert "samples.csv" in report_md
