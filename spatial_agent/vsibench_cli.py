@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
 
 from spatial_agent.factory import build_spatial_agent
-from spatial_agent.io.vsibench_runner import resolve_vsibench_cache_dir, run_vsibench_sample
+from spatial_agent.io.vsibench_runner import resolve_vsibench_cache_dir, run_vsibench_sample, write_vsibench_run_outputs
+from spatial_agent.analysis.analyzer import aggregate_runs, load_spatial_traces
+from spatial_agent.analysis.report import write_analysis_report
 from spatial_agent.runtime.config import SpatialAgentConfig, load_tool_config
 
 
@@ -29,6 +32,11 @@ def main() -> int:
     parser.add_argument("--keep-video-frames", action="store_true", help="Keep sampled video frames on disk.")
     parser.add_argument("--artifact-dir", default=".artifacts/spatial_agent")
     parser.add_argument("--tool-config-path", help="JSON file path for tool_config.")
+    parser.add_argument(
+        "--output-dir",
+        help="Directory to store run.json and vsibench.json. Defaults to <artifact_dir>/single_runs/<split>/<doc_id>.",
+    )
+    parser.add_argument("--run-analysis", action="store_true", help="Run the existing analysis reporter after saving files.")
     args = parser.parse_args()
 
     config = SpatialAgentConfig(
@@ -60,7 +68,41 @@ def main() -> int:
         video_frame_dir=config.video_frame_dir,
         token=args.hf_token,
     )
-    print(json.dumps(payload, indent=2, ensure_ascii=False))
+    output_dir = args.output_dir or str(Path(config.artifact_dir) / "single_runs" / args.split / str(args.doc_id))
+    output_paths = write_vsibench_run_outputs(
+        output_dir=output_dir,
+        doc_id=args.doc_id,
+        payload=payload,
+    )
+
+    print("Run complete.")
+    print(f"run_json: {output_paths['run_json']}")
+    print(f"samples_json: {output_paths['samples_json']}")
+    print(f"trace_path: {payload['result'].get('trace_path')}")
+
+    if args.run_analysis:
+        report = aggregate_runs(
+            samples=[{
+                "task_id": payload["task_input"]["task_id"],
+                "doc_id": args.doc_id,
+                "question": payload["doc"].get("question", ""),
+                "question_type": payload["doc"].get("question_type", "unknown"),
+                "ground_truth": payload["doc"].get("ground_truth"),
+                "target": payload["doc"].get("ground_truth"),
+                "prediction": payload["result"].get("final_answer") or "",
+                "scene_name": payload["doc"].get("scene_name"),
+                "dataset": payload["doc"].get("dataset"),
+                "score_fields": {},
+                "doc": dict(payload["doc"]),
+                "raw_sample": {},
+            }],
+            traces=load_spatial_traces(config.artifact_dir),
+        )
+        analysis_dir = str(Path(output_dir) / "analysis")
+        analysis_paths = write_analysis_report(report, analysis_dir)
+        print(f"analysis_dir: {analysis_dir}")
+        for name, value in analysis_paths.items():
+            print(f"{name}: {value}")
     return 0
 
 

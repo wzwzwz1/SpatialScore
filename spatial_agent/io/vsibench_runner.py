@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import json
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
@@ -106,3 +107,38 @@ def resolve_vsibench_cache_dir(explicit_cache_dir: str | None) -> str:
     hf_home = os.getenv("HF_HOME", "~/.cache/huggingface/")
     base_cache_dir = os.path.expanduser(hf_home)
     return os.path.join(base_cache_dir, "vsibench")
+
+
+def build_vsibench_sample_log(doc_id: int, doc: Dict[str, Any], result: Dict[str, Any]) -> Dict[str, Any]:
+    prediction = result.get("final_answer") or ""
+    return {
+        "doc_id": int(doc_id),
+        "doc": dict(doc),
+        "target": doc.get("ground_truth"),
+        "filtered_resps": [str(prediction)],
+    }
+
+
+def write_vsibench_run_outputs(output_dir: str, doc_id: int, payload: Dict[str, Any]) -> Dict[str, str]:
+    base = Path(output_dir)
+    base.mkdir(parents=True, exist_ok=True)
+
+    run_path = base / "run.json"
+    run_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    sample_bundle = {
+        "logs": [
+            build_vsibench_sample_log(
+                doc_id=doc_id,
+                doc=payload["doc"],
+                result=payload["result"],
+            )
+        ]
+    }
+    samples_path = base / "vsibench.json"
+    samples_path.write_text(json.dumps(sample_bundle, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    return {
+        "run_json": str(run_path),
+        "samples_json": str(samples_path),
+    }

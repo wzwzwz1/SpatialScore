@@ -4,8 +4,10 @@ from spatial_agent.adapters.openai_compatible import OpenAICompatibleAdapter
 from spatial_agent.io.lmms_bridge import build_task_input_from_vsibench_doc
 from spatial_agent.io.vsibench_runner import (
     build_vsibench_video_path,
+    build_vsibench_sample_log,
     build_vsibench_visual_task_input,
     run_vsibench_sample,
+    write_vsibench_run_outputs,
 )
 from spatial_agent.io.video_sampling import select_frame_indices
 from spatial_agent.runtime.config import SpatialAgentConfig
@@ -218,3 +220,46 @@ def test_run_vsibench_sample_removes_sampled_frames_when_not_kept(monkeypatch, t
     )
 
     assert not frame_root.exists()
+
+
+def test_build_vsibench_sample_log_uses_agent_answer():
+    doc = {
+        "question": "How many chairs are visible?",
+        "question_type": "object_counting",
+        "ground_truth": "4",
+        "scene_name": "scene0001",
+        "dataset": "scannet",
+    }
+    result = {
+        "task_id": "vsibench___test___0",
+        "final_answer": "3",
+        "status": "success",
+    }
+
+    row = build_vsibench_sample_log(doc_id=0, doc=doc, result=result)
+
+    assert row["doc_id"] == 0
+    assert row["target"] == "4"
+    assert row["filtered_resps"] == ["3"]
+    assert row["doc"]["question"] == doc["question"]
+
+
+def test_write_vsibench_run_outputs_writes_run_and_sample_bundle(tmp_path):
+    payload = {
+        "doc": {
+            "question": "How many chairs are visible?",
+            "question_type": "object_counting",
+            "ground_truth": "4",
+            "scene_name": "scene0001",
+            "dataset": "scannet",
+        },
+        "task_input": {"task_id": "vsibench___test___0"},
+        "result": {"final_answer": "3", "status": "success"},
+    }
+
+    paths = write_vsibench_run_outputs(output_dir=str(tmp_path), doc_id=0, payload=payload)
+
+    assert (tmp_path / "run.json").exists()
+    assert (tmp_path / "vsibench.json").exists()
+    assert paths["run_json"].endswith("run.json")
+    assert paths["samples_json"].endswith("vsibench.json")

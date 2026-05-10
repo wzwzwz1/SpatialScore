@@ -297,6 +297,67 @@ python -m spatial_agent.vsibench_cli \
   --keep-video-frames
 ```
 
+现在这个入口默认**不再把完整运行结果直接打印成大段 JSON**，而是优先写文件。默认输出目录是：
+
+```text
+<artifact_dir>/single_runs/<split>/<doc_id>/
+```
+
+例如：
+
+```text
+/tmp/spatial_agent_runs/single_runs/test/0/
+```
+
+里面至少会有：
+
+- `run.json`
+  - 完整单样本运行结果
+- `vsibench.json`
+  - 一个和分析器兼容的样本日志 bundle
+
+CLI 结束后只会打印这些文件路径，例如：
+
+```text
+Run complete.
+run_json: /tmp/spatial_agent_runs/single_runs/test/0/run.json
+samples_json: /tmp/spatial_agent_runs/single_runs/test/0/vsibench.json
+trace_path: /tmp/spatial_agent_runs/vsibench___test___0.json
+```
+
+如果你想自定义输出目录，可以显式传：
+
+```bash
+--output-dir /disk/wangzhe/SpatialScore/runs/vsibench/test_0
+```
+
+如果你想在单样本运行结束后，直接顺手调用我们之前的分析报告脚本，也可以加：
+
+```bash
+--run-analysis
+```
+
+例如：
+
+```bash
+python -m spatial_agent.vsibench_cli \
+  --doc-id 0 \
+  --split test \
+  --llm-backend openai_compatible \
+  --model-name gpt-4o-mini \
+  --artifact-dir /tmp/spatial_agent_runs \
+  --output-dir /disk/wangzhe/SpatialScore/runs/vsibench/test_0 \
+  --tool-config-path /disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
+  --keep-video-frames \
+  --run-analysis
+```
+
+这样运行后，你会同时得到：
+
+- 单样本原始结果：`run.json`
+- 分析器样本输入：`vsibench.json`
+- 分析报告目录：`analysis/`
+
 说明：
 
 - `--doc-id` 是 `VSI-Bench` 对应 split 里的样本索引
