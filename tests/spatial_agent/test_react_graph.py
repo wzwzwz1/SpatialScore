@@ -1,5 +1,6 @@
 from spatial_agent.adapters.mock import MockLLMAdapter
 from spatial_agent.agent import SpatialAgent
+from spatial_agent.graph.tool_args import normalize_tool_arguments
 from spatial_agent.runtime.config import SpatialAgentConfig
 from spatial_agent.tools.base import BaseSpatialTool
 from spatial_agent.tools.registry import ToolRegistry
@@ -243,3 +244,109 @@ def test_graph_normalizes_placeholder_multi_image_argument():
     assert result["status"] == "success"
     assert result["tool_calls"][0]["arguments"]["images"] == ["/tmp/frame0.jpg", "/tmp/frame1.jpg"]
     assert result["tool_observations"][0]["payload"]["images"] == ["/tmp/frame0.jpg", "/tmp/frame1.jpg"]
+
+
+def test_graph_normalizes_placeholder_image_with_extension_argument():
+    adapter = MockLLMAdapter(
+        responses=[
+            {
+                "thought": "Need the first frame.",
+                "action": {"name": "CaptureImageTool", "arguments": {"image": "image1.jpg"}},
+                "finish": None,
+            },
+            {"thought": "Done.", "action": None, "finish": {"answer": "ok"}},
+        ]
+    )
+    registry = ToolRegistry()
+    registry.register(CaptureImageTool())
+    agent = SpatialAgent(
+        llm_adapter=adapter,
+        tool_registry=registry,
+        config=SpatialAgentConfig(),
+    )
+
+    result = agent.invoke(
+        {
+            "task_id": "task-image-extension-normalization",
+            "question": "Use the first image.",
+            "question_type": "open_ended",
+            "input_modality": "video",
+            "image_paths": ["/tmp/frame0.jpg", "/tmp/frame1.jpg"],
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["tool_calls"][0]["arguments"]["image"] == "/tmp/frame0.jpg"
+
+
+def test_normalize_tool_arguments_injects_default_single_image_for_target_tools():
+    state = {"image_paths": ["/tmp/frame0.jpg", "/tmp/frame1.jpg"]}
+
+    normalized = normalize_tool_arguments(
+        state=state,
+        tool_name="LocalizeObjects",
+        arguments={"objects": ["chair"]},
+    )
+
+    assert normalized["image"] == "/tmp/frame0.jpg"
+    assert normalized["objects"] == ["chair"]
+
+
+def test_graph_normalizes_vsibench_counting_answer_to_digits():
+    adapter = MockLLMAdapter(
+        responses=[
+            {"thought": "Enough evidence.", "action": None, "finish": {"answer": "There are at least 3 chairs in the room."}},
+        ]
+    )
+    agent = SpatialAgent(
+        llm_adapter=adapter,
+        tool_registry=ToolRegistry(),
+        config=SpatialAgentConfig(),
+    )
+
+    result = agent.invoke(
+        {
+            "task_id": "task-counting-normalization",
+            "question": "How many chair(s) are in this room?",
+            "question_type": "open_ended",
+            "input_modality": "video",
+            "image_paths": ["/tmp/frame0.jpg"],
+            "metadata": {
+                "source_benchmark": "vsibench",
+                "vsibench_question_type": "object_counting",
+            },
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["final_answer"] == "3"
+
+
+def test_graph_normalizes_vsibench_counting_word_answer_to_digits():
+    adapter = MockLLMAdapter(
+        responses=[
+            {"thought": "Enough evidence.", "action": None, "finish": {"answer": "two"}},
+        ]
+    )
+    agent = SpatialAgent(
+        llm_adapter=adapter,
+        tool_registry=ToolRegistry(),
+        config=SpatialAgentConfig(),
+    )
+
+    result = agent.invoke(
+        {
+            "task_id": "task-counting-word-normalization",
+            "question": "How many sofa(s) are in this room?",
+            "question_type": "open_ended",
+            "input_modality": "video",
+            "image_paths": ["/tmp/frame0.jpg"],
+            "metadata": {
+                "source_benchmark": "vsibench",
+                "vsibench_question_type": "object_counting",
+            },
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["final_answer"] == "2"

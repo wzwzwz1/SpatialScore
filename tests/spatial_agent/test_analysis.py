@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from PIL import Image
+
 from spatial_agent.analysis.analyzer import (
     aggregate_runs,
     infer_vsibench_task_id,
@@ -112,6 +114,7 @@ def test_aggregate_runs_merges_samples_and_traces(tmp_path):
         "status": "success",
         "error": None,
         "final_answer": "3",
+        "image_paths": [str(tmp_path / "frame0.jpg")],
         "tool_calls": [{"tool_name": "GetObjectMask", "arguments": {"object_name": "chair"}}],
         "tool_observations": [
             {
@@ -144,11 +147,14 @@ def test_aggregate_runs_merges_samples_and_traces(tmp_path):
     assert report["samples"][1]["trace_found"] is False
     assert report["samples"][0]["tool_execution_details"][0]["tool_name"] == "GetObjectMask"
     assert report["samples"][0]["tool_execution_details"][0]["payload"]["mask_area"] == 1200
+    assert report["samples"][0]["prediction_diagnostics"]["pure_numeric"] is True
 
 
 def test_write_analysis_report_emits_outputs(tmp_path):
     artifact = tmp_path / "depth.png"
     artifact.write_bytes(b"fake-image")
+    frame = tmp_path / "frame0.png"
+    Image.new("RGB", (32, 24), "white").save(frame)
 
     report = {
         "summary": {
@@ -183,13 +189,33 @@ def test_write_analysis_report_emits_outputs(tmp_path):
                 "status": "success",
                 "tool_names": ["EstimateObjectDepth"],
                 "artifact_paths": [str(artifact)],
+                "input_frame_paths": [str(frame)],
                 "reasoning_steps": 3,
                 "tool_call_count": 1,
                 "score_fields": {"MRA:.5:.95:.05": 0.0},
                 "error": None,
+                "prediction_diagnostics": {
+                    "pure_numeric": False,
+                    "natural_language_count": True,
+                    "contains_uncertainty_phrase": False,
+                },
+                "tool_execution_details": [
+                    {
+                        "step": 1,
+                        "tool_name": "EstimateObjectDepth",
+                        "arguments": {"image": str(frame)},
+                        "status": "success",
+                        "payload": {"instance_count": 1},
+                        "error": None,
+                        "artifacts": [str(artifact)],
+                    }
+                ],
             }
         ],
-        "artifacts": [{"sample_task_id": infer_vsibench_task_id(0), "tool_name": "EstimateObjectDepth", "path": str(artifact)}],
+        "artifacts": [
+            {"sample_task_id": infer_vsibench_task_id(0), "tool_name": "EstimateObjectDepth", "path": str(artifact)},
+            {"sample_task_id": infer_vsibench_task_id(0), "tool_name": "__input__", "path": str(frame)},
+        ],
     }
 
     output_dir = tmp_path / "report"
@@ -214,4 +240,6 @@ def test_write_analysis_report_emits_outputs(tmp_path):
     assert "samples.csv" in report_md
     assert "### Tool 执行明细" in report_md
     assert "EstimateObjectDepth" in report_md
+    assert "预测格式诊断" in report_md
+    assert "输入采样帧" in report_md
     assert "\"MRA:.5:.95:.05\": 0.0" in report_md or "MRA:.5:.95:.05=0.000" in report_md

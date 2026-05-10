@@ -1,4 +1,5 @@
 from spatial_agent.adapters.huggingface_qwen import HuggingFaceQwenAdapter
+from spatial_agent.prompts.react_system_prompt import build_react_system_prompt
 
 
 def test_qwen_adapter_builds_prompt_with_history_and_options():
@@ -21,6 +22,10 @@ def test_qwen_adapter_builds_prompt_with_history_and_options():
                 "observation": {"status": "success", "payload": {"cat": 1.2, "dog": 2.0}},
             }
         ],
+        "metadata": {
+            "source_benchmark": "vsibench",
+            "vsibench_question_type": "object_counting",
+        },
     }
     available_tools = [{"name": "EstimateObjectDepth"}]
 
@@ -35,3 +40,12 @@ def test_qwen_adapter_builds_prompt_with_history_and_options():
     assert "Previous tool interaction history" in prompt_text
     assert "EstimateObjectDepth" in prompt_text
     assert "Recent conversation context" in prompt_text
+    assert "Counting rule:" in prompt_text
+    assert "pure Arabic numeral only" in prompt_text
+
+
+def test_react_system_prompt_forbids_invented_image_paths():
+    prompt = build_react_system_prompt([{"name": "LocalizeObjects"}])
+
+    assert "Do not invent image file names or file paths" in prompt
+    assert "runtime binds real sampled frames automatically" in prompt

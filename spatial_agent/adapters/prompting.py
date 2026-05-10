@@ -10,6 +10,16 @@ def build_text_prompt_from_state(state: Mapping[str, Any]) -> str:
         f"Question type: {state.get('question_type', 'open_ended')}",
         f"Input modality: {state.get('input_modality', 'single_image')}",
     ]
+    metadata = state.get("metadata") or {}
+    if metadata.get("source_benchmark") == "vsibench":
+        sections.append(f"Benchmark: {metadata['source_benchmark']}")
+        if metadata.get("vsibench_question_type"):
+            sections.append(f"Benchmark question type: {metadata['vsibench_question_type']}")
+        if metadata.get("vsibench_question_type") == "object_counting":
+            sections.append(
+                "Counting rule: prefer GetObjectMask first and fall back to LocalizeObjects only if masking is unavailable. "
+                "Base the answer on tool observations and return a pure Arabic numeral only."
+            )
 
     options = state.get("options") or []
     if options:

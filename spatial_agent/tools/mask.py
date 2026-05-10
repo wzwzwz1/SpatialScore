@@ -32,7 +32,7 @@ class GetObjectMaskTool(BaseSpatialTool):
             "image": {"type": "string"},
             "objects": {"type": "array", "items": {"type": "string"}},
         },
-        "required": ["image", "objects"],
+        "required": ["objects"],
     }
     returns_schema = {"type": "object"}
 
@@ -114,6 +114,15 @@ class GetObjectMaskTool(BaseSpatialTool):
                 payload={
                     "results": results,
                     "backend": f"sam2:{settings.get('model_id', 'facebook/sam2.1-hiera-large')}",
+                    "instance_count": sum(1 for item in results if not item.get("error") and item.get("bbox") is not None),
+                    "artifact_descriptions": [
+                        {
+                            "path": path,
+                            "kind": "mask_overlay",
+                            "description": "Object mask overlay produced by SAM2.",
+                        }
+                        for path in artifacts
+                    ],
                 },
                 artifacts=artifacts,
             )

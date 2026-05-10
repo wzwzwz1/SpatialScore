@@ -195,7 +195,9 @@ def _write_csv(samples: List[Dict[str, Any]], path: Path) -> None:
         "reasoning_steps",
         "artifact_count",
         "tool_names",
+        "input_frame_paths",
         "tool_execution_details",
+        "prediction_diagnostics",
         "score_fields",
     ]
     with path.open("w", encoding="utf-8", newline="") as handle:
@@ -204,7 +206,9 @@ def _write_csv(samples: List[Dict[str, Any]], path: Path) -> None:
         for sample in samples:
             row = dict(sample)
             row["tool_names"] = "|".join(sample.get("tool_names", []))
+            row["input_frame_paths"] = "|".join(sample.get("input_frame_paths", []))
             row["tool_execution_details"] = json.dumps(sample.get("tool_execution_details", []), ensure_ascii=False)
+            row["prediction_diagnostics"] = json.dumps(sample.get("prediction_diagnostics", {}), ensure_ascii=False)
             row["score_fields"] = json.dumps(sample.get("score_fields", {}), ensure_ascii=False)
             writer.writerow({key: row.get(key) for key in fieldnames})
 
@@ -289,6 +293,7 @@ def _build_case_rows(report: Dict[str, Any], artifact_mapping: Dict[str, str], m
             {
                 **sample,
                 "artifact_report_paths": [artifact_mapping.get(path, path) for path in sample.get("artifact_paths", [])],
+                "input_frame_report_paths": [artifact_mapping.get(path, path) for path in sample.get("input_frame_paths", [])],
             }
         )
     return case_rows
@@ -338,6 +343,7 @@ def _derive_findings(report: Dict[str, Any]) -> List[str]:
     ]
     if natural_language_counting:
         findings.append("计数题存在自然语言长句输出，建议把数值题最终答案收紧为纯数字，避免评测时因为格式问题丢分。")
+        findings.append("部分计数题 prediction 不是纯数字，属于明显的格式风险。")
 
     if not findings:
         findings.append("当前样本量较小，建议把 `--limit` 扩到 20 或更多，再观察题型分数和 tool 使用分布。")
@@ -454,16 +460,35 @@ def _write_markdown(
                 lines.extend([f"![artifact]({artifact_path})", ""])
         else:
             lines.extend(["中间视觉产物：", "", "(none)", ""])
+        if sample.get("input_frame_report_paths"):
+            lines.extend(["输入采样帧：", ""])
+            for frame_path in sample["input_frame_report_paths"]:
+                lines.extend([f"![input-frame]({frame_path})", ""])
+
+        diagnostics = sample.get("prediction_diagnostics") or {}
+        if diagnostics:
+            lines.extend(
+                [
+                    "预测格式诊断：",
+                    "",
+                    f"- pure_numeric: {diagnostics.get('pure_numeric', False)}",
+                    f"- natural_language_count: {diagnostics.get('natural_language_count', False)}",
+                    f"- contains_uncertainty_phrase: {diagnostics.get('contains_uncertainty_phrase', False)}",
+                    "",
+                ]
+            )
 
         lines.extend(["### Tool 执行明细", ""])
         if sample.get("tool_execution_details"):
             for execution in sample["tool_execution_details"]:
+                payload = execution.get("payload", {})
                 lines.extend(
                     [
                         f"#### 第 {execution['step']} 步：{execution['tool_name']}",
                         "",
                         f"- status: {execution['status']}",
                         f"- error: {execution['error'] or '(none)'}",
+                        f"- instance_count: {payload.get('instance_count', '(none)')}",
                         "",
                         "arguments:",
                         "",
@@ -527,6 +552,11 @@ def _write_html(report: Dict[str, Any], chart_files: Dict[str, str], case_rows: 
             f"<img src=\"{artifact_path}\" alt=\"artifact\" style=\"max-width: 360px; margin: 8px 8px 8px 0; border: 1px solid #ddd; border-radius: 6px;\" />"
             for artifact_path in sample["artifact_report_paths"]
         )
+        input_frame_html = "".join(
+            f"<img src=\"{frame_path}\" alt=\"input-frame\" style=\"max-width: 240px; margin: 8px 8px 8px 0; border: 1px solid #ddd; border-radius: 6px;\" />"
+            for frame_path in sample.get("input_frame_report_paths", [])
+        )
+        diagnostics = sample.get("prediction_diagnostics") or {}
         tool_detail_html = []
         for execution in sample.get("tool_execution_details", []):
             artifact_list = execution.get("artifacts", [])
@@ -536,6 +566,7 @@ def _write_html(report: Dict[str, Any], chart_files: Dict[str, str], case_rows: 
                 <section style="margin-top: 12px; padding: 12px; background: #fafafa; border-radius: 8px;">
                   <h4>第 {execution['step']} 步：{execution['tool_name']}</h4>
                   <p><strong>status:</strong> {execution['status']} | <strong>error:</strong> {execution['error'] or '(none)'}</p>
+                  <p><strong>instance_count:</strong> {execution.get('payload', {}).get('instance_count', '(none)')}</p>
                   <p><strong>arguments</strong></p>
                   <pre style="white-space: pre-wrap; background: white; border: 1px solid #ddd; padding: 10px;">{_format_json_block(execution.get('arguments', {}))}</pre>
                   <p><strong>payload</strong></p>
@@ -556,6 +587,9 @@ def _write_html(report: Dict[str, Any], chart_files: Dict[str, str], case_rows: 
               <p><strong>指标:</strong> {_format_metric_map(sample.get('score_fields', {}))}</p>
               <p>{sample['question']}</p>
               <div>{artifact_html if artifact_html else "(none)"}</div>
+              <p><strong>输入采样帧</strong></p>
+              <div>{input_frame_html if input_frame_html else "(none)"}</div>
+              <p><strong>预测格式诊断:</strong> pure_numeric={diagnostics.get('pure_numeric', False)}, natural_language_count={diagnostics.get('natural_language_count', False)}, contains_uncertainty_phrase={diagnostics.get('contains_uncertainty_phrase', False)}</p>
               <h4>Tool 执行明细</h4>
               {''.join(tool_detail_html) if tool_detail_html else "<p>(none)</p>"}
             </article>

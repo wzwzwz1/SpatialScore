@@ -5,7 +5,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping
 
 
-_INDEXED_IMAGE_PATTERN = re.compile(r"^(?:image|frame)[_\- ]?(\d+)$", re.IGNORECASE)
+_INDEXED_IMAGE_PATTERN = re.compile(r"^(?:image|frame)[_\- ]?(\d+)(?:\.[a-z0-9]+)?$", re.IGNORECASE)
+_FIRST_IMAGE_PATTERN = re.compile(r"^(?:first|current|input)[_\- ]?image(?:\.[a-z0-9]+)?$", re.IGNORECASE)
 _GENERIC_IMAGE_TOKENS = {
     "image",
     "images",
@@ -23,7 +24,9 @@ def _looks_like_placeholder_image(value: str) -> bool:
         return True
     if _INDEXED_IMAGE_PATTERN.match(token):
         return True
-    if any(sep in token for sep in ("/", "\\")) or "." in token:
+    if _FIRST_IMAGE_PATTERN.match(token):
+        return True
+    if any(sep in token for sep in ("/", "\\")):
         return False
     return token.startswith("image") or token.startswith("frame")
 

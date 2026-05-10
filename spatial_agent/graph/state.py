@@ -50,6 +50,15 @@ def summarize_observation(result: Dict[str, Any]) -> str:
     tool_name = result.get("tool_name", "unknown")
     payload = result.get("payload", {})
     if status == "success":
-        return f"{tool_name} succeeded with payload: {payload}"
+        summary_parts = []
+        instance_count = payload.get("instance_count")
+        if isinstance(instance_count, int):
+            summary_parts.append(f"instance_count={instance_count}")
+        results = payload.get("results")
+        if isinstance(results, list):
+            summary_parts.append(f"result_items={len(results)}")
+        summary_prefix = f"{tool_name} succeeded"
+        if summary_parts:
+            summary_prefix += " (" + ", ".join(summary_parts) + ")"
+        return f"{summary_prefix} with payload: {payload}"
     return f"{tool_name} returned status={status} error={result.get('error')}"
-

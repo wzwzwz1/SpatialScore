@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, Dict, List
 
 from spatial_agent.tools.backends import (
+    artifact_dir_for_tool,
     clamp_bbox,
     ensure_image_paths,
     ensure_object_names,
@@ -11,6 +13,7 @@ from spatial_agent.tools.backends import (
     get_tool_settings,
     load_pil_image,
     resolve_device,
+    save_bbox_overlay,
 )
 from spatial_agent.tools.base import BaseSpatialTool
 
@@ -29,7 +32,7 @@ class LocalizeObjectsTool(BaseSpatialTool):
                 ]
             },
         },
-        "required": ["image", "objects"],
+        "required": ["objects"],
     }
     returns_schema = {"type": "object"}
 
@@ -106,6 +109,7 @@ class LocalizeObjectsTool(BaseSpatialTool):
                 "regions": deduped,
                 "missing_objects": [name for name in objects if not any(region["label"] == name for region in deduped)],
                 "backend": f"grounding_dino:{model_id}",
+                "instance_count": len(deduped),
             }
 
             if settings.get("enable_ram_tags"):
@@ -129,6 +133,15 @@ class LocalizeObjectsTool(BaseSpatialTool):
 
             if not deduped:
                 return self.error("Object grounding produced no candidate regions.", payload=payload)
-            return self.success(payload=payload)
+            artifact_path = artifact_dir_for_tool(self.config, self.name) / f"{Path(image_path).stem}_bbox.png"
+            artifact = save_bbox_overlay(image, deduped, artifact_path)
+            payload["artifact_descriptions"] = [
+                {
+                    "path": artifact,
+                    "kind": "bbox_overlay",
+                    "description": "Object localization bounding boxes with label and confidence.",
+                }
+            ]
+            return self.success(payload=payload, artifacts=[artifact])
         except Exception as exc:  # pragma: no cover - dependency-heavy runtime path
             return self.unavailable(f"Object localization backend is not available or failed to initialize: {exc}")

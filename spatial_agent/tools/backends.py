@@ -220,6 +220,38 @@ def save_mask_overlay(image: Image.Image, mask: np.ndarray, bbox: Sequence[float
     return str(output_path)
 
 
+def save_bbox_overlay(
+    image: Image.Image,
+    regions: Sequence[Dict[str, Any]],
+    output_path: Path,
+) -> str:
+    canvas = image.copy().convert("RGB")
+    draw = ImageDraw.Draw(canvas)
+    palette = [
+        (255, 90, 90),
+        (90, 200, 255),
+        (100, 255, 120),
+        (255, 210, 90),
+        (190, 130, 255),
+    ]
+    for index, region in enumerate(regions):
+        bbox = region.get("bbox")
+        if not bbox:
+            continue
+        color = palette[index % len(palette)]
+        x1, y1, x2, y2 = bbox
+        draw.rectangle((x1, y1, x2, y2), outline=color, width=3)
+        label = str(region.get("label", "object"))
+        score = region.get("score")
+        text = f"{label} ({float(score):.2f})" if isinstance(score, (int, float)) else label
+        text_x = max(0, int(round(x1)))
+        text_y = max(0, int(round(y1)) - 14)
+        draw.rectangle((text_x, text_y, text_x + max(48, len(text) * 7), text_y + 14), fill=color)
+        draw.text((text_x + 2, text_y + 1), text, fill="black")
+    canvas.save(output_path)
+    return str(output_path)
+
+
 def save_track_visualization(frame_paths: Sequence[str], tracks: np.ndarray, output_path: Path) -> str:
     frames = [load_pil_image(path) for path in frame_paths]
     colors = [(255, 90, 90), (90, 200, 255), (100, 255, 120), (255, 210, 90)]

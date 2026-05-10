@@ -30,7 +30,7 @@ class EstimateObjectDepthTool(BaseSpatialTool):
             "objects": {"type": "array", "items": {"type": "string"}},
             "indoor_or_outdoor": {"type": "string"},
         },
-        "required": ["image", "objects"],
+        "required": ["objects"],
     }
     returns_schema = {"type": "object"}
 
@@ -111,6 +111,13 @@ class EstimateObjectDepthTool(BaseSpatialTool):
                     "results": results,
                     "scene_type_hint": kwargs.get("indoor_or_outdoor"),
                     "backend": f"depth_anything_v2_metric:{settings.get('encoder', 'vitl')}",
+                    "artifact_descriptions": [
+                        {
+                            "path": str(artifact_path),
+                            "kind": "depth_heatmap",
+                            "description": "Normalized depth heatmap generated from the sampled frame.",
+                        }
+                    ],
                 },
                 artifacts=[str(artifact_path)],
             )

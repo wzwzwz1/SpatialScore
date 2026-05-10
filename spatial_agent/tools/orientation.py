@@ -34,7 +34,7 @@ class GetObjectOrientationTool(BaseSpatialTool):
                 ]
             },
         },
-        "required": ["image", "objects"],
+        "required": ["objects"],
     }
     returns_schema = {"type": "object"}
 

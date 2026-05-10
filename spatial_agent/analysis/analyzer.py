@@ -112,6 +112,24 @@ def _mean(values: Iterable[float]) -> float:
     return sum(values) / len(values) if values else 0.0
 
 
+def _prediction_diagnostics(question_type: str, prediction: str) -> Dict[str, bool]:
+    normalized = str(prediction or "").strip()
+    lowered = normalized.lower()
+    contains_uncertainty = any(phrase in lowered for phrase in ("at least", "approximately", "about", "around", "maybe"))
+    if question_type != "object_counting":
+        return {
+            "pure_numeric": False,
+            "natural_language_count": False,
+            "contains_uncertainty_phrase": contains_uncertainty,
+        }
+    pure_numeric = normalized.isdigit()
+    return {
+        "pure_numeric": pure_numeric,
+        "natural_language_count": bool(normalized) and not pure_numeric,
+        "contains_uncertainty_phrase": contains_uncertainty,
+    }
+
+
 def aggregate_runs(samples: List[Dict[str, Any]], traces: Mapping[str, Dict[str, Any]]) -> Dict[str, Any]:
     question_type_stats: Dict[str, Dict[str, Any]] = {}
     tool_stats: Dict[str, Dict[str, int]] = defaultdict(lambda: {"calls": 0, "success": 0, "error": 0, "unavailable": 0})
@@ -133,6 +151,7 @@ def aggregate_runs(samples: List[Dict[str, Any]], traces: Mapping[str, Dict[str,
         tool_observations = list((trace or {}).get("tool_observations", []))
         reasoning_trace = list((trace or {}).get("reasoning_trace", []))
         tool_execution_details: List[Dict[str, Any]] = []
+        input_frame_paths: List[str] = list((trace or {}).get("image_paths", []))
 
         status = (trace or {}).get("status", "missing")
         status_counts[status] += 1
@@ -175,6 +194,13 @@ def aggregate_runs(samples: List[Dict[str, Any]], traces: Mapping[str, Dict[str,
                     "artifacts": observation.get("artifacts", []) or [],
                 }
             )
+            arguments = call.get("arguments", {})
+            for key in ("image", "images", "image_paths", "other_images"):
+                value = arguments.get(key)
+                if isinstance(value, str):
+                    input_frame_paths.append(value)
+                elif isinstance(value, list):
+                    input_frame_paths.extend(str(item) for item in value)
 
         if trace_found:
             step_counts.append(reasoning_steps)
@@ -186,6 +212,16 @@ def aggregate_runs(samples: List[Dict[str, Any]], traces: Mapping[str, Dict[str,
         q_stat["trace_found"] += int(trace_found)
         for metric_name, value in sample["score_fields"].items():
             q_stat["metrics"][metric_name].append(value)
+
+        unique_input_frames = sorted({path for path in input_frame_paths if isinstance(path, str) and path})
+        for frame_path in unique_input_frames:
+            artifact_rows.append(
+                {
+                    "sample_task_id": sample["task_id"],
+                    "tool_name": "__input__",
+                    "path": frame_path,
+                }
+            )
 
         merged_samples.append(
             {
@@ -205,9 +241,11 @@ def aggregate_runs(samples: List[Dict[str, Any]], traces: Mapping[str, Dict[str,
                 "reasoning_steps": reasoning_steps,
                 "artifact_count": len(artifact_paths),
                 "artifact_paths": artifact_paths,
+                "input_frame_paths": unique_input_frames,
                 "tool_execution_details": tool_execution_details,
                 "score_fields": sample["score_fields"],
                 "final_answer": (trace or {}).get("final_answer"),
+                "prediction_diagnostics": _prediction_diagnostics(question_type, sample["prediction"]),
             }
         )
 

@@ -33,6 +33,7 @@ class SpatialAgent:
         trace = {
             "task_id": result.get("task_id", task_input.get("task_id", "task")),
             "question": result.get("question", task_input.get("question")),
+            "image_paths": result.get("image_paths", task_input.get("image_paths", [])),
             "status": result.get("status"),
             "error": result.get("error"),
             "final_answer": result.get("final_answer"),
