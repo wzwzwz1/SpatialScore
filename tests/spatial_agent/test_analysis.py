@@ -38,6 +38,35 @@ def test_load_lmms_samples_from_json_bundle(tmp_path):
     assert samples[0]["question_type"] == "object_counting"
 
 
+def test_load_lmms_samples_from_task_named_json_file(tmp_path):
+    output_dir = tmp_path / "logs"
+    output_dir.mkdir()
+    bundle_path = output_dir / "vsibench.json"
+    bundle = {
+        "logs": [
+            {
+                "doc_id": 3,
+                "doc": {
+                    "question": "Which option is correct?",
+                    "question_type": "object_rel_distance",
+                    "ground_truth": "A",
+                    "scene_name": "scene0003",
+                },
+                "target": "A",
+                "filtered_resps": ["B"],
+                "accuracy": 0.0,
+            }
+        ]
+    }
+    bundle_path.write_text(json.dumps(bundle), encoding="utf-8")
+
+    samples = load_lmms_samples(output_dir, task_name="vsibench", split="test")
+
+    assert len(samples) == 1
+    assert samples[0]["task_id"] == "vsibench___test___3"
+    assert samples[0]["prediction"] == "B"
+
+
 def test_aggregate_runs_merges_samples_and_traces(tmp_path):
     sample_path = tmp_path / "samples_vsibench_bundle.json"
     trace_dir = tmp_path / "traces"

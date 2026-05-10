@@ -72,7 +72,10 @@ def _discover_sample_file(path: Path, task_name: str) -> Path:
         return path
 
     candidates = sorted(
-        list(path.rglob(f"samples_{task_name}_*.jsonl")) + list(path.rglob(f"samples_{task_name}_*.json")),
+        list(path.rglob(f"samples_{task_name}_*.jsonl"))
+        + list(path.rglob(f"samples_{task_name}_*.json"))
+        + list(path.rglob(f"{task_name}.json"))
+        + list(path.rglob(f"{task_name}.jsonl")),
         key=lambda item: item.stat().st_mtime,
         reverse=True,
     )
