@@ -216,3 +216,41 @@ trace 中包含：
 - final answer
 - status / error
 - reasoning trace
+
+## VSI-Bench 结果分析
+
+如果你已经通过 `lmms_eval` 跑出了 `VSI-Bench` 结果，并且保留了 `SpatialAgent` trace，可以直接用内置分析器生成图表和报告：
+
+```bash
+python -m spatial_agent.analysis \
+  --samples-path /disk/wangzhe/thinking-in-space/logs/vsibench \
+  --trace-dir /tmp/spatial_agent_runs \
+  --output-dir /disk/wangzhe/SpatialScore/analysis/vsibench
+```
+
+输出包括：
+
+- `summary.json`
+- `samples.csv`
+- `report.md`
+- `report.html`
+- `charts/*.png`
+- `artifacts/`
+
+分析器会把 `lmms_eval` 的题目级结果，与 `SpatialAgent` 的：
+
+- `tool_calls`
+- `tool_observations`
+- `reasoning_trace`
+- tool artifacts
+
+拼在一起，方便你分析：
+
+- 哪些题型掉分最多
+- 哪些 tool 调用频繁
+- 哪些 tool 经常 `unavailable` 或 `error`
+- 分割 / 深度 / 光流 / 运动轨迹等中间结果是否合理
+
+详细说明见：
+
+- [`/disk/wangzhe/SpatialScore/docs/spatial_agent_vsibench_analysis.md`](/disk/wangzhe/SpatialScore/docs/spatial_agent_vsibench_analysis.md)

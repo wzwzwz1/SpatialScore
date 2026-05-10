@@ -239,3 +239,29 @@ llm_backend=openai_compatible,model_name=你的模型名,...
 ```
 
 这样命令行会更短，也更方便切换不同中转站。
+
+## 11. 结果分析与可视化
+
+如果你已经跑出了 `VSI-Bench` 结果，推荐直接使用仓库内置的分析器，把 `lmms_eval` 样本日志和 `SpatialAgent` trace 合并起来做可视化：
+
+```bash
+python -m spatial_agent.analysis \
+  --samples-path /disk/wangzhe/thinking-in-space/logs/vsibench \
+  --trace-dir /tmp/spatial_agent_runs \
+  --output-dir /disk/wangzhe/SpatialScore/analysis/vsibench
+```
+
+分析器会输出：
+
+- `summary.json`
+- `samples.csv`
+- `report.md`
+- `report.html`
+- `charts/*.png`
+- `artifacts/`
+
+其中 `report.html` 会尽量把 trace 里的分割、深度、光流、运动轨迹等 artifact 一起带上，方便你直观看 agent 对场景的中间建模结果。
+
+更详细的使用方式见：
+
+- [`/disk/wangzhe/SpatialScore/docs/spatial_agent_vsibench_analysis.md`](/disk/wangzhe/SpatialScore/docs/spatial_agent_vsibench_analysis.md)
