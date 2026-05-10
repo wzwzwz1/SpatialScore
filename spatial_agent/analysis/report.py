@@ -195,6 +195,7 @@ def _write_csv(samples: List[Dict[str, Any]], path: Path) -> None:
         "reasoning_steps",
         "artifact_count",
         "tool_names",
+        "tool_execution_details",
         "score_fields",
     ]
     with path.open("w", encoding="utf-8", newline="") as handle:
@@ -203,6 +204,7 @@ def _write_csv(samples: List[Dict[str, Any]], path: Path) -> None:
         for sample in samples:
             row = dict(sample)
             row["tool_names"] = "|".join(sample.get("tool_names", []))
+            row["tool_execution_details"] = json.dumps(sample.get("tool_execution_details", []), ensure_ascii=False)
             row["score_fields"] = json.dumps(sample.get("score_fields", {}), ensure_ascii=False)
             writer.writerow({key: row.get(key) for key in fieldnames})
 
@@ -303,6 +305,12 @@ def _format_metric_map(metric_map: Dict[str, float]) -> str:
     if not metric_map:
         return "(none)"
     return ", ".join(f"{key}={value:.3f}" for key, value in metric_map.items())
+
+
+def _format_json_block(payload: Any) -> str:
+    if payload in (None, {}, []):
+        return "(none)"
+    return json.dumps(payload, ensure_ascii=False, indent=2)
 
 
 def _derive_findings(report: Dict[str, Any]) -> List[str]:
@@ -447,6 +455,40 @@ def _write_markdown(
         else:
             lines.extend(["中间视觉产物：", "", "(none)", ""])
 
+        lines.extend(["### Tool 执行明细", ""])
+        if sample.get("tool_execution_details"):
+            for execution in sample["tool_execution_details"]:
+                lines.extend(
+                    [
+                        f"#### 第 {execution['step']} 步：{execution['tool_name']}",
+                        "",
+                        f"- status: {execution['status']}",
+                        f"- error: {execution['error'] or '(none)'}",
+                        "",
+                        "arguments:",
+                        "",
+                        "```json",
+                        _format_json_block(execution.get("arguments", {})),
+                        "```",
+                        "",
+                        "payload:",
+                        "",
+                        "```json",
+                        _format_json_block(execution.get("payload", {})),
+                        "```",
+                        "",
+                    ]
+                )
+                artifacts = execution.get("artifacts", [])
+                if artifacts:
+                    lines.extend(["artifacts:", ""])
+                    for artifact_path in artifacts:
+                        lines.extend([f"- {artifact_path}", ""])
+                else:
+                    lines.extend(["artifacts:", "", "(none)", ""])
+        else:
+            lines.extend(["(none)", ""])
+
     lines.extend(
         [
             "## 后续建议",
@@ -485,6 +527,24 @@ def _write_html(report: Dict[str, Any], chart_files: Dict[str, str], case_rows: 
             f"<img src=\"{artifact_path}\" alt=\"artifact\" style=\"max-width: 360px; margin: 8px 8px 8px 0; border: 1px solid #ddd; border-radius: 6px;\" />"
             for artifact_path in sample["artifact_report_paths"]
         )
+        tool_detail_html = []
+        for execution in sample.get("tool_execution_details", []):
+            artifact_list = execution.get("artifacts", [])
+            artifact_detail = "".join(f"<li>{artifact}</li>" for artifact in artifact_list) if artifact_list else "<li>(none)</li>"
+            tool_detail_html.append(
+                f"""
+                <section style="margin-top: 12px; padding: 12px; background: #fafafa; border-radius: 8px;">
+                  <h4>第 {execution['step']} 步：{execution['tool_name']}</h4>
+                  <p><strong>status:</strong> {execution['status']} | <strong>error:</strong> {execution['error'] or '(none)'}</p>
+                  <p><strong>arguments</strong></p>
+                  <pre style="white-space: pre-wrap; background: white; border: 1px solid #ddd; padding: 10px;">{_format_json_block(execution.get('arguments', {}))}</pre>
+                  <p><strong>payload</strong></p>
+                  <pre style="white-space: pre-wrap; background: white; border: 1px solid #ddd; padding: 10px;">{_format_json_block(execution.get('payload', {}))}</pre>
+                  <p><strong>artifacts</strong></p>
+                  <ul>{artifact_detail}</ul>
+                </section>
+                """
+            )
         case_html_parts.append(
             f"""
             <article style="padding: 16px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 16px;">
@@ -496,6 +556,8 @@ def _write_html(report: Dict[str, Any], chart_files: Dict[str, str], case_rows: 
               <p><strong>指标:</strong> {_format_metric_map(sample.get('score_fields', {}))}</p>
               <p>{sample['question']}</p>
               <div>{artifact_html if artifact_html else "(none)"}</div>
+              <h4>Tool 执行明细</h4>
+              {''.join(tool_detail_html) if tool_detail_html else "<p>(none)</p>"}
             </article>
             """
         )

@@ -132,6 +132,7 @@ def aggregate_runs(samples: List[Dict[str, Any]], traces: Mapping[str, Dict[str,
         tool_calls = list((trace or {}).get("tool_calls", []))
         tool_observations = list((trace or {}).get("tool_observations", []))
         reasoning_trace = list((trace or {}).get("reasoning_trace", []))
+        tool_execution_details: List[Dict[str, Any]] = []
 
         status = (trace or {}).get("status", "missing")
         status_counts[status] += 1
@@ -158,6 +159,22 @@ def aggregate_runs(samples: List[Dict[str, Any]], traces: Mapping[str, Dict[str,
                         "path": artifact_path,
                     }
                 )
+
+        max_tool_steps = max(len(tool_calls), len(tool_observations))
+        for index in range(max_tool_steps):
+            call = tool_calls[index] if index < len(tool_calls) else {}
+            observation = tool_observations[index] if index < len(tool_observations) else {}
+            tool_execution_details.append(
+                {
+                    "step": index + 1,
+                    "tool_name": call.get("tool_name") or observation.get("tool_name", "unknown"),
+                    "arguments": call.get("arguments", {}),
+                    "status": observation.get("status", "missing"),
+                    "payload": observation.get("payload", {}),
+                    "error": observation.get("error"),
+                    "artifacts": observation.get("artifacts", []) or [],
+                }
+            )
 
         if trace_found:
             step_counts.append(reasoning_steps)
@@ -188,6 +205,7 @@ def aggregate_runs(samples: List[Dict[str, Any]], traces: Mapping[str, Dict[str,
                 "reasoning_steps": reasoning_steps,
                 "artifact_count": len(artifact_paths),
                 "artifact_paths": artifact_paths,
+                "tool_execution_details": tool_execution_details,
                 "score_fields": sample["score_fields"],
                 "final_answer": (trace or {}).get("final_answer"),
             }

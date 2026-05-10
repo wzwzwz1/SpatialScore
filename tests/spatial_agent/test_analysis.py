@@ -142,6 +142,8 @@ def test_aggregate_runs_merges_samples_and_traces(tmp_path):
     assert report["tools"]["GetObjectMask"]["success"] == 1
     assert report["samples"][0]["artifact_count"] == 1
     assert report["samples"][1]["trace_found"] is False
+    assert report["samples"][0]["tool_execution_details"][0]["tool_name"] == "GetObjectMask"
+    assert report["samples"][0]["tool_execution_details"][0]["payload"]["mask_area"] == 1200
 
 
 def test_write_analysis_report_emits_outputs(tmp_path):
@@ -210,3 +212,6 @@ def test_write_analysis_report_emits_outputs(tmp_path):
     assert "## 样本级明细" in report_md
     assert "summary.json" in report_md
     assert "samples.csv" in report_md
+    assert "### Tool 执行明细" in report_md
+    assert "EstimateObjectDepth" in report_md
+    assert "\"MRA:.5:.95:.05\": 0.0" in report_md or "MRA:.5:.95:.05=0.000" in report_md
