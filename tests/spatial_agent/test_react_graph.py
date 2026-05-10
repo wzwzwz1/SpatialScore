@@ -15,6 +15,16 @@ class EchoTool(BaseSpatialTool):
         return self.success(payload={"echo": kwargs["value"]})
 
 
+class CaptureImageTool(BaseSpatialTool):
+    name = "CaptureImageTool"
+    description = "Captures normalized image arguments for testing."
+    args_schema = {"type": "object", "properties": {"image": {"type": "string"}}, "required": ["image"]}
+    returns_schema = {"type": "object"}
+
+    def invoke(self, **kwargs):
+        return self.success(payload={"image": kwargs.get("image"), "images": kwargs.get("images")})
+
+
 def test_graph_finish_path_returns_answer():
     adapter = MockLLMAdapter(
         responses=[
@@ -165,3 +175,71 @@ def test_graph_fails_after_exceeding_repair_limit():
 
     assert result["status"] == "failed"
     assert "repair" in result["error"].lower()
+
+
+def test_graph_normalizes_placeholder_single_image_argument():
+    adapter = MockLLMAdapter(
+        responses=[
+            {
+                "thought": "Need to inspect the first frame.",
+                "action": {"name": "CaptureImageTool", "arguments": {"image": "image1"}},
+                "finish": None,
+            },
+            {"thought": "Done.", "action": None, "finish": {"answer": "ok"}},
+        ]
+    )
+    registry = ToolRegistry()
+    registry.register(CaptureImageTool())
+    agent = SpatialAgent(
+        llm_adapter=adapter,
+        tool_registry=registry,
+        config=SpatialAgentConfig(),
+    )
+
+    result = agent.invoke(
+        {
+            "task_id": "task-image-normalization",
+            "question": "Use the first image.",
+            "question_type": "open_ended",
+            "input_modality": "video",
+            "image_paths": ["/tmp/frame0.jpg", "/tmp/frame1.jpg"],
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["tool_calls"][0]["arguments"]["image"] == "/tmp/frame0.jpg"
+    assert result["tool_observations"][0]["payload"]["image"] == "/tmp/frame0.jpg"
+
+
+def test_graph_normalizes_placeholder_multi_image_argument():
+    adapter = MockLLMAdapter(
+        responses=[
+            {
+                "thought": "Need all frames.",
+                "action": {"name": "CaptureImageTool", "arguments": {"images": ["image1", "image2"]}},
+                "finish": None,
+            },
+            {"thought": "Done.", "action": None, "finish": {"answer": "ok"}},
+        ]
+    )
+    registry = ToolRegistry()
+    registry.register(CaptureImageTool())
+    agent = SpatialAgent(
+        llm_adapter=adapter,
+        tool_registry=registry,
+        config=SpatialAgentConfig(),
+    )
+
+    result = agent.invoke(
+        {
+            "task_id": "task-images-normalization",
+            "question": "Use all images.",
+            "question_type": "open_ended",
+            "input_modality": "video",
+            "image_paths": ["/tmp/frame0.jpg", "/tmp/frame1.jpg", "/tmp/frame2.jpg"],
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["tool_calls"][0]["arguments"]["images"] == ["/tmp/frame0.jpg", "/tmp/frame1.jpg"]
+    assert result["tool_observations"][0]["payload"]["images"] == ["/tmp/frame0.jpg", "/tmp/frame1.jpg"]

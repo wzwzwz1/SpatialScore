@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from spatial_agent.graph.tool_args import normalize_tool_arguments
+
 
 def route_node(runtime):
     def _route_node(state):
@@ -19,7 +21,11 @@ def route_node(runtime):
 
         if action and action.get("name"):
             state["selected_tool"] = action["name"]
-            state["selected_args"] = action.get("arguments", {})
+            state["selected_args"] = normalize_tool_arguments(
+                state=state,
+                tool_name=action["name"],
+                arguments=action.get("arguments", {}),
+            )
             state["pending_route"] = "tool"
             return state
 
@@ -28,4 +34,3 @@ def route_node(runtime):
         return state
 
     return _route_node
-
