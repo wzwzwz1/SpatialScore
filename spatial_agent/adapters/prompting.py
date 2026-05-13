@@ -8,11 +8,23 @@ from spatial_agent.graph.tool_args import get_representative_counting_frames, is
 
 
 def build_text_prompt_from_state(state: Mapping[str, Any]) -> str:
+    image_paths = [str(path) for path in state.get("image_paths", [])]
     sections: List[str] = [
         f"Question: {state.get('question', '')}",
         f"Question type: {state.get('question_type', 'open_ended')}",
         f"Input modality: {state.get('input_modality', 'single_image')}",
     ]
+    if image_paths:
+        image_reference_lines = [f"- image-{index}: {path}" for index, path in enumerate(image_paths)]
+        sections.append(
+            "Image references (use these ordered aliases in reasoning and tool arguments; do not invent new paths):\n"
+            + "\n".join(image_reference_lines)
+        )
+        if str(state.get("input_modality") or "").lower() == "video":
+            sections.append(
+                "Video frame ordering note: the image aliases are sorted by video time from earliest to latest, "
+                "so image-0 is earlier than image-1, image-1 is earlier than image-2, and so on."
+            )
     metadata = state.get("metadata") or {}
     if metadata.get("source_benchmark") == "vsibench":
         sections.append(f"Benchmark: {metadata['source_benchmark']}")
@@ -25,10 +37,16 @@ def build_text_prompt_from_state(state: Mapping[str, Any]) -> str:
         )
     if is_video_counting_task(state):
         representative_frames = get_representative_counting_frames(state)
+        representative_aliases = []
+        for frame_path in representative_frames:
+            if frame_path in image_paths:
+                representative_aliases.append(f"image-{image_paths.index(frame_path)}")
         sections.append(
             "Video counting rule: do not finish after a single frame. Inspect representative frames with CountObjects "
             f"before answering. Current representative frame budget: {len(representative_frames)}."
         )
+        if representative_aliases:
+            sections.append("Representative counting frames in order: " + ", ".join(representative_aliases))
 
     options = state.get("options") or []
     if options:

@@ -381,6 +381,48 @@ def test_normalize_tool_arguments_injects_default_single_image_for_count_objects
     assert normalized["objects"] == ["chair"]
 
 
+def test_normalize_tool_arguments_resolves_zero_based_image_aliases():
+    state = {"image_paths": ["/tmp/frame0.jpg", "/tmp/frame1.jpg", "/tmp/frame2.jpg"]}
+
+    normalized = normalize_tool_arguments(
+        state=state,
+        tool_name="CountObjects",
+        arguments={"image": "image-1", "objects": ["chair"]},
+    )
+
+    assert normalized["image"] == "/tmp/frame1.jpg"
+
+
+def test_normalize_tool_arguments_resolves_known_image_basename_before_placeholder_fallback():
+    state = {
+        "image_paths": [
+            "/tmp/41069025_frame_00000.jpg",
+            "/tmp/41069025_frame_02690.jpg",
+            "/tmp/41069025_frame_05044.jpg",
+        ]
+    }
+
+    normalized = normalize_tool_arguments(
+        state=state,
+        tool_name="CountObjects",
+        arguments={"image": "41069025_frame_02690.jpg", "objects": ["table"]},
+    )
+
+    assert normalized["image"] == "/tmp/41069025_frame_02690.jpg"
+
+
+def test_normalize_tool_arguments_resolves_exact_absolute_image_path_from_reference_map():
+    state = {"image_paths": ["/tmp/frame0.jpg", "/tmp/frame1.jpg", "/tmp/frame2.jpg"]}
+
+    normalized = normalize_tool_arguments(
+        state=state,
+        tool_name="CountObjects",
+        arguments={"image": "/tmp/frame2.jpg", "objects": ["chair"]},
+    )
+
+    assert normalized["image"] == "/tmp/frame2.jpg"
+
+
 def test_default_runtime_config_aligns_react_max_steps_to_paper():
     config = SpatialAgentConfig()
 

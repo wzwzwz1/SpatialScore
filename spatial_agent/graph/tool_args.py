@@ -18,6 +18,32 @@ _GENERIC_IMAGE_TOKENS = {
 }
 
 
+def get_image_reference_map(image_paths: List[str]) -> Dict[str, str]:
+    reference_map: Dict[str, str] = {}
+    for index, image_path in enumerate(image_paths):
+        normalized_path = str(Path(image_path))
+        basename = Path(normalized_path).name
+        zero_based_aliases = {
+            f"image-{index}",
+            f"image_{index}",
+            f"image {index}",
+        }
+        one_based_index = index + 1
+        one_based_frame_aliases = {
+            f"frame-{one_based_index}",
+            f"frame_{one_based_index}",
+            f"frame {one_based_index}",
+            f"frame{one_based_index}",
+            f"frame{one_based_index}.jpg",
+            f"frame{one_based_index}.jpeg",
+            f"frame{one_based_index}.png",
+        }
+        aliases = {normalized_path.lower(), basename.lower(), *zero_based_aliases, *one_based_frame_aliases}
+        for alias in aliases:
+            reference_map.setdefault(alias, normalized_path)
+    return reference_map
+
+
 def _looks_like_placeholder_image(value: str) -> bool:
     token = value.strip().lower()
     if token in _GENERIC_IMAGE_TOKENS:
@@ -34,9 +60,24 @@ def _looks_like_placeholder_image(value: str) -> bool:
 def _resolve_single_image_token(token: str, image_paths: List[str]) -> str:
     if not image_paths:
         return token
-    match = _INDEXED_IMAGE_PATTERN.match(token.strip().lower())
+    stripped = token.strip()
+    reference_map = get_image_reference_map(image_paths)
+    direct_match = reference_map.get(stripped.lower())
+    if direct_match:
+        return direct_match
+
+    lowered = stripped.lower()
+    if lowered in _GENERIC_IMAGE_TOKENS or _FIRST_IMAGE_PATTERN.match(lowered):
+        return image_paths[0]
+
+    match = _INDEXED_IMAGE_PATTERN.match(lowered)
     if match:
-        index = max(0, int(match.group(1)) - 1)
+        raw_index = int(match.group(1))
+        if lowered.startswith("image"):
+            has_separator = any(separator in lowered for separator in ("-", "_", " "))
+            index = max(0, raw_index if has_separator else raw_index - 1)
+        else:
+            index = max(0, raw_index - 1)
         return image_paths[min(index, len(image_paths) - 1)]
     return image_paths[0]
 
@@ -45,7 +86,11 @@ def _normalize_image_value(key: str, value: Any, image_paths: List[str]) -> Any:
     if not image_paths:
         return value
 
+    reference_map = get_image_reference_map(image_paths)
     if isinstance(value, str):
+        direct_match = reference_map.get(value.strip().lower())
+        if direct_match:
+            return direct_match
         if _looks_like_placeholder_image(value) and not Path(value).exists():
             return _resolve_single_image_token(value, image_paths)
         return value
@@ -54,10 +99,21 @@ def _normalize_image_value(key: str, value: Any, image_paths: List[str]) -> Any:
         if not value:
             return image_paths
         string_values = [str(item) for item in value]
-        if all(_looks_like_placeholder_image(item) and not Path(item).exists() for item in string_values):
-            indexed = [_INDEXED_IMAGE_PATTERN.match(item.strip().lower()) for item in string_values]
-            if any(match is not None for match in indexed):
-                return [_resolve_single_image_token(item, image_paths) for item in string_values]
+        resolved_values = []
+        all_resolved = True
+        for item in string_values:
+            direct_match = reference_map.get(item.strip().lower())
+            if direct_match:
+                resolved_values.append(direct_match)
+                continue
+            if _looks_like_placeholder_image(item) and not Path(item).exists():
+                resolved_values.append(_resolve_single_image_token(item, image_paths))
+                continue
+            all_resolved = False
+            break
+        if all_resolved:
+            if resolved_values:
+                return resolved_values
             return image_paths
         return value
 

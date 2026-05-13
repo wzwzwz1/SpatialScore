@@ -42,9 +42,35 @@ def test_qwen_adapter_builds_prompt_with_history_and_options():
     assert "EstimateObjectDepth" in prompt_text
     assert "Recent conversation context" in prompt_text
     assert "Counting rule:" in prompt_text
+    assert "Image references" in prompt_text
+    assert "image-0: /tmp/a.jpg" in prompt_text
+    assert "image-1: /tmp/b.jpg" in prompt_text
     assert "CountObjects" in prompt_text
     assert "returned points" in prompt_text
     assert "pure Arabic numeral only" in prompt_text
+
+
+def test_prompt_mentions_video_frame_time_order_for_video_inputs():
+    adapter = HuggingFaceQwenAdapter(model_path="/tmp/qwen")
+    state = {
+        "question": "How many chair(s) are in this room?",
+        "question_type": "open_ended",
+        "input_modality": "video",
+        "image_paths": ["/tmp/a.jpg", "/tmp/b.jpg", "/tmp/c.jpg"],
+        "messages": [{"role": "user", "content": "How many chair(s) are in this room?"}],
+        "metadata": {
+            "source_benchmark": "vsibench",
+            "vsibench_question_type": "object_counting",
+        },
+    }
+
+    messages = adapter._build_messages(state, [{"name": "CountObjects"}])
+    prompt_text = messages[1]["content"][-1]["text"]
+
+    assert "sorted by video time from earliest to latest" in prompt_text
+    assert "image-0: /tmp/a.jpg" in prompt_text
+    assert "image-1: /tmp/b.jpg" in prompt_text
+    assert "image-2: /tmp/c.jpg" in prompt_text
 
 
 def test_react_system_prompt_forbids_invented_image_paths():
