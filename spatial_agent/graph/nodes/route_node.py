@@ -16,6 +16,10 @@ def route_node(runtime):
             return state
 
         decision = state.get("pending_decision") or {}
+        if not isinstance(decision, dict):
+            state["pending_repair_message"] = "Decision must be a JSON object."
+            state["pending_route"] = "repair"
+            return state
         finish = decision.get("finish")
         action = decision.get("action")
 
@@ -32,7 +36,7 @@ def route_node(runtime):
             state["pending_route"] = "finalize"
             return state
 
-        if action and action.get("name"):
+        if isinstance(action, dict) and action.get("name"):
             state["selected_tool"] = action["name"]
             state["selected_args"] = normalize_tool_arguments(
                 state=state,
@@ -40,6 +44,11 @@ def route_node(runtime):
                 arguments=action.get("arguments", {}),
             )
             state["pending_route"] = "tool"
+            return state
+
+        if action is not None and not isinstance(action, dict):
+            state["pending_repair_message"] = "Decision `action` must be an object with `name` and optional `arguments`."
+            state["pending_route"] = "repair"
             return state
 
         state["pending_repair_message"] = "Decision did not contain either a finish payload or a valid action."

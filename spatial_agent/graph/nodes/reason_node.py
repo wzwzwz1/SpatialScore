@@ -38,10 +38,24 @@ def reason_node(runtime):
             state["pending_route"] = "repair"
             return state
 
+        if not isinstance(decision, dict):
+            state["pending_decision"] = None
+            state["pending_repair_message"] = (
+                "Model output must be a JSON object with keys `thought`, `action`, and `finish`."
+            )
+            state["reasoning_trace"].append(
+                {
+                    "stage": "repair",
+                    "error": "Model output was not a JSON object.",
+                    "raw_output": decision,
+                }
+            )
+            state["pending_route"] = "repair"
+            return state
+
         state["pending_decision"] = decision
         state["last_thought"] = decision.get("thought")
         state["reasoning_trace"].append({"stage": "reason", "decision": decision})
         return state
 
     return _reason_node
-

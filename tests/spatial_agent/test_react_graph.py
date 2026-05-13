@@ -437,3 +437,32 @@ def test_graph_requires_multiple_representative_frames_before_finishing_video_co
     ]
     repair_messages = [message["content"] for message in result["messages"] if message["role"] == "system"]
     assert any("inspect another representative frame" in message for message in repair_messages)
+
+
+def test_graph_repairs_when_action_is_not_an_object():
+    adapter = MockLLMAdapter(
+        responses=[
+            {"thought": "Use counting.", "action": "CountObjects", "finish": None},
+            {"thought": "Recovered.", "action": None, "finish": {"answer": "1"}},
+        ]
+    )
+    agent = SpatialAgent(
+        llm_adapter=adapter,
+        tool_registry=ToolRegistry(),
+        config=SpatialAgentConfig(),
+    )
+
+    result = agent.invoke(
+        {
+            "task_id": "task-invalid-action-shape",
+            "question": "How many chair(s) are in this room?",
+            "question_type": "open_ended",
+            "input_modality": "single_image",
+            "image_paths": ["/tmp/frame0.jpg"],
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["final_answer"] == "1"
+    repair_messages = [message["content"] for message in result["messages"] if message["role"] == "system"]
+    assert any("Decision `action` must be an object" in message for message in repair_messages)
