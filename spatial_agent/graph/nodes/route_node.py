@@ -17,6 +17,7 @@ def route_node(runtime):
 
         decision = state.get("pending_decision") or {}
         if not isinstance(decision, dict):
+            state["pending_decision_queue"] = []
             state["pending_repair_message"] = "Decision must be a JSON object."
             state["pending_route"] = "repair"
             return state
@@ -27,16 +28,24 @@ def route_node(runtime):
             if is_video_counting_task(state):
                 next_frame = get_next_counting_frame(state)
                 if next_frame:
+                    state["pending_decision_queue"] = []
                     state["pending_repair_message"] = (
                         "For room-level video counting, inspect another representative frame before finishing. "
                         "Call CountObjects on the next representative frame and then reassess the total."
                     )
                     state["pending_route"] = "repair"
                     return state
+            state.setdefault("executed_decision_queue_steps", []).append(
+                {"decision": decision, "execution": "finish"}
+            )
+            state["pending_decision_queue"] = []
             state["pending_route"] = "finalize"
             return state
 
         if isinstance(action, dict) and action.get("name"):
+            state.setdefault("executed_decision_queue_steps", []).append(
+                {"decision": decision, "execution": "tool"}
+            )
             state["selected_tool"] = action["name"]
             state["selected_args"] = normalize_tool_arguments(
                 state=state,
@@ -47,10 +56,12 @@ def route_node(runtime):
             return state
 
         if action is not None and not isinstance(action, dict):
+            state["pending_decision_queue"] = []
             state["pending_repair_message"] = "Decision `action` must be an object with `name` and optional `arguments`."
             state["pending_route"] = "repair"
             return state
 
+        state["pending_decision_queue"] = []
         state["pending_repair_message"] = "Decision did not contain either a finish payload or a valid action."
         state["pending_route"] = "repair"
         return state

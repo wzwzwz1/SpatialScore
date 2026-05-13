@@ -13,7 +13,7 @@ def repair_node(runtime):
         state["pending_repair_message"] = None
         state["pending_route"] = None
         state["pending_decision"] = None
+        state["pending_decision_queue"] = []
         return state
 
     return _repair_node
-

@@ -41,6 +41,7 @@ class SpatialAgent:
             "tool_observations": result.get("tool_observations", []),
             "reasoning_trace": result.get("reasoning_trace", []),
             "llm_raw_outputs": result.get("llm_raw_outputs", []),
+            "executed_decision_queue_steps": result.get("executed_decision_queue_steps", []),
         }
         result["trace_path"] = write_trace(
             trace=trace,
@@ -53,6 +54,7 @@ class SpatialAgent:
                 "question": trace["question"],
                 "status": trace["status"],
                 "llm_raw_outputs": result.get("llm_raw_outputs", []),
+                "executed_decision_queue_steps": result.get("executed_decision_queue_steps", []),
             },
             artifact_dir=self.config.artifact_dir,
             filename=f"{trace['task_id']}_llm_raw_outputs.json",

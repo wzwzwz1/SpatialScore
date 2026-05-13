@@ -7,6 +7,9 @@ from spatial_agent.adapters.base import AdapterResponseError
 
 def reason_node(runtime):
     def _reason_node(state):
+        if isinstance(state.get("pending_decision"), dict):
+            return state
+
         llm_attempt = len(state.get("llm_raw_outputs", [])) + 1
         if state["step_count"] >= state["max_steps"]:
             state["status"] = "max_steps"
@@ -77,9 +80,16 @@ def reason_node(runtime):
                 "attempt": llm_attempt,
                 "status": "success",
                 "raw_output": getattr(runtime.llm_adapter, "last_raw_output", json.dumps(decision, ensure_ascii=False)),
+                "parsed_step_count": (getattr(runtime.llm_adapter, "last_parse_summary", None) or {}).get("parsed_step_count", 1),
+                "accepted_step_count": (getattr(runtime.llm_adapter, "last_parse_summary", None) or {}).get("accepted_step_count", 1),
+                "dropped_step_count": (getattr(runtime.llm_adapter, "last_parse_summary", None) or {}).get("dropped_step_count", 0),
+                "dropped_steps": (getattr(runtime.llm_adapter, "last_parse_summary", None) or {}).get("dropped_steps", []),
+                "multi_step_queue": len(getattr(runtime.llm_adapter, "last_parsed_decisions", [])) > 1,
             }
         )
+        parsed_decisions = list(getattr(runtime.llm_adapter, "last_parsed_decisions", []))
         state["pending_decision"] = decision
+        state["pending_decision_queue"] = parsed_decisions[1:] if len(parsed_decisions) > 1 else []
         state["last_thought"] = decision.get("thought")
         state["reasoning_trace"].append({"stage": "reason", "decision": decision})
         return state

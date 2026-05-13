@@ -1,4 +1,5 @@
 from spatial_agent.adapters.huggingface_qwen import HuggingFaceQwenAdapter
+from spatial_agent.adapters.react_decisions import parse_react_decisions
 from spatial_agent.prompts.react_system_prompt import build_react_system_prompt
 
 
@@ -52,3 +53,34 @@ def test_react_system_prompt_forbids_invented_image_paths():
     assert "Do not invent image file names or file paths" in prompt
     assert "runtime binds real sampled frames automatically" in prompt
     assert "CountObjects" in prompt
+
+
+def test_parse_react_decisions_accepts_multiple_concatenated_objects():
+    raw_output = (
+        '{"thought":"step1","action":{"name":"CountObjects","arguments":{"objects":"table"}},"finish":null}\n'
+        '{"thought":"step2","action":{"name":"CountObjects","arguments":{"objects":"table"}},"finish":null}\n'
+        '{"thought":"done","action":null,"finish":{"answer":"2"}}'
+    )
+
+    parsed = parse_react_decisions(raw_output)
+
+    assert parsed.parsed_step_count == 3
+    assert parsed.accepted_step_count == 3
+    assert parsed.dropped_step_count == 0
+    assert parsed.accepted_steps[0]["thought"] == "step1"
+    assert parsed.accepted_steps[-1]["finish"]["answer"] == "2"
+
+
+def test_parse_react_decisions_drops_invalid_steps_but_keeps_valid_ones():
+    raw_output = (
+        '{"thought":"step1","action":{"name":"CountObjects","arguments":{"objects":"table"}},"finish":null}\n'
+        '[]\n'
+        '{"thought":"done","action":null,"finish":{"answer":"2"}}'
+    )
+
+    parsed = parse_react_decisions(raw_output)
+
+    assert parsed.parsed_step_count == 3
+    assert parsed.accepted_step_count == 2
+    assert parsed.dropped_step_count == 1
+    assert parsed.dropped_steps[0]["reason"] == "invalid_step"

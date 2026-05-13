@@ -1,6 +1,4 @@
 from __future__ import annotations
-
-import json
 import os
 from typing import Any, Dict, List, Mapping, Optional
 
@@ -10,6 +8,7 @@ from spatial_agent.adapters.prompting import (
     build_text_prompt_from_state,
     normalize_response_text,
 )
+from spatial_agent.adapters.react_decisions import parse_react_decisions
 from spatial_agent.prompts.react_system_prompt import build_react_system_prompt
 from spatial_agent.prompts.repair_prompt import build_repair_prompt
 
@@ -34,6 +33,8 @@ class OpenAICompatibleAdapter(LLMAdapter):
         self.timeout = timeout
         self._client = None
         self.last_raw_output = ""
+        self.last_parsed_decisions = []
+        self.last_parse_summary = None
 
     def _ensure_client(self):
         if self._client is not None:
@@ -72,6 +73,8 @@ class OpenAICompatibleAdapter(LLMAdapter):
     def generate(self, state: Mapping[str, Any], available_tools: List[Dict[str, Any]]) -> Dict[str, Any]:
         client = self._ensure_client()
         messages = self._build_messages(state, available_tools)
+        self.last_parsed_decisions = []
+        self.last_parse_summary = None
 
         try:  # pragma: no cover - depends on remote API
             response = client.chat.completions.create(
@@ -87,6 +90,14 @@ class OpenAICompatibleAdapter(LLMAdapter):
             raise AdapterResponseError("OpenAI-compatible adapter inference failed.") from exc
 
         try:
-            return json.loads(raw_output)
+            parsed = parse_react_decisions(raw_output)
+            self.last_parsed_decisions = list(parsed.accepted_steps)
+            self.last_parse_summary = {
+                "parsed_step_count": parsed.parsed_step_count,
+                "accepted_step_count": parsed.accepted_step_count,
+                "dropped_step_count": parsed.dropped_step_count,
+                "dropped_steps": parsed.dropped_steps,
+            }
+            return parsed.accepted_steps[0]
         except json.JSONDecodeError as exc:
             raise AdapterResponseError(build_repair_prompt(raw_output), raw_output=raw_output) from exc

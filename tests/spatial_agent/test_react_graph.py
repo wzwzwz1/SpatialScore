@@ -50,6 +50,57 @@ class CountFramesTool(BaseSpatialTool):
         )
 
 
+class FailingCountFramesTool(BaseSpatialTool):
+    name = "CountObjects"
+    description = "Fails on the second call to test queue invalidation."
+    args_schema = {
+        "type": "object",
+        "properties": {
+            "image": {"type": "string"},
+            "objects": {"type": "string"},
+        },
+        "required": ["image", "objects"],
+    }
+    returns_schema = {"type": "object"}
+
+    def __init__(self):
+        self.call_count = 0
+
+    def invoke(self, **kwargs):
+        self.call_count += 1
+        if self.call_count == 2:
+            return {
+                "status": "error",
+                "tool_name": self.name,
+                "payload": {},
+                "artifacts": [],
+                "error": "synthetic failure",
+            }
+        return CountFramesTool().invoke(**kwargs)
+
+
+class FailingEchoTool(BaseSpatialTool):
+    name = "EchoTool"
+    description = "Fails on the second call to test queue invalidation."
+    args_schema = {"type": "object", "properties": {"value": {"type": "string"}}, "required": ["value"]}
+    returns_schema = {"type": "object"}
+
+    def __init__(self):
+        self.call_count = 0
+
+    def invoke(self, **kwargs):
+        self.call_count += 1
+        if self.call_count == 2:
+            return {
+                "status": "error",
+                "tool_name": self.name,
+                "payload": {},
+                "artifacts": [],
+                "error": "synthetic failure",
+            }
+        return self.success(payload={"echo": kwargs["value"]})
+
+
 def test_graph_finish_path_returns_answer():
     adapter = MockLLMAdapter(
         responses=[
@@ -438,6 +489,123 @@ def test_graph_requires_multiple_representative_frames_before_finishing_video_co
     ]
     repair_messages = [message["content"] for message in result["messages"] if message["role"] == "system"]
     assert any("inspect another representative frame" in message for message in repair_messages)
+
+
+def test_graph_serializes_multi_step_react_output_without_extra_llm_call():
+    adapter = MockLLMAdapter(
+        responses=[
+            (
+                '{"thought":"Inspect first value.","action":{"name":"EchoTool","arguments":{"value":"alpha"}},"finish":null}\n'
+                '{"thought":"Inspect second value.","action":{"name":"EchoTool","arguments":{"value":"beta"}},"finish":null}\n'
+                '{"thought":"Done.","action":null,"finish":{"answer":"2"}}'
+            ),
+        ]
+    )
+    registry = ToolRegistry()
+    registry.register(EchoTool())
+    agent = SpatialAgent(
+        llm_adapter=adapter,
+        tool_registry=registry,
+        config=SpatialAgentConfig(),
+    )
+
+    result = agent.invoke(
+        {
+            "task_id": "task-multi-step-output",
+            "question": "Use two tool steps then finish.",
+            "question_type": "open_ended",
+            "input_modality": "single_image",
+            "image_paths": ["/tmp/frame0.jpg"],
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["final_answer"] == "2"
+    assert len(result["tool_calls"]) == 2
+    assert result["tool_calls"][0]["arguments"]["value"] == "alpha"
+    assert result["tool_calls"][1]["arguments"]["value"] == "beta"
+    assert len(result["llm_raw_outputs"]) == 1
+    assert result["llm_raw_outputs"][0]["parsed_step_count"] == 3
+    assert result["llm_raw_outputs"][0]["accepted_step_count"] == 3
+
+
+def test_graph_clears_remaining_queue_after_tool_failure():
+    adapter = MockLLMAdapter(
+        responses=[
+            (
+                '{"thought":"Use first tool step.","action":{"name":"EchoTool","arguments":{"value":"alpha"}},"finish":null}\n'
+                '{"thought":"Use second tool step.","action":{"name":"EchoTool","arguments":{"value":"beta"}},"finish":null}\n'
+                '{"thought":"Use third tool step.","action":{"name":"EchoTool","arguments":{"value":"gamma"}},"finish":null}\n'
+                '{"thought":"Done.","action":null,"finish":{"answer":"1"}}'
+            ),
+            {"thought": "Recover after failure.", "action": None, "finish": {"answer": "1"}},
+        ]
+    )
+    registry = ToolRegistry()
+    registry.register(FailingEchoTool())
+    agent = SpatialAgent(
+        llm_adapter=adapter,
+        tool_registry=registry,
+        config=SpatialAgentConfig(),
+    )
+
+    result = agent.invoke(
+        {
+            "task_id": "task-multi-step-failure",
+            "question": "Use queued tool steps then recover.",
+            "question_type": "open_ended",
+            "input_modality": "single_image",
+            "image_paths": ["/tmp/frame0.jpg"],
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["final_answer"] == "1"
+    assert len(result["tool_calls"]) == 2
+    assert result["tool_errors"][0]["error"] == "synthetic failure"
+    assert result["pending_decision_queue"] == []
+
+
+def test_graph_serializes_multi_step_counting_output_across_representative_frames():
+    adapter = MockLLMAdapter(
+        responses=[
+            (
+                '{"thought":"Count first view.","action":{"name":"CountObjects","arguments":{"objects":"table"}},"finish":null}\n'
+                '{"thought":"Count second view.","action":{"name":"CountObjects","arguments":{"objects":"table"}},"finish":null}\n'
+                '{"thought":"Count third view.","action":{"name":"CountObjects","arguments":{"objects":"table"}},"finish":null}\n'
+                '{"thought":"Done.","action":null,"finish":{"answer":"3"}}'
+            ),
+        ]
+    )
+    registry = ToolRegistry()
+    registry.register(CountFramesTool())
+    agent = SpatialAgent(
+        llm_adapter=adapter,
+        tool_registry=registry,
+        config=SpatialAgentConfig(),
+    )
+
+    result = agent.invoke(
+        {
+            "task_id": "task-multi-step-counting-output",
+            "question": "How many table(s) are in this room?",
+            "question_type": "open_ended",
+            "input_modality": "video",
+            "image_paths": ["/tmp/frame0.jpg", "/tmp/frame1.jpg", "/tmp/frame2.jpg"],
+            "metadata": {
+                "source_benchmark": "vsibench",
+                "vsibench_question_type": "object_counting",
+            },
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["final_answer"] == "3"
+    assert [call["arguments"]["image"] for call in result["tool_calls"]] == [
+        "/tmp/frame0.jpg",
+        "/tmp/frame1.jpg",
+        "/tmp/frame2.jpg",
+    ]
 
 
 def test_graph_repairs_when_action_is_not_an_object():
