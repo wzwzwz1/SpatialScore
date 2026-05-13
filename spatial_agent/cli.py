@@ -50,7 +50,7 @@ def main() -> int:
     parser.add_argument("--api-key", help="API key for OpenAI-compatible APIs.")
     parser.add_argument("--api-key-env", default="OPENAI_API_KEY", help="Environment variable name for API key lookup.")
     parser.add_argument("--api-timeout", type=int, default=120)
-    parser.add_argument("--max-steps", type=int, default=8)
+    parser.add_argument("--max-steps", type=int, default=10)
     parser.add_argument("--video-num-frames", type=int, default=16)
     parser.add_argument("--video-frame-dir", help="Optional directory for sampled video frames.")
     parser.add_argument("--keep-video-frames", action="store_true", help="Keep sampled video frames on disk.")

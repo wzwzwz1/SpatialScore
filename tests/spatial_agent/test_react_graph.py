@@ -26,6 +26,30 @@ class CaptureImageTool(BaseSpatialTool):
         return self.success(payload={"image": kwargs.get("image"), "images": kwargs.get("images")})
 
 
+class CountFramesTool(BaseSpatialTool):
+    name = "CountObjects"
+    description = "Returns a synthetic counting result for testing orchestration."
+    args_schema = {
+        "type": "object",
+        "properties": {
+            "image": {"type": "string"},
+            "objects": {"type": "string"},
+        },
+        "required": ["image", "objects"],
+    }
+    returns_schema = {"type": "object"}
+
+    def invoke(self, **kwargs):
+        image = kwargs["image"]
+        return self.success(
+            payload={
+                "points": {str(kwargs["objects"]): [[0.25, 0.25]]},
+                "instance_count": 1,
+                "image": image,
+            }
+        )
+
+
 def test_graph_finish_path_returns_answer():
     adapter = MockLLMAdapter(
         responses=[
@@ -369,3 +393,47 @@ def test_graph_normalizes_vsibench_counting_word_answer_to_digits():
 
     assert result["status"] == "success"
     assert result["final_answer"] == "2"
+
+
+def test_graph_requires_multiple_representative_frames_before_finishing_video_counting():
+    adapter = MockLLMAdapter(
+        responses=[
+            {"thought": "Count first view.", "action": {"name": "CountObjects", "arguments": {"objects": "table"}}, "finish": None},
+            {"thought": "I can answer now.", "action": None, "finish": {"answer": "1"}},
+            {"thought": "Count another view.", "action": {"name": "CountObjects", "arguments": {"objects": "table"}}, "finish": None},
+            {"thought": "I can answer now.", "action": None, "finish": {"answer": "2"}},
+            {"thought": "Count last view.", "action": {"name": "CountObjects", "arguments": {"objects": "table"}}, "finish": None},
+            {"thought": "Now I have enough evidence.", "action": None, "finish": {"answer": "3"}},
+        ]
+    )
+    registry = ToolRegistry()
+    registry.register(CountFramesTool())
+    agent = SpatialAgent(
+        llm_adapter=adapter,
+        tool_registry=registry,
+        config=SpatialAgentConfig(),
+    )
+
+    result = agent.invoke(
+        {
+            "task_id": "task-multi-frame-counting",
+            "question": "How many table(s) are in this room?",
+            "question_type": "open_ended",
+            "input_modality": "video",
+            "image_paths": ["/tmp/frame0.jpg", "/tmp/frame1.jpg", "/tmp/frame2.jpg"],
+            "metadata": {
+                "source_benchmark": "vsibench",
+                "vsibench_question_type": "object_counting",
+            },
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["final_answer"] == "3"
+    assert [call["arguments"]["image"] for call in result["tool_calls"]] == [
+        "/tmp/frame0.jpg",
+        "/tmp/frame1.jpg",
+        "/tmp/frame2.jpg",
+    ]
+    repair_messages = [message["content"] for message in result["messages"] if message["role"] == "system"]
+    assert any("inspect another representative frame" in message for message in repair_messages)

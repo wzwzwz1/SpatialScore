@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from spatial_agent.graph.tool_args import normalize_tool_arguments
+from spatial_agent.graph.tool_args import (
+    get_next_counting_frame,
+    normalize_tool_arguments,
+    is_video_counting_task,
+)
 
 
 def route_node(runtime):
@@ -16,6 +20,15 @@ def route_node(runtime):
         action = decision.get("action")
 
         if finish:
+            if is_video_counting_task(state):
+                next_frame = get_next_counting_frame(state)
+                if next_frame:
+                    state["pending_repair_message"] = (
+                        "For room-level video counting, inspect another representative frame before finishing. "
+                        "Call CountObjects on the next representative frame and then reassess the total."
+                    )
+                    state["pending_route"] = "repair"
+                    return state
             state["pending_route"] = "finalize"
             return state
 

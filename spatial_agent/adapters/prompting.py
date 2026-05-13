@@ -4,6 +4,8 @@ import json
 import re
 from typing import Any, Dict, List, Mapping
 
+from spatial_agent.graph.tool_args import get_representative_counting_frames, is_video_counting_task
+
 
 def build_text_prompt_from_state(state: Mapping[str, Any]) -> str:
     sections: List[str] = [
@@ -20,6 +22,12 @@ def build_text_prompt_from_state(state: Mapping[str, Any]) -> str:
         sections.append(
             "Counting rule: use CountObjects first. Base the final answer on the number of returned points, "
             "and return a pure Arabic numeral only."
+        )
+    if is_video_counting_task(state):
+        representative_frames = get_representative_counting_frames(state)
+        sections.append(
+            "Video counting rule: do not finish after a single frame. Inspect representative frames with CountObjects "
+            f"before answering. Current representative frame budget: {len(representative_frames)}."
         )
 
     options = state.get("options") or []

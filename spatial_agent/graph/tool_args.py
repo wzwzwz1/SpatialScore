@@ -64,6 +64,52 @@ def _normalize_image_value(key: str, value: Any, image_paths: List[str]) -> Any:
     return value
 
 
+def is_video_counting_task(state: Mapping[str, Any]) -> bool:
+    metadata = state.get("metadata") or {}
+    benchmark_type = str(metadata.get("vsibench_question_type") or "").lower()
+    if "count" not in benchmark_type:
+        question = str(state.get("question") or "").strip().lower()
+        if "how many" not in question and "number of" not in question:
+            return False
+    return str(state.get("input_modality") or "").lower() == "video"
+
+
+def get_representative_counting_frames(state: Mapping[str, Any]) -> List[str]:
+    image_paths = [str(path) for path in state.get("image_paths", [])]
+    if len(image_paths) <= 3:
+        return image_paths
+
+    candidate_indices = [0, len(image_paths) // 2, len(image_paths) - 1]
+    ordered_unique_indices: List[int] = []
+    for index in candidate_indices:
+        if index not in ordered_unique_indices:
+            ordered_unique_indices.append(index)
+    return [image_paths[index] for index in ordered_unique_indices]
+
+
+def get_observed_counting_frames(state: Mapping[str, Any]) -> List[str]:
+    observed: List[str] = []
+    for call in state.get("tool_calls", []) or []:
+        if call.get("tool_name") != "CountObjects":
+            continue
+        arguments = call.get("arguments") or {}
+        image = arguments.get("image")
+        if isinstance(image, str) and image not in observed:
+            observed.append(image)
+    return observed
+
+
+def get_next_counting_frame(state: Mapping[str, Any]) -> str | None:
+    representative_frames = get_representative_counting_frames(state)
+    if len(representative_frames) <= 1:
+        return None
+    observed_frames = set(get_observed_counting_frames(state))
+    for frame_path in representative_frames:
+        if frame_path not in observed_frames:
+            return frame_path
+    return None
+
+
 def normalize_tool_arguments(state: Mapping[str, Any], tool_name: str | None, arguments: Dict[str, Any] | None) -> Dict[str, Any]:
     args = dict(arguments or {})
     image_paths = [str(path) for path in state.get("image_paths", [])]
@@ -76,7 +122,10 @@ def normalize_tool_arguments(state: Mapping[str, Any], tool_name: str | None, ar
 
     if tool_name in {"CountObjects", "LocalizeObjects", "GetObjectMask", "EstimateObjectDepth", "GetObjectOrientation"}:
         if "image" not in args or (isinstance(args.get("image"), str) and _looks_like_placeholder_image(str(args["image"]))):
-            args["image"] = image_paths[0]
+            if tool_name == "CountObjects" and is_video_counting_task(state):
+                args["image"] = get_next_counting_frame(state) or image_paths[0]
+            else:
+                args["image"] = image_paths[0]
 
     if tool_name in {"EstimateOpticalFlow", "EstimateObjectMotion"}:
         if "images" not in args:
