@@ -65,6 +65,8 @@ class CountObjectsTool(BaseSpatialTool):
                 device=device,
                 repo_path=str(repo_path) if repo_path else None,
                 quantization=str(quantization) if quantization else None,
+                attn_implementation=str(settings.get("attn_implementation", "sdpa")),
+                device_map=str(settings.get("device_map", "auto")),
                 max_tokens=int(settings.get("max_tokens", 2048)),
                 temperature=float(settings.get("temperature", 0.0)),
                 top_p=float(settings.get("top_p", 0.05)),

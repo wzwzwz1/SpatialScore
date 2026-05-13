@@ -184,6 +184,7 @@ python -m lmms_eval \
 - `CountObjects` 后端使用 **Rex-Omni**
 - tool 输入遵循论文接口：`image` + `objects`
 - tool 输出会返回实例点位，点数就是计数依据
+- 当前默认通过 `attn_implementation=sdpa` 加载 `transformers` 后端，尽量避免卡在 `flash-attn`
 - 系统不会在 `CountObjects` 失败时自动回退到 `GetObjectMask` 或 `LocalizeObjects`
 
 这意味着如果服务器上没有准备好 Rex-Omni 依赖或权重，counting 样本会明确显示 `CountObjects unavailable`，而不是悄悄走替代链路。

@@ -52,6 +52,7 @@ def test_default_registry_tools_return_structured_results():
 def test_count_objects_returns_points_and_artifact(tmp_path, monkeypatch):
     image_path = tmp_path / "frame.jpg"
     Image.new("RGB", (100, 80), "white").save(image_path)
+    captured_kwargs = {}
 
     class DummyRex:
         def inference(self, *, images, task, categories):
@@ -71,13 +72,14 @@ def test_count_objects_returns_points_and_artifact(tmp_path, monkeypatch):
 
     monkeypatch.setattr(
         "spatial_agent.tools.counting.get_rex_omni_backend",
-        lambda **kwargs: {"wrapper": DummyRex(), "backend_label": "rex_omni:IDEA-Research/Rex-Omni"},
+        lambda **kwargs: captured_kwargs.update(kwargs) or {"wrapper": DummyRex(), "backend_label": "rex_omni:IDEA-Research/Rex-Omni"},
     )
 
     tool = CountObjectsTool(SpatialAgentConfig(artifact_dir=str(tmp_path)))
     result = tool.invoke(image=str(image_path), objects=["chair"])
 
     assert result["status"] == "success"
+    assert captured_kwargs["attn_implementation"] == "sdpa"
     assert result["payload"]["instance_count"] == 2
     assert result["payload"]["points"] == {"chair": [[0.1, 0.25], [0.5, 0.75]]}
     assert len(result["artifacts"]) == 1

@@ -477,6 +477,8 @@ def get_rex_omni_backend(
     device: str,
     repo_path: str | None,
     quantization: str | None,
+    attn_implementation: str | None,
+    device_map: str | None,
     max_tokens: int,
     temperature: float,
     top_p: float,
@@ -500,7 +502,8 @@ def get_rex_omni_backend(
     if quantization:
         wrapper_kwargs["quantization"] = quantization
     if backend == "transformers":
-        wrapper_kwargs["device_map"] = "auto" if device == "cuda" else device
+        wrapper_kwargs["attn_implementation"] = attn_implementation or "sdpa"
+        wrapper_kwargs["device_map"] = device_map or ("auto" if device == "cuda" else device)
         wrapper_kwargs["trust_remote_code"] = True
     wrapper = wrapper_cls(**wrapper_kwargs)
     return {"wrapper": wrapper, "backend_label": f"rex_omni:{model_path}"}

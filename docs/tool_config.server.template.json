@@ -18,6 +18,8 @@
     "model_path": "IDEA-Research/Rex-Omni",
     "backend": "transformers",
     "device": "cuda",
+    "attn_implementation": "sdpa",
+    "device_map": "auto",
     "max_tokens": 2048,
     "temperature": 0.0,
     "top_p": 0.05,

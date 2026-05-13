@@ -114,6 +114,8 @@ python3 -m spatial_agent \
   - `backend`（`transformers|vllm`）
   - `repo_path`（可选，本地 `Rex-Omni` 仓库路径）
   - `quantization`（可选，例如 `awq`）
+  - `attn_implementation`（推荐 `sdpa`，避免强依赖 `flash-attn`）
+  - `device_map`
   - `max_tokens`
   - `temperature`
   - `top_p`
@@ -162,6 +164,8 @@ config = SpatialAgentConfig(
         "counting": {
             "model_path": "IDEA-Research/Rex-Omni",
             "backend": "transformers",
+            "attn_implementation": "sdpa",
+            "device_map": "auto",
             "max_tokens": 2048,
             "temperature": 0.0,
             "top_p": 0.05,
@@ -213,6 +217,7 @@ config = SpatialAgentConfig(
 - counting 类问题默认优先调用 `CountObjects`
 - `CountObjects` 使用 **Rex-Omni** 的 `pointing` 任务来返回实例点位
 - 最终答案会基于返回点数收紧为纯数字
+- 默认会把 `attn_implementation` 设成 `sdpa`，尽量避免因为缺少 `flash-attn` 而阻塞加载
 - 如果 Rex-Omni 不可用，系统不会自动回退到 `GetObjectMask` 或 `LocalizeObjects`
 
 如果你想直接抄服务器模板，用下面这份专门文档：
