@@ -27,7 +27,7 @@ def test_qwen_adapter_builds_prompt_with_history_and_options():
             "vsibench_question_type": "object_counting",
         },
     }
-    available_tools = [{"name": "EstimateObjectDepth"}]
+    available_tools = [{"name": "CountObjects"}]
 
     messages = adapter._build_messages(state, available_tools)
 
@@ -41,11 +41,14 @@ def test_qwen_adapter_builds_prompt_with_history_and_options():
     assert "EstimateObjectDepth" in prompt_text
     assert "Recent conversation context" in prompt_text
     assert "Counting rule:" in prompt_text
+    assert "CountObjects" in prompt_text
+    assert "returned points" in prompt_text
     assert "pure Arabic numeral only" in prompt_text
 
 
 def test_react_system_prompt_forbids_invented_image_paths():
-    prompt = build_react_system_prompt([{"name": "LocalizeObjects"}])
+    prompt = build_react_system_prompt([{"name": "CountObjects"}])
 
     assert "Do not invent image file names or file paths" in prompt
     assert "runtime binds real sampled frames automatically" in prompt
+    assert "CountObjects" in prompt

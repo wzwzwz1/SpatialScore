@@ -3,6 +3,7 @@ from pathlib import Path
 from PIL import Image
 
 from spatial_agent.runtime.config import SpatialAgentConfig
+from spatial_agent.tools.counting import CountObjectsTool
 from spatial_agent.tools.localization import LocalizeObjectsTool
 from spatial_agent.tools.placeholders import PlaceholderTool
 from spatial_agent.tools.registry import build_default_tool_registry
@@ -24,8 +25,10 @@ def test_placeholder_tool_returns_unavailable_status():
 
 def test_default_registry_tools_return_structured_results():
     registry = build_default_tool_registry(SpatialAgentConfig())
+    assert "CountObjects" in registry.list_names()
 
     invocations = {
+        "CountObjects": {"image": "missing.jpg", "objects": ["cat"]},
         "EstimateObjectDepth": {"image": "missing.jpg", "objects": ["cat"]},
         "GetObjectMask": {"image": "missing.jpg", "objects": ["cat"]},
         "EstimateOpticalFlow": {"images": ["missing-a.jpg", "missing-b.jpg"]},
@@ -44,6 +47,57 @@ def test_default_registry_tools_return_structured_results():
         assert "payload" in result
         assert "artifacts" in result
         assert "error" in result
+
+
+def test_count_objects_returns_points_and_artifact(tmp_path, monkeypatch):
+    image_path = tmp_path / "frame.jpg"
+    Image.new("RGB", (100, 80), "white").save(image_path)
+
+    class DummyRex:
+        def inference(self, *, images, task, categories):
+            assert task == "pointing"
+            assert categories == ["chair"]
+            assert images.size == (100, 80)
+            return [
+                {
+                    "extracted_predictions": {
+                        "chair": [
+                            {"type": "point", "coords": [10, 20]},
+                            {"type": "point", "coords": [50, 60]},
+                        ]
+                    }
+                }
+            ]
+
+    monkeypatch.setattr(
+        "spatial_agent.tools.counting.get_rex_omni_backend",
+        lambda **kwargs: {"wrapper": DummyRex(), "backend_label": "rex_omni:IDEA-Research/Rex-Omni"},
+    )
+
+    tool = CountObjectsTool(SpatialAgentConfig(artifact_dir=str(tmp_path)))
+    result = tool.invoke(image=str(image_path), objects=["chair"])
+
+    assert result["status"] == "success"
+    assert result["payload"]["instance_count"] == 2
+    assert result["payload"]["points"] == {"chair": [[0.1, 0.25], [0.5, 0.75]]}
+    assert len(result["artifacts"]) == 1
+    assert Path(result["artifacts"][0]).exists()
+
+
+def test_count_objects_returns_unavailable_when_rex_omni_missing(tmp_path, monkeypatch):
+    image_path = tmp_path / "frame.jpg"
+    Image.new("RGB", (32, 24), "white").save(image_path)
+
+    def _raise_backend(**kwargs):
+        raise ModuleNotFoundError("No module named 'rex_omni'")
+
+    monkeypatch.setattr("spatial_agent.tools.counting.get_rex_omni_backend", _raise_backend)
+
+    tool = CountObjectsTool(SpatialAgentConfig(artifact_dir=str(tmp_path)))
+    result = tool.invoke(image=str(image_path), objects=["chair"])
+
+    assert result["status"] == "unavailable"
+    assert "rex_omni" in result["error"].lower()
 
 
 def test_localize_objects_returns_instance_count_and_bbox_artifact(tmp_path, monkeypatch):

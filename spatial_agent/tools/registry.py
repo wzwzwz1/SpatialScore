@@ -4,6 +4,7 @@ from typing import Dict, Iterable, List, Optional
 
 from spatial_agent.tools.base import BaseSpatialTool
 from spatial_agent.tools.camera import GetCameraParametersVGGTTool
+from spatial_agent.tools.counting import CountObjectsTool
 from spatial_agent.tools.depth import EstimateObjectDepthTool
 from spatial_agent.tools.homography import EstimateHomographyMatrixTool
 from spatial_agent.tools.localization import LocalizeObjectsTool
@@ -36,6 +37,7 @@ class ToolRegistry:
 
 def build_default_tool_registry(config) -> ToolRegistry:
     tools = [
+        CountObjectsTool(config),
         EstimateObjectDepthTool(config),
         GetObjectMaskTool(config),
         EstimateOpticalFlowTool(config),

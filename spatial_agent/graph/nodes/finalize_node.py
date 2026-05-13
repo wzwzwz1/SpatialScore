@@ -29,6 +29,7 @@ def finalize_node(runtime):
             state.get("question_type"),
             state.get("options"),
             state.get("metadata"),
+            state.get("question"),
         )
         state["status"] = "success"
         state["reasoning_trace"].append({"stage": "finalize", "answer": state["final_answer"]})
@@ -37,11 +38,11 @@ def finalize_node(runtime):
     return _finalize_node
 
 
-def _normalize_answer(answer, question_type, options, metadata=None):
+def _normalize_answer(answer, question_type, options, metadata=None, question=None):
     if answer is None:
         return None
     normalized_text = str(answer).strip()
-    if _is_vsibench_object_counting(metadata):
+    if _is_counting_task(question, metadata):
         return _normalize_counting_answer(normalized_text)
     if question_type == "multi_choice":
         normalized = normalized_text
@@ -53,11 +54,18 @@ def _normalize_answer(answer, question_type, options, metadata=None):
     return normalized_text
 
 
-def _is_vsibench_object_counting(options):
+def _is_counting_task(question, options):
     metadata = options if isinstance(options, dict) else None
     if not metadata:
-        return False
-    return metadata.get("source_benchmark") == "vsibench" and metadata.get("vsibench_question_type") == "object_counting"
+        metadata = {}
+    benchmark_type = str(metadata.get("vsibench_question_type") or "").lower()
+    if "count" in benchmark_type:
+        return True
+    question_type = str(metadata.get("question_type") or "").lower()
+    if "count" in question_type:
+        return True
+    prompt_text = str(metadata.get("prompt_question") or metadata.get("question") or question or "").lower()
+    return bool(re.search(r"\bhow many\b", prompt_text) or re.search(r"\bnumber of\b", prompt_text))
 
 
 def _normalize_counting_answer(answer: str) -> str:

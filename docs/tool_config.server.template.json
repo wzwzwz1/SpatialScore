@@ -14,6 +14,16 @@
     "input_size": 518,
     "device": "cuda"
   },
+  "counting": {
+    "model_path": "IDEA-Research/Rex-Omni",
+    "backend": "transformers",
+    "device": "cuda",
+    "max_tokens": 2048,
+    "temperature": 0.0,
+    "top_p": 0.05,
+    "top_k": 1,
+    "repetition_penalty": 1.05
+  },
   "mask": {
     "model_id": "facebook/sam2.1-hiera-large",
     "device": "cuda"

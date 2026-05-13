@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import importlib
 import sys
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from functools import lru_cache
 from pathlib import Path
 from types import SimpleNamespace
@@ -252,6 +252,42 @@ def save_bbox_overlay(
     return str(output_path)
 
 
+def save_point_overlay(
+    image: Image.Image,
+    points_by_category: Dict[str, Sequence[Sequence[float]]],
+    output_path: Path,
+) -> str:
+    canvas = image.copy().convert("RGB")
+    draw = ImageDraw.Draw(canvas)
+    palette = [
+        (255, 90, 90),
+        (90, 200, 255),
+        (100, 255, 120),
+        (255, 210, 90),
+        (190, 130, 255),
+    ]
+    width, height = canvas.size
+    summary_lines = []
+    for category_index, (category, points) in enumerate(points_by_category.items()):
+        color = palette[category_index % len(palette)]
+        summary_lines.append(f"{category}: {len(points)}")
+        for point_index, point in enumerate(points, start=1):
+            x_norm, y_norm = float(point[0]), float(point[1])
+            x = max(0.0, min(float(width - 1), x_norm * width))
+            y = max(0.0, min(float(height - 1), y_norm * height))
+            draw.ellipse((x - 6, y - 6, x + 6, y + 6), fill=color, outline="black", width=1)
+            draw.text((x + 8, y - 8), f"{category}#{point_index}", fill=color)
+
+    if summary_lines:
+        summary_text = " | ".join(summary_lines)
+        box_width = max(120, len(summary_text) * 7)
+        draw.rectangle((8, 8, 8 + box_width, 30), fill=(255, 255, 255))
+        draw.text((12, 12), summary_text, fill="black")
+
+    canvas.save(output_path)
+    return str(output_path)
+
+
 def save_track_visualization(frame_paths: Sequence[str], tracks: np.ndarray, output_path: Path) -> str:
     frames = [load_pil_image(path) for path in frame_paths]
     colors = [(255, 90, 90), (90, 200, 255), (100, 255, 120), (255, 210, 90)]
@@ -432,6 +468,42 @@ def get_grounding_backend(model_id: str, device: str) -> Dict[str, Any]:
     processor = AutoProcessor.from_pretrained(model_id)
     model = AutoModelForZeroShotObjectDetection.from_pretrained(model_id).to(device).eval()
     return {"processor": processor, "model": model, "torch": torch}
+
+
+@lru_cache(maxsize=2)
+def get_rex_omni_backend(
+    model_path: str,
+    backend: str,
+    device: str,
+    repo_path: str | None,
+    quantization: str | None,
+    max_tokens: int,
+    temperature: float,
+    top_p: float,
+    top_k: int,
+    repetition_penalty: float,
+) -> Dict[str, Any]:
+    module_context = prepend_sys_path(Path(repo_path)) if repo_path else nullcontext()
+    with module_context:
+        rex_module = importlib.import_module("rex_omni")
+
+    wrapper_cls = getattr(rex_module, "RexOmniWrapper")
+    wrapper_kwargs: Dict[str, Any] = {
+        "model_path": model_path,
+        "backend": backend,
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+        "top_p": top_p,
+        "top_k": top_k,
+        "repetition_penalty": repetition_penalty,
+    }
+    if quantization:
+        wrapper_kwargs["quantization"] = quantization
+    if backend == "transformers":
+        wrapper_kwargs["device_map"] = "auto" if device == "cuda" else device
+        wrapper_kwargs["trust_remote_code"] = True
+    wrapper = wrapper_cls(**wrapper_kwargs)
+    return {"wrapper": wrapper, "backend_label": f"rex_omni:{model_path}"}
 
 
 class AttrDict(dict):

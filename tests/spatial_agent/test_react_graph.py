@@ -292,6 +292,25 @@ def test_normalize_tool_arguments_injects_default_single_image_for_target_tools(
     assert normalized["objects"] == ["chair"]
 
 
+def test_normalize_tool_arguments_injects_default_single_image_for_count_objects():
+    state = {"image_paths": ["/tmp/frame0.jpg", "/tmp/frame1.jpg"]}
+
+    normalized = normalize_tool_arguments(
+        state=state,
+        tool_name="CountObjects",
+        arguments={"objects": ["chair"]},
+    )
+
+    assert normalized["image"] == "/tmp/frame0.jpg"
+    assert normalized["objects"] == ["chair"]
+
+
+def test_default_runtime_config_aligns_react_max_steps_to_paper():
+    config = SpatialAgentConfig()
+
+    assert config.max_steps == 10
+
+
 def test_graph_normalizes_vsibench_counting_answer_to_digits():
     adapter = MockLLMAdapter(
         responses=[

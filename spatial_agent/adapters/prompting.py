@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any, Dict, List, Mapping
 
 
@@ -15,11 +16,11 @@ def build_text_prompt_from_state(state: Mapping[str, Any]) -> str:
         sections.append(f"Benchmark: {metadata['source_benchmark']}")
         if metadata.get("vsibench_question_type"):
             sections.append(f"Benchmark question type: {metadata['vsibench_question_type']}")
-        if metadata.get("vsibench_question_type") == "object_counting":
-            sections.append(
-                "Counting rule: prefer GetObjectMask first and fall back to LocalizeObjects only if masking is unavailable. "
-                "Base the answer on tool observations and return a pure Arabic numeral only."
-            )
+    if _is_counting_question(state):
+        sections.append(
+            "Counting rule: use CountObjects first. Base the final answer on the number of returned points, "
+            "and return a pure Arabic numeral only."
+        )
 
     options = state.get("options") or []
     if options:
@@ -46,6 +47,20 @@ def build_text_prompt_from_state(state: Mapping[str, Any]) -> str:
         sections.append("Recent conversation context:\n" + "\n".join(trailing_messages[-6:]))
 
     return "\n\n".join(sections)
+
+
+def _is_counting_question(state: Mapping[str, Any]) -> bool:
+    metadata = state.get("metadata") or {}
+    benchmark_type = str(metadata.get("vsibench_question_type") or "").lower()
+    if "count" in benchmark_type:
+        return True
+
+    question = str(state.get("question") or "").strip().lower()
+    if re.search(r"\bhow many\b", question):
+        return True
+    if re.search(r"\bnumber of\b", question):
+        return True
+    return False
 
 
 def normalize_response_text(content: Any) -> str:

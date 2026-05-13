@@ -74,7 +74,7 @@ def normalize_tool_arguments(state: Mapping[str, Any], tool_name: str | None, ar
         if key in {"image", "images", "other_images", "image_paths"}:
             args[key] = _normalize_image_value(key, args[key], image_paths)
 
-    if tool_name in {"LocalizeObjects", "GetObjectMask", "EstimateObjectDepth", "GetObjectOrientation"}:
+    if tool_name in {"CountObjects", "LocalizeObjects", "GetObjectMask", "EstimateObjectDepth", "GetObjectOrientation"}:
         if "image" not in args or (isinstance(args.get("image"), str) and _looks_like_placeholder_image(str(args["image"]))):
             args["image"] = image_paths[0]
 

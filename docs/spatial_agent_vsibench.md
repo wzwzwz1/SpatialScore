@@ -177,9 +177,20 @@ python -m lmms_eval \
 4. `SpatialAgent` 跑 ReAct 推理并返回 `final_answer`
 5. `lmms-eval` 继续使用原始 `vsibench` metric 对答案打分
 
-## 8. 你应该看哪些输出
+## 8. Counting 工具策略
 
-### 8.1 Benchmark 输出
+当前 `SpatialAgent` 已经按论文思路把 counting 类问题切到 `CountObjects` 优先：
+
+- `CountObjects` 后端使用 **Rex-Omni**
+- tool 输入遵循论文接口：`image` + `objects`
+- tool 输出会返回实例点位，点数就是计数依据
+- 系统不会在 `CountObjects` 失败时自动回退到 `GetObjectMask` 或 `LocalizeObjects`
+
+这意味着如果服务器上没有准备好 Rex-Omni 依赖或权重，counting 样本会明确显示 `CountObjects unavailable`，而不是悄悄走替代链路。
+
+## 9. 你应该看哪些输出
+
+### 9.1 Benchmark 输出
 
 `thinking-in-space` 会把评测结果写到你传入的 `--output_path` 下，例如：
 
@@ -192,7 +203,7 @@ python -m lmms_eval \
 - 聚合结果 `results.json`
 - 如果开启了 `--log_samples`，还会有逐样本日志
 
-### 8.2 SpatialAgent trace
+### 9.2 SpatialAgent trace
 
 `SpatialAgent` 会把每个样本的 trace 写到：
 
@@ -214,7 +225,7 @@ python -m lmms_eval \
 - tool observations
 - reasoning trace
 
-## 9. 额外说明
+## 10. 额外说明
 
 - `VSI-Bench` 是视频任务，所以桥接层会先采样帧，再调用 agent
 - `batch_size 1` 是最稳妥的默认值，因为每个样本都可能触发多步推理和 tool 调用
@@ -223,7 +234,7 @@ python -m lmms_eval \
 - 如果你还需要把空间工具链一起配好，可以继续看：
   - [`/disk/wangzhe/SpatialScore/docs/spatial_agent_tool_config_template.md`](/disk/wangzhe/SpatialScore/docs/spatial_agent_tool_config_template.md)
 
-## 10. 用云雾中转站的推荐写法
+## 11. 用云雾中转站的推荐写法
 
 如果你走 `yunwu.ai` 这类 OpenAI-compatible 中转站，推荐直接在环境变量里写：
 

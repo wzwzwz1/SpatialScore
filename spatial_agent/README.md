@@ -20,6 +20,8 @@
 
 下面这些工具已经接上了真实推理链路；只要服务器上的依赖、权重、路径配置正确，就会真正执行：
 
+- `CountObjects`
+  - 后端：**Rex-Omni pointing**
 - `EstimateOpticalFlow`
   - 后端：**RAFT**
 - `EstimateHomographyMatrix`
@@ -42,6 +44,7 @@
 下面这些工具虽然已经接好了代码，但如果缺少依赖、checkpoint 或 `tool_config`，会返回结构化的 `unavailable` 结果，而不会直接把 agent 跑崩：
 
 - `EstimateOpticalFlow`
+- `CountObjects`
 - `EstimateObjectDepth`
 - `GetObjectMask`
 - `GetCameraParametersVGGT`
@@ -106,6 +109,16 @@ python3 -m spatial_agent \
 
 ### 常用配置键
 
+- `CountObjects` / `counting`
+  - `model_path`（默认 `IDEA-Research/Rex-Omni`）
+  - `backend`（`transformers|vllm`）
+  - `repo_path`（可选，本地 `Rex-Omni` 仓库路径）
+  - `quantization`（可选，例如 `awq`）
+  - `max_tokens`
+  - `temperature`
+  - `top_p`
+  - `top_k`
+  - `repetition_penalty`
 - `EstimateOpticalFlow` / `raft`
   - `checkpoint_path`
   - `small`
@@ -146,6 +159,15 @@ config = SpatialAgentConfig(
     llm_backend="hf",
     qwen_model_path="/models/Qwen2.5-VL-7B-Instruct",
     tool_config={
+        "counting": {
+            "model_path": "IDEA-Research/Rex-Omni",
+            "backend": "transformers",
+            "max_tokens": 2048,
+            "temperature": 0.0,
+            "top_p": 0.05,
+            "top_k": 1,
+            "repetition_penalty": 1.05,
+        },
         "raft": {
             "checkpoint_path": "/models/raft/raft-things.pth",
             "small": False,
@@ -183,6 +205,15 @@ config = SpatialAgentConfig(
     },
 )
 ```
+
+## Counting 行为
+
+当前 ReAct 编排已经按论文思路切到 `CountObjects` 优先：
+
+- counting 类问题默认优先调用 `CountObjects`
+- `CountObjects` 使用 **Rex-Omni** 的 `pointing` 任务来返回实例点位
+- 最终答案会基于返回点数收紧为纯数字
+- 如果 Rex-Omni 不可用，系统不会自动回退到 `GetObjectMask` 或 `LocalizeObjects`
 
 如果你想直接抄服务器模板，用下面这份专门文档：
 

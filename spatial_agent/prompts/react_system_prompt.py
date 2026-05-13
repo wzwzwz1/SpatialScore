@@ -13,6 +13,7 @@ def build_react_system_prompt(available_tools: List[Dict[str, object]]) -> str:
         "Rules:\n"
         "- Call at most one tool per step.\n"
         "- Only use tools from AVAILABLE_TOOLS.\n"
+        "- For counting-related questions, prefer CountObjects and use the returned points as evidence for the final count.\n"
         "- Do not invent image file names or file paths in tool arguments.\n"
         "- The runtime binds real sampled frames automatically; only provide semantic arguments such as objects when possible.\n"
         "- If a tool is unavailable or fails, revise your strategy.\n"
