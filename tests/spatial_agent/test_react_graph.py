@@ -171,6 +171,7 @@ def test_graph_writes_trace_file(tmp_path):
 
     assert result["status"] == "success"
     assert result["trace_path"].endswith("task-trace.json")
+    assert result["llm_raw_outputs_path"].endswith("task-trace_llm_raw_outputs.json")
 
 
 def test_graph_fails_after_exceeding_repair_limit():

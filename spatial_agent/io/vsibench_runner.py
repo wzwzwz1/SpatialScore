@@ -138,7 +138,23 @@ def write_vsibench_run_outputs(output_dir: str, doc_id: int, payload: Dict[str, 
     samples_path = base / "vsibench.json"
     samples_path.write_text(json.dumps(sample_bundle, indent=2, ensure_ascii=False), encoding="utf-8")
 
+    llm_raw_outputs_path = base / "llm_raw_outputs.json"
+    llm_raw_outputs_path.write_text(
+        json.dumps(
+            {
+                "task_id": payload.get("result", {}).get("task_id"),
+                "trace_path": payload.get("result", {}).get("trace_path"),
+                "llm_raw_outputs_path": payload.get("result", {}).get("llm_raw_outputs_path"),
+                "llm_raw_outputs": payload.get("result", {}).get("llm_raw_outputs", []),
+            },
+            indent=2,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
     return {
         "run_json": str(run_path),
         "samples_json": str(samples_path),
+        "llm_raw_outputs_json": str(llm_raw_outputs_path),
     }

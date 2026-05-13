@@ -78,6 +78,7 @@ def main() -> int:
     print("Run complete.")
     print(f"run_json: {output_paths['run_json']}")
     print(f"samples_json: {output_paths['samples_json']}")
+    print(f"llm_raw_outputs_json: {output_paths['llm_raw_outputs_json']}")
     print(f"trace_path: {payload['result'].get('trace_path')}")
 
     if args.run_analysis:

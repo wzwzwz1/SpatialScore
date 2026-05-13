@@ -254,12 +254,21 @@ def test_write_vsibench_run_outputs_writes_run_and_sample_bundle(tmp_path):
             "dataset": "scannet",
         },
         "task_input": {"task_id": "vsibench___test___0"},
-        "result": {"final_answer": "3", "status": "success"},
+        "result": {
+            "task_id": "vsibench___test___0",
+            "final_answer": "3",
+            "status": "success",
+            "trace_path": "/tmp/trace.json",
+            "llm_raw_outputs_path": "/tmp/raw.json",
+            "llm_raw_outputs": [{"attempt": 1, "status": "success", "raw_output": "{\"finish\":{\"answer\":\"3\"}}"}],
+        },
     }
 
     paths = write_vsibench_run_outputs(output_dir=str(tmp_path), doc_id=0, payload=payload)
 
     assert (tmp_path / "run.json").exists()
     assert (tmp_path / "vsibench.json").exists()
+    assert (tmp_path / "llm_raw_outputs.json").exists()
     assert paths["run_json"].endswith("run.json")
     assert paths["samples_json"].endswith("vsibench.json")
+    assert paths["llm_raw_outputs_json"].endswith("llm_raw_outputs.json")

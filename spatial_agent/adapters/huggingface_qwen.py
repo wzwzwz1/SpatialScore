@@ -18,6 +18,7 @@ class HuggingFaceQwenAdapter(LLMAdapter):
         self._model = None
         self._processor = None
         self._process_vision_info = None
+        self.last_raw_output = ""
 
     def _ensure_loaded(self) -> None:
         if self._model is not None and self._processor is not None:
@@ -73,7 +74,9 @@ class HuggingFaceQwenAdapter(LLMAdapter):
                 skip_special_tokens=True,
                 clean_up_tokenization_spaces=False,
             )[0].strip()
+            self.last_raw_output = raw_output
         except Exception as exc:
+            self.last_raw_output = ""
             raise AdapterResponseError("Qwen adapter inference failed.") from exc
 
         try:

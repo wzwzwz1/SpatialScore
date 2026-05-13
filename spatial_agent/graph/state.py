@@ -26,6 +26,7 @@ def build_initial_state(task_input: Dict[str, Any], available_tools: List[Dict[s
         "messages": [
             {"role": "user", "content": task_input["question"]},
         ],
+        "llm_raw_outputs": [],
         "scratchpad": [],
         "last_thought": None,
         "selected_tool": None,

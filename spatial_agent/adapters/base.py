@@ -15,7 +15,8 @@ class AdapterResponseError(ValueError):
 class LLMAdapter(ABC):
     """Graph-facing abstraction for ReAct-capable multimodal language models."""
 
+    last_raw_output: str = ""
+
     @abstractmethod
     def generate(self, state: Mapping[str, Any], available_tools: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Generate a structured ReAct payload for the current state."""
-

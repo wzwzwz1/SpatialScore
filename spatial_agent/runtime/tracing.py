@@ -12,3 +12,10 @@ def write_trace(trace: Dict[str, Any], artifact_dir: str, task_id: str) -> str:
     trace_path.write_text(json.dumps(trace, indent=2, ensure_ascii=False))
     return str(trace_path)
 
+
+def write_debug_dump(payload: Dict[str, Any], artifact_dir: str, filename: str) -> str:
+    path = Path(artifact_dir)
+    path.mkdir(parents=True, exist_ok=True)
+    output_path = path / filename
+    output_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    return str(output_path)

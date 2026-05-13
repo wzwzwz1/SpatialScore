@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import json
+
 from spatial_agent.adapters.base import AdapterResponseError
 
 
 def reason_node(runtime):
     def _reason_node(state):
+        llm_attempt = len(state.get("llm_raw_outputs", [])) + 1
         if state["step_count"] >= state["max_steps"]:
             state["status"] = "max_steps"
             state["error"] = "Maximum reasoning steps exceeded."
@@ -26,6 +29,14 @@ def reason_node(runtime):
         try:
             decision = runtime.llm_adapter.generate(state=state, available_tools=state["available_tools"])
         except AdapterResponseError as exc:
+            state.setdefault("llm_raw_outputs", []).append(
+                {
+                    "attempt": llm_attempt,
+                    "status": "error",
+                    "raw_output": getattr(exc, "raw_output", ""),
+                    "error": str(exc),
+                }
+            )
             state["pending_decision"] = None
             state["pending_repair_message"] = str(exc)
             state["reasoning_trace"].append(
@@ -39,6 +50,14 @@ def reason_node(runtime):
             return state
 
         if not isinstance(decision, dict):
+            state.setdefault("llm_raw_outputs", []).append(
+                {
+                    "attempt": llm_attempt,
+                    "status": "invalid_decision",
+                    "raw_output": getattr(runtime.llm_adapter, "last_raw_output", ""),
+                    "error": "Model output was not a JSON object.",
+                }
+            )
             state["pending_decision"] = None
             state["pending_repair_message"] = (
                 "Model output must be a JSON object with keys `thought`, `action`, and `finish`."
@@ -53,6 +72,13 @@ def reason_node(runtime):
             state["pending_route"] = "repair"
             return state
 
+        state.setdefault("llm_raw_outputs", []).append(
+            {
+                "attempt": llm_attempt,
+                "status": "success",
+                "raw_output": getattr(runtime.llm_adapter, "last_raw_output", json.dumps(decision, ensure_ascii=False)),
+            }
+        )
         state["pending_decision"] = decision
         state["last_thought"] = decision.get("thought")
         state["reasoning_trace"].append({"stage": "reason", "decision": decision})

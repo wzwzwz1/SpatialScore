@@ -33,6 +33,7 @@ class OpenAICompatibleAdapter(LLMAdapter):
         self.api_key_env = api_key_env
         self.timeout = timeout
         self._client = None
+        self.last_raw_output = ""
 
     def _ensure_client(self):
         if self._client is not None:
@@ -80,7 +81,9 @@ class OpenAICompatibleAdapter(LLMAdapter):
                 max_tokens=1024,
             )
             raw_output = normalize_response_text(response.choices[0].message.content)
+            self.last_raw_output = raw_output
         except Exception as exc:
+            self.last_raw_output = ""
             raise AdapterResponseError("OpenAI-compatible adapter inference failed.") from exc
 
         try:

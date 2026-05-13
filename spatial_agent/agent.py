@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 from spatial_agent.graph.builder import build_graph
 from spatial_agent.runtime.config import SpatialAgentConfig
 from spatial_agent.runtime.runtime import GraphRuntime
-from spatial_agent.runtime.tracing import write_trace
+from spatial_agent.runtime.tracing import write_debug_dump, write_trace
 from spatial_agent.tools.registry import ToolRegistry
 
 
@@ -40,10 +40,21 @@ class SpatialAgent:
             "tool_calls": result.get("tool_calls", []),
             "tool_observations": result.get("tool_observations", []),
             "reasoning_trace": result.get("reasoning_trace", []),
+            "llm_raw_outputs": result.get("llm_raw_outputs", []),
         }
         result["trace_path"] = write_trace(
             trace=trace,
             artifact_dir=self.config.artifact_dir,
             task_id=trace["task_id"],
+        )
+        result["llm_raw_outputs_path"] = write_debug_dump(
+            payload={
+                "task_id": trace["task_id"],
+                "question": trace["question"],
+                "status": trace["status"],
+                "llm_raw_outputs": result.get("llm_raw_outputs", []),
+            },
+            artifact_dir=self.config.artifact_dir,
+            filename=f"{trace['task_id']}_llm_raw_outputs.json",
         )
         return result
