@@ -24,7 +24,7 @@ class OpenAICompatibleAdapter(LLMAdapter):
         api_key: Optional[str] = None,
         api_base_url_env: str = "OPENAI_API_BASE_URL",
         api_key_env: str = "OPENAI_API_KEY",
-        timeout: int = 120,
+        timeout: int = 300,
     ) -> None:
         self.model_name = model_name
         self.api_base_url = api_base_url

@@ -19,7 +19,7 @@ class SpatialAgentConfig:
     api_key: Optional[str] = None
     api_base_url_env: str = "OPENAI_API_BASE_URL"
     api_key_env: str = "OPENAI_API_KEY"
-    api_timeout: int = 120
+    api_timeout: int = 300
     video_num_frames: int = 16
     video_frame_dir: Optional[str] = None
     keep_video_frames: bool = False
