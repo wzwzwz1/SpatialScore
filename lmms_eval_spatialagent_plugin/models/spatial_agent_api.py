@@ -29,7 +29,7 @@ class SpatialAgentAPI(lmms):
         api_key_env: str = "OPENAI_API_KEY",
         api_timeout: int = 300,
         max_steps: int = 8,
-        video_num_frames: int = 16,
+        video_num_frames: int = 64,
         video_frame_dir: str = "",
         artifact_dir: str = ".artifacts/spatial_agent",
         keep_video_frames: bool = False,

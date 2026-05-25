@@ -429,6 +429,12 @@ def test_default_runtime_config_aligns_react_max_steps_to_paper():
     assert config.max_steps == 10
 
 
+def test_default_runtime_config_uses_64_video_frames():
+    config = SpatialAgentConfig()
+
+    assert config.video_num_frames == 64
+
+
 def test_graph_normalizes_vsibench_counting_answer_to_digits():
     adapter = MockLLMAdapter(
         responses=[

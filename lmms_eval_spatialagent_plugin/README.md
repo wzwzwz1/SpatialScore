@@ -18,7 +18,7 @@ export OPENAI_API_BASE_URL=https://yunwu.ai/v1
 ```bash
 python -m lmms_eval \
   --model spatial_agent_api \
-  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,video_num_frames=16,tool_config_path=/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
+  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,video_num_frames=64,tool_config_path=/disk/wangzhe/SpatialScore/docs/tool_config.server.template.json \
   --tasks vsibench \
   --batch_size 1 \
   --log_samples \

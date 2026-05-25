@@ -218,7 +218,7 @@ python -m spatial_agent.analysis \
 ```bash
 python -m lmms_eval \
   --model spatial_agent_api \
-  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,video_num_frames=16,artifact_dir=/tmp/spatial_agent_runs,tool_config_path=/disk/wangzhe/SpatialScore/configs/tool_config.server.json \
+  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,video_num_frames=64,artifact_dir=/tmp/spatial_agent_runs,tool_config_path=/disk/wangzhe/SpatialScore/configs/tool_config.server.json \
   --tasks vsibench \
   --batch_size 1 \
   --limit 20 \
