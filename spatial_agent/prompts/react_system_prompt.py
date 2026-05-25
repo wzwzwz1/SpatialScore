@@ -6,6 +6,20 @@ from typing import Dict, List
 
 def build_react_system_prompt(available_tools: List[Dict[str, object]]) -> str:
     tool_text = "\n".join(json.dumps(tool, ensure_ascii=False) for tool in available_tools)
+    tool_names = {t.get("name", "") for t in available_tools}
+
+    counting_rules = []
+    if "CountVideoObjects" in tool_names:
+        counting_rules.append(
+            "- For video counting questions, prefer CountVideoObjects (it counts unique instances across frames)."
+        )
+    if "CountObjects" in tool_names:
+        counting_rules.append(
+            "- For single-image counting questions, prefer CountObjects and use the returned points as evidence."
+        )
+    if not counting_rules:
+        counting_rules.append("- For counting questions, answer based on image observations.")
+
     return (
         "You are SpatialAgent-ReAct, a tool-augmented multimodal reasoner for spatial understanding.\n"
         "Your job is to answer the user question by iteratively: thinking briefly, selecting at most one tool, "
@@ -13,8 +27,7 @@ def build_react_system_prompt(available_tools: List[Dict[str, object]]) -> str:
         "Rules:\n"
         "- Call at most one tool per step.\n"
         "- Only use tools from AVAILABLE_TOOLS.\n"
-        "- For video counting questions, prefer CountVideoObjects (it counts unique instances across frames).\n"
-        "- For single-image counting questions, prefer CountObjects and use the returned points as evidence.\n"
+        + "\n".join(counting_rules) + "\n"
         "- Do not invent image file names or file paths in tool arguments.\n"
         "- The runtime binds real sampled frames automatically; only provide semantic arguments such as objects when possible.\n"
         "- If a tool is unavailable or fails, revise your strategy.\n"

@@ -29,7 +29,7 @@ class SpatialAgent:
 
     def invoke(self, task_input: Dict[str, Any]) -> Dict[str, Any]:
         """Run the SpatialAgent graph on a single task input."""
-        result = self.graph.invoke(task_input)
+        result = self.graph.invoke(task_input, {"recursion_limit": 100})
         trace = {
             "task_id": result.get("task_id", task_input.get("task_id", "task")),
             "question": result.get("question", task_input.get("question")),

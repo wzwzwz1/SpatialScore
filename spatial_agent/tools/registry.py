@@ -36,10 +36,16 @@ class ToolRegistry:
         return [self._tools[name].to_metadata() for name in self.list_names()]
 
 
+def _video_counting_configured(config) -> bool:
+    """Only register CountVideoObjects if the CountVid backend paths are configured."""
+    from spatial_agent.tools.backends import get_tool_settings
+    settings = get_tool_settings(config, "CountVideoObjects", aliases=["video_counting", "countvid"])
+    return bool(settings.get("countgd_checkpoint_path") and settings.get("sam2_checkpoint_path"))
+
+
 def build_default_tool_registry(config) -> ToolRegistry:
     tools = [
         CountObjectsTool(config),
-        CountVideoObjectsTool(config),
         EstimateObjectDepthTool(config),
         GetObjectMaskTool(config),
         EstimateOpticalFlowTool(config),
@@ -49,4 +55,6 @@ def build_default_tool_registry(config) -> ToolRegistry:
         LocalizeObjectsTool(config),
         EstimateObjectMotionTool(config),
     ]
+    if _video_counting_configured(config):
+        tools.insert(1, CountVideoObjectsTool(config))
     return ToolRegistry(tools)

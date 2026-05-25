@@ -375,9 +375,29 @@ def test_count_video_objects_zero_instance_success(tmp_path, monkeypatch):
     assert result["payload"]["tracks"] == []
 
 
-def test_default_registry_includes_count_video_objects():
+def test_count_video_objects_not_registered_without_backend_config():
+    """CountVideoObjects should be omitted when CountVid backend is not configured."""
     registry = build_default_tool_registry(SpatialAgentConfig())
+    assert "CountVideoObjects" not in registry.list_names()
+
+
+def test_count_video_objects_registered_with_backend_config():
+    """CountVideoObjects should be registered when CountVid checkpoint paths are provided."""
+    config = SpatialAgentConfig(
+        tool_config={
+            "video_counting": {
+                "countgd_checkpoint_path": "/data/models/countgd_box.pth",
+                "sam2_checkpoint_path": "/data/models/sam2.1_hiera_large.pt",
+                "sam2_config_name": "configs/sam2.1/sam2.1_hiera_l.yaml",
+            }
+        }
+    )
+    registry = build_default_tool_registry(config)
     assert "CountVideoObjects" in registry.list_names()
     tool = registry.get("CountVideoObjects")
     assert tool is not None
     assert tool.name == "CountVideoObjects"
+    # CountObjects should still come first
+    names = registry.list_names()
+    assert names[0] == "CountObjects"
+    assert names[1] == "CountVideoObjects"

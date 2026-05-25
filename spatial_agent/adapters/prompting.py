@@ -7,6 +7,18 @@ from typing import Any, Dict, List, Mapping
 from spatial_agent.graph.tool_args import get_representative_counting_frames, is_video_counting_task
 
 
+def should_skip_images_for_video_counting(
+    state: Mapping[str, Any], available_tools: List[Dict[str, Any]]
+) -> bool:
+    """Skip sending video frames to the LLM when CountVideoObjects will handle them."""
+    if str(state.get("input_modality") or "").lower() != "video":
+        return False
+    tool_names = {t.get("name", "") for t in available_tools}
+    if "CountVideoObjects" not in tool_names:
+        return False
+    return is_video_counting_task(state)
+
+
 def build_text_prompt_from_state(state: Mapping[str, Any]) -> str:
     image_paths = [str(path) for path in state.get("image_paths", [])]
     sections: List[str] = [

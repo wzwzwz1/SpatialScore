@@ -10,7 +10,7 @@ from typing import Dict, Optional
 class SpatialAgentConfig:
     llm_backend: str = "hf"
     max_steps: int = 10
-    max_repairs: int = 2
+    max_repairs: int = 3
     max_tool_fails: int = 3
     artifact_dir: str = ".artifacts/spatial_agent"
     qwen_model_path: Optional[str] = None

@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import json
 import os
 from typing import Any, Dict, List, Mapping, Optional
 
@@ -7,6 +9,7 @@ from spatial_agent.adapters.prompting import (
     build_openai_image_content,
     build_text_prompt_from_state,
     normalize_response_text,
+    should_skip_images_for_video_counting,
 )
 from spatial_agent.adapters.react_decisions import parse_react_decisions
 from spatial_agent.prompts.react_system_prompt import build_react_system_prompt
@@ -63,7 +66,15 @@ class OpenAICompatibleAdapter(LLMAdapter):
     def _build_messages(self, state: Mapping[str, Any], available_tools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         base_prompt = build_react_system_prompt(available_tools)
         text_prompt = build_text_prompt_from_state(state)
-        content = build_openai_image_content(list(state.get("image_paths", [])))
+        image_paths = list(state.get("image_paths", []))
+
+        # For video counting tasks where CountVideoObjects is available, skip sending
+        # frames to the LLM — the tool backend handles them directly. This avoids
+        # blowing up the API request with 64+ base64-encoded frames.
+        if should_skip_images_for_video_counting(state, available_tools):
+            image_paths = []
+
+        content = build_openai_image_content(image_paths)
         content.append({"type": "text", "text": text_prompt})
         return [
             {"role": "system", "content": base_prompt},
@@ -81,13 +92,15 @@ class OpenAICompatibleAdapter(LLMAdapter):
                 model=self.model_name,
                 messages=messages,
                 temperature=0,
-                max_tokens=1024,
+                max_tokens=2048,
             )
             raw_output = normalize_response_text(response.choices[0].message.content)
             self.last_raw_output = raw_output
         except Exception as exc:
             self.last_raw_output = ""
-            raise AdapterResponseError("OpenAI-compatible adapter inference failed.") from exc
+            raise AdapterResponseError(
+                f"OpenAI-compatible adapter inference failed: {exc}"
+            ) from exc
 
         try:
             parsed = parse_react_decisions(raw_output)

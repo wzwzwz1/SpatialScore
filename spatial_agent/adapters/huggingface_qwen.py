@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Mapping, Optional
 
 from spatial_agent.adapters.base import AdapterResponseError, LLMAdapter
-from spatial_agent.adapters.prompting import build_text_prompt_from_state
+from spatial_agent.adapters.prompting import build_text_prompt_from_state, should_skip_images_for_video_counting
 from spatial_agent.adapters.react_decisions import parse_react_decisions
 from spatial_agent.prompts.react_system_prompt import build_react_system_prompt
 from spatial_agent.prompts.repair_prompt import build_repair_prompt
@@ -49,7 +49,10 @@ class HuggingFaceQwenAdapter(LLMAdapter):
     def _build_messages(self, state: Mapping[str, Any], available_tools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         base_prompt = build_react_system_prompt(available_tools)
         text_prompt = build_text_prompt_from_state(state)
-        image_content = [{"type": "image", "image": image_path} for image_path in state.get("image_paths", [])]
+        image_paths = list(state.get("image_paths", []))
+        if should_skip_images_for_video_counting(state, available_tools):
+            image_paths = []
+        image_content = [{"type": "image", "image": image_path} for image_path in image_paths]
         return [
             {"role": "system", "content": base_prompt},
             {"role": "user", "content": image_content + [{"type": "text", "text": text_prompt}]},
