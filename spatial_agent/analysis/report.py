@@ -489,7 +489,19 @@ def _write_markdown(
                         f"- status: {execution['status']}",
                         f"- error: {execution['error'] or '(none)'}",
                         f"- instance_count: {payload.get('instance_count', '(none)')}",
-                        "",
+                    ]
+                )
+                if payload.get("tracks"):
+                    lines.append(f"- track count: {len(payload['tracks'])}")
+                if payload.get("frame_summaries"):
+                    fs_summary = ", ".join(
+                        f"{fs['image']}:{fs.get('filtered_count', fs.get('candidate_count', 0))}"
+                        for fs in payload["frame_summaries"]
+                    )
+                    lines.append(f"- frame_summaries: {fs_summary}")
+                lines.append("")
+                lines.extend(
+                    [
                         "arguments:",
                         "",
                         "```json",
@@ -561,12 +573,22 @@ def _write_html(report: Dict[str, Any], chart_files: Dict[str, str], case_rows: 
         for execution in sample.get("tool_execution_details", []):
             artifact_list = execution.get("artifacts", [])
             artifact_detail = "".join(f"<li>{artifact}</li>" for artifact in artifact_list) if artifact_list else "<li>(none)</li>"
+            extra_info = ""
+            payload = execution.get('payload', {})
+            if payload.get('tracks'):
+                extra_info += f" | <strong>track count:</strong> {len(payload['tracks'])}"
+            if payload.get('frame_summaries'):
+                fs_parts = [
+                    f"{fs['image']}:{fs.get('filtered_count', fs.get('candidate_count', 0))}"
+                    for fs in payload['frame_summaries']
+                ]
+                extra_info += f" | <strong>frames:</strong> {', '.join(fs_parts)}"
             tool_detail_html.append(
                 f"""
                 <section style="margin-top: 12px; padding: 12px; background: #fafafa; border-radius: 8px;">
                   <h4>第 {execution['step']} 步：{execution['tool_name']}</h4>
                   <p><strong>status:</strong> {execution['status']} | <strong>error:</strong> {execution['error'] or '(none)'}</p>
-                  <p><strong>instance_count:</strong> {execution.get('payload', {}).get('instance_count', '(none)')}</p>
+                  <p><strong>instance_count:</strong> {execution.get('payload', {}).get('instance_count', '(none)')}{extra_info}</p>
                   <p><strong>arguments</strong></p>
                   <pre style="white-space: pre-wrap; background: white; border: 1px solid #ddd; padding: 10px;">{_format_json_block(execution.get('arguments', {}))}</pre>
                   <p><strong>payload</strong></p>

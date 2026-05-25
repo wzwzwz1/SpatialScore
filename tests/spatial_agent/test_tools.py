@@ -7,6 +7,7 @@ from spatial_agent.tools.counting import CountObjectsTool
 from spatial_agent.tools.localization import LocalizeObjectsTool
 from spatial_agent.tools.placeholders import PlaceholderTool
 from spatial_agent.tools.registry import build_default_tool_registry
+from spatial_agent.tools.video_counting import CountVideoObjectsTool
 
 
 def test_placeholder_tool_returns_unavailable_status():
@@ -168,3 +169,215 @@ def test_localize_objects_returns_instance_count_and_bbox_artifact(tmp_path, mon
     assert result["payload"]["instance_count"] == 2
     assert len(result["artifacts"]) == 1
     assert Path(result["artifacts"][0]).exists()
+
+
+def test_count_video_objects_returns_unavailable_when_backend_missing(tmp_path, monkeypatch):
+    """CountVideoObjects should return unavailable when backend init fails."""
+    image_path = tmp_path / "frame.jpg"
+    Image.new("RGB", (32, 24), "white").save(image_path)
+
+    def _raise_backend(**kwargs):
+        raise ModuleNotFoundError("No module named 'countgd'")
+
+    monkeypatch.setattr(
+        "spatial_agent.tools.video_counting.get_countvid_backend",
+        _raise_backend,
+    )
+
+    config = SpatialAgentConfig(
+        artifact_dir=str(tmp_path),
+        tool_config={
+            "video_counting": {
+                "countgd_repo_path": "/nonexistent",
+                "countgd_checkpoint_path": "/nonexistent.pth",
+                "sam2_checkpoint_path": "/nonexistent.pt",
+                "sam2_config_name": "/nonexistent.yaml",
+                "device": "cpu",
+            }
+        },
+    )
+    tool = CountVideoObjectsTool(config)
+    result = tool.invoke(images=[str(image_path)], objects=["table"])
+
+    assert result["status"] == "unavailable"
+    assert "No module named 'countgd'" in result["error"]
+
+
+def test_count_video_objects_returns_unavailable_when_partial_backend(tmp_path, monkeypatch):
+    """CountVideoObjects should return unavailable when one component is missing."""
+    image_path = tmp_path / "frame.jpg"
+    Image.new("RGB", (32, 24), "white").save(image_path)
+
+    monkeypatch.setattr(
+        "spatial_agent.tools.video_counting.get_countvid_backend",
+        lambda **kwargs: {
+            "countgd_available": True,
+            "sam2_available": False,
+            "device": "cpu",
+        },
+    )
+
+    config = SpatialAgentConfig(
+        artifact_dir=str(tmp_path),
+        tool_config={
+            "video_counting": {
+                "countgd_repo_path": "/nonexistent",
+                "countgd_checkpoint_path": "/nonexistent.pth",
+                "sam2_checkpoint_path": "/nonexistent.pt",
+                "sam2_config_name": "/nonexistent.yaml",
+                "device": "cpu",
+            }
+        },
+    )
+    tool = CountVideoObjectsTool(config)
+    result = tool.invoke(images=[str(image_path)], objects=["table"])
+
+    assert result["status"] == "unavailable"
+    assert "SAM2.1" in result["error"]
+
+
+def test_count_video_objects_returns_error_on_missing_images():
+    tool = CountVideoObjectsTool(SpatialAgentConfig())
+    result = tool.invoke(objects=["table"])
+    assert result["status"] == "error"
+    assert "image" in result["error"].lower()
+
+
+def test_count_video_objects_returns_error_on_missing_objects():
+    tool = CountVideoObjectsTool(SpatialAgentConfig())
+    result = tool.invoke(images=["frame.jpg"])
+    assert result["status"] == "error"
+    assert "object" in result["error"].lower()
+
+
+def test_count_video_objects_success_with_mock_backend(tmp_path, monkeypatch):
+    """Full pipeline test with mocked backend components."""
+    # Create dummy frames
+    frame_paths = []
+    for i in range(3):
+        p = tmp_path / f"frame_{i}.jpg"
+        Image.new("RGB", (64, 48), "white").save(p)
+        frame_paths.append(str(p))
+
+    monkeypatch.setattr(
+        "spatial_agent.tools.video_counting.get_countvid_backend",
+        lambda **kwargs: {
+            "countgd_model": None,
+            "countgd_available": True,
+            "sam2_predictor": None,
+            "sam2_available": True,
+            "torch": type("DummyTorch", (), {"no_grad": lambda: type("DummyCtx", (), {"__enter__": lambda s: None, "__exit__": lambda s, *a: None})()})(),
+            "device": "cpu",
+        },
+    )
+
+    # Mock candidate generation
+    def _mock_generate(backend, image_paths, objects):
+        return [
+            {"candidates": [{"point": [0.1, 0.2], "score": 0.9}]},
+            {"candidates": [{"point": [0.12, 0.22], "score": 0.85}]},
+            {"candidates": []},
+        ]
+
+    monkeypatch.setattr(
+        "spatial_agent.tools.video_counting.generate_candidates_countgd",
+        _mock_generate,
+    )
+
+    # Mock SAM propagation
+    def _mock_propagate(backend, image_paths, frame_detections, objects):
+        return [
+            {
+                "track_id": "table_000",
+                "object": "table",
+                "frame_indices": [0, 1],
+                "points": [[0.1, 0.2], [0.12, 0.22]],
+            }
+        ]
+
+    monkeypatch.setattr(
+        "spatial_agent.tools.video_counting.run_sam2_propagation",
+        _mock_propagate,
+    )
+
+    config = SpatialAgentConfig(
+        artifact_dir=str(tmp_path),
+        tool_config={
+            "video_counting": {
+                "countgd_repo_path": "/tmp/fake",
+                "countgd_checkpoint_path": "/tmp/fake.pth",
+                "sam2_checkpoint_path": "/tmp/fake.pt",
+                "sam2_config_name": "/tmp/fake.yaml",
+                "device": "cpu",
+            }
+        },
+    )
+    tool = CountVideoObjectsTool(config)
+    result = tool.invoke(images=frame_paths, objects=["table"])
+
+    assert result["status"] == "success"
+    assert result["payload"]["instance_count"] == 1
+    assert len(result["payload"]["tracks"]) == 1
+    assert result["payload"]["tracks"][0]["track_id"] == "table_000"
+    assert result["payload"]["tracks"][0]["object"] == "table"
+    assert "image-0" in result["payload"]["tracks"][0]["supporting_frames"]
+    assert "image-1" in result["payload"]["tracks"][0]["supporting_frames"]
+    assert len(result["payload"]["frame_summaries"]) == 3
+    assert result["payload"]["backend"] == "countvid:countgd_box+sam2.1"
+    assert len(result["artifacts"]) >= 1
+
+
+def test_count_video_objects_zero_instance_success(tmp_path, monkeypatch):
+    """CountVideoObjects should return success with instance_count=0 when no objects found."""
+    frame_paths = []
+    for i in range(2):
+        p = tmp_path / f"frame_{i}.jpg"
+        Image.new("RGB", (64, 48), "white").save(p)
+        frame_paths.append(str(p))
+
+    monkeypatch.setattr(
+        "spatial_agent.tools.video_counting.get_countvid_backend",
+        lambda **kwargs: {
+            "countgd_model": None,
+            "countgd_available": True,
+            "sam2_predictor": None,
+            "sam2_available": True,
+            "torch": type("DummyTorch", (), {"no_grad": lambda: type("DummyCtx", (), {"__enter__": lambda s: None, "__exit__": lambda s, *a: None})()})(),
+            "device": "cpu",
+        },
+    )
+    monkeypatch.setattr(
+        "spatial_agent.tools.video_counting.generate_candidates_countgd",
+        lambda backend, image_paths, objects: [{"candidates": []}, {"candidates": []}],
+    )
+    monkeypatch.setattr(
+        "spatial_agent.tools.video_counting.run_sam2_propagation",
+        lambda backend, image_paths, frame_detections, objects: [],
+    )
+
+    config = SpatialAgentConfig(
+        artifact_dir=str(tmp_path),
+        tool_config={
+            "video_counting": {
+                "countgd_repo_path": "/tmp/fake",
+                "countgd_checkpoint_path": "/tmp/fake.pth",
+                "sam2_checkpoint_path": "/tmp/fake.pt",
+                "sam2_config_name": "/tmp/fake.yaml",
+                "device": "cpu",
+            }
+        },
+    )
+    tool = CountVideoObjectsTool(config)
+    result = tool.invoke(images=frame_paths, objects=["table"])
+
+    assert result["status"] == "success"
+    assert result["payload"]["instance_count"] == 0
+    assert result["payload"]["tracks"] == []
+
+
+def test_default_registry_includes_count_video_objects():
+    registry = build_default_tool_registry(SpatialAgentConfig())
+    assert "CountVideoObjects" in registry.list_names()
+    tool = registry.get("CountVideoObjects")
+    assert tool is not None
+    assert tool.name == "CountVideoObjects"

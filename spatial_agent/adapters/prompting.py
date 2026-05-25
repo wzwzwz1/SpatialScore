@@ -31,22 +31,19 @@ def build_text_prompt_from_state(state: Mapping[str, Any]) -> str:
         if metadata.get("vsibench_question_type"):
             sections.append(f"Benchmark question type: {metadata['vsibench_question_type']}")
     if _is_counting_question(state):
-        sections.append(
-            "Counting rule: use CountObjects first. Base the final answer on the number of returned points, "
-            "and return a pure Arabic numeral only."
-        )
-    if is_video_counting_task(state):
-        representative_frames = get_representative_counting_frames(state)
-        representative_aliases = []
-        for frame_path in representative_frames:
-            if frame_path in image_paths:
-                representative_aliases.append(f"image-{image_paths.index(frame_path)}")
-        sections.append(
-            "Video counting rule: do not finish after a single frame. Inspect representative frames with CountObjects "
-            f"before answering. Current representative frame budget: {len(representative_frames)}."
-        )
-        if representative_aliases:
-            sections.append("Representative counting frames in order: " + ", ".join(representative_aliases))
+        if is_video_counting_task(state):
+            sections.append(
+                "Video counting rule: prefer CountVideoObjects for video counting tasks "
+                "because it counts unique object instances across frames with cross-frame propagation. "
+                "Use CountObjects only for single-image counting. "
+                "Base the final answer on the instance_count from the tool output, "
+                "and return a pure Arabic numeral only."
+            )
+        else:
+            sections.append(
+                "Counting rule: use CountObjects first. Base the final answer on the number of returned points, "
+                "and return a pure Arabic numeral only."
+            )
 
     options = state.get("options") or []
     if options:

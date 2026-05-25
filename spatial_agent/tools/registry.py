@@ -12,6 +12,7 @@ from spatial_agent.tools.mask import GetObjectMaskTool
 from spatial_agent.tools.motion import EstimateObjectMotionTool
 from spatial_agent.tools.optical_flow import EstimateOpticalFlowTool
 from spatial_agent.tools.orientation import GetObjectOrientationTool
+from spatial_agent.tools.video_counting import CountVideoObjectsTool
 
 
 class ToolRegistry:
@@ -38,6 +39,7 @@ class ToolRegistry:
 def build_default_tool_registry(config) -> ToolRegistry:
     tools = [
         CountObjectsTool(config),
+        CountVideoObjectsTool(config),
         EstimateObjectDepthTool(config),
         GetObjectMaskTool(config),
         EstimateOpticalFlowTool(config),
