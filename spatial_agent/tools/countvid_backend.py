@@ -458,6 +458,7 @@ def run_countvid_subprocess(
     sam2_checkpoint_path: str,
     sam2_config_name: str,
     device: str = "cuda",
+    window_size: int = 3,
     temp_dir: str | None = None,
 ) -> Dict[str, Any]:
     """Run CountVid pipeline via subprocess calling count_in_videos.py.
@@ -501,7 +502,7 @@ def run_countvid_subprocess(
             dest = frames_dir / f"{idx:05d}{ext}"
             shutil.copyfile(image_path, str(dest))
 
-        # Build command
+        # Build command (temporal_filter disabled — multiprocessing issues in subprocess)
         cmd = [
             sys.executable, str(script_path),
             "--video_dir", str(frames_dir),
@@ -530,7 +531,7 @@ def run_countvid_subprocess(
             cmd,
             capture_output=True,
             text=True,
-            timeout=600,
+            timeout=1200,
             cwd=str(repo_path),
             env=env,
         )

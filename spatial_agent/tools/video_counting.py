@@ -88,13 +88,14 @@ class CountVideoObjectsTool(BaseSpatialTool):
                 sam2_checkpoint_path=str(sam2_ckpt) if sam2_ckpt else "",
                 sam2_config_name=str(sam2_config) if sam2_config else "",
                 device=str(device),
+                window_size=window_size,
             )
         except FileNotFoundError:
             return self.unavailable(
                 f"CountVid script not found at {countgd_repo}/count_in_videos.py"
             )
         except subprocess.TimeoutExpired:
-            return self.error("CountVid subprocess timed out (10 min limit)")
+            return self.error("CountVid subprocess timed out (20 min limit)")
         except Exception as exc:
             return self.error(f"CountVid subprocess failed: {exc}")
 
