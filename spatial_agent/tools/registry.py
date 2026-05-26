@@ -12,6 +12,7 @@ from spatial_agent.tools.mask import GetObjectMaskTool
 from spatial_agent.tools.motion import EstimateObjectMotionTool
 from spatial_agent.tools.optical_flow import EstimateOpticalFlowTool
 from spatial_agent.tools.orientation import GetObjectOrientationTool
+from spatial_agent.tools.video_counting_3d import CountVideoObjects3DTool
 from spatial_agent.tools.video_counting import CountVideoObjectsTool
 
 
@@ -61,6 +62,13 @@ def _video_counting_configured(config) -> bool:
     return True
 
 
+def _video_counting_3d_configured(config) -> bool:
+    from spatial_agent.tools.backends import get_tool_settings
+
+    settings = get_tool_settings(config, "CountVideoObjects3D", aliases=["video_counting_3d", "visra_counting"])
+    return bool(settings)
+
+
 def build_default_tool_registry(config) -> ToolRegistry:
     tools = [
         CountObjectsTool(config),
@@ -73,6 +81,9 @@ def build_default_tool_registry(config) -> ToolRegistry:
         LocalizeObjectsTool(config),
         EstimateObjectMotionTool(config),
     ]
+    if _video_counting_3d_configured(config):
+        tools.insert(1, CountVideoObjects3DTool(config))
     if _video_counting_configured(config):
-        tools.insert(1, CountVideoObjectsTool(config))
+        insert_at = 2 if _video_counting_3d_configured(config) else 1
+        tools.insert(insert_at, CountVideoObjectsTool(config))
     return ToolRegistry(tools)

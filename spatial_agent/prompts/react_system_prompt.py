@@ -9,9 +9,13 @@ def build_react_system_prompt(available_tools: List[Dict[str, object]]) -> str:
     tool_names = {t.get("name", "") for t in available_tools}
 
     counting_rules = []
+    if "CountVideoObjects3D" in tool_names:
+        counting_rules.append(
+            "- For video object-counting questions, prefer CountVideoObjects3D (it clusters 3D object views to avoid cross-view over-counting)."
+        )
     if "CountVideoObjects" in tool_names:
         counting_rules.append(
-            "- For video counting questions, prefer CountVideoObjects (it counts unique instances across frames)."
+            "- If CountVideoObjects3D is unavailable or fails, use CountVideoObjects as the fallback for video counting."
         )
     if "CountObjects" in tool_names:
         counting_rules.append(

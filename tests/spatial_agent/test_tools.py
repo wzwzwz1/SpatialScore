@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from PIL import Image
@@ -7,6 +8,9 @@ from spatial_agent.tools.counting import CountObjectsTool
 from spatial_agent.tools.localization import LocalizeObjectsTool
 from spatial_agent.tools.placeholders import PlaceholderTool
 from spatial_agent.tools.registry import build_default_tool_registry
+from spatial_agent.tools.countvid_backend import run_countvid_subprocess
+from spatial_agent.tools.video_counting_3d import CountVideoObjects3DTool
+from spatial_agent.tools.video_counting_3d_utils import constrained_greedy_cluster
 from spatial_agent.tools.video_counting import CountVideoObjectsTool
 from spatial_agent.tools.video_counting_utils import aggregate_unique_tracks
 
@@ -31,6 +35,7 @@ def test_default_registry_tools_return_structured_results():
 
     invocations = {
         "CountObjects": {"image": "missing.jpg", "objects": ["cat"]},
+        "CountVideoObjects3D": {"images": ["missing.jpg"], "objects": ["cat"]},
         "EstimateObjectDepth": {"image": "missing.jpg", "objects": ["cat"]},
         "GetObjectMask": {"image": "missing.jpg", "objects": ["cat"]},
         "EstimateOpticalFlow": {"images": ["missing-a.jpg", "missing-b.jpg"]},
@@ -308,6 +313,7 @@ def test_count_video_objects_success_with_mock_backend(tmp_path, monkeypatch):
     assert "image-1" in result["payload"]["tracks"][0]["supporting_frames"]
     assert len(result["payload"]["frame_summaries"]) == 3
     assert "countvid" in result["payload"]["backend"]
+    assert result["payload"]["pipeline_stats"]["official_pipeline"] is False
     assert len(result["artifacts"]) >= 1
 
 
@@ -353,6 +359,297 @@ def test_count_video_objects_zero_instance_success(tmp_path, monkeypatch):
     assert result["status"] == "success"
     assert result["payload"]["instance_count"] == 0
     assert result["payload"]["tracks"] == []
+
+
+def test_count_video_objects_3d_success_with_mock_backends(tmp_path, monkeypatch):
+    frame_paths = []
+    for i in range(3):
+        p = tmp_path / f"frame_{i}.jpg"
+        Image.new("RGB", (20, 20), "white").save(p)
+        frame_paths.append(str(p))
+
+    class DummyRex:
+        def inference(self, *, images, task, categories):
+            assert task == "detection"
+            return [
+                {
+                    "extracted_predictions": {
+                        "table": [
+                            {"type": "box", "coords": [4, 4, 10, 10], "score": 0.9},
+                        ]
+                    }
+                }
+            ]
+
+    class DummyTensor:
+        def __init__(self, array):
+            self.array = array
+
+        @property
+        def shape(self):
+            return self.array.shape
+
+        def to(self, _device):
+            return self
+
+        def detach(self):
+            return self
+
+        def cpu(self):
+            return self
+
+        def numpy(self):
+            return self.array
+
+        def __getitem__(self, item):
+            return DummyTensor(self.array[item])
+
+    class DummyTorch:
+        class no_grad:
+            def __enter__(self):
+                return None
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+    class DummyVGGT:
+        def __call__(self, images):
+            import numpy as np
+
+            points = np.zeros((1, 3, 20, 20, 3), dtype=float)
+            points[0, 0, :, :, :] = [0.0, 0.0, 0.0]
+            points[0, 1, :, :, :] = [0.1, 0.0, 0.0]
+            points[0, 2, :, :, :] = [2.0, 0.0, 0.0]
+            return {"world_points": DummyTensor(points)}
+
+    def _load_images(paths, mode="pad"):
+        import numpy as np
+
+        return DummyTensor(np.zeros((len(paths), 3, 20, 20), dtype=float))
+
+    monkeypatch.setattr(
+        "spatial_agent.tools.video_counting_3d.get_rex_omni_backend",
+        lambda **kwargs: {"wrapper": DummyRex(), "backend_label": "rex"},
+    )
+    monkeypatch.setattr(
+        "spatial_agent.tools.video_counting_3d.get_vggt_backend",
+        lambda **kwargs: {
+            "torch": DummyTorch(),
+            "model": DummyVGGT(),
+            "load_and_preprocess_images": _load_images,
+        },
+    )
+
+    config = SpatialAgentConfig(
+        artifact_dir=str(tmp_path),
+        tool_config={
+            "video_counting_3d": {
+                "num_frames": 3,
+                "device": "cpu",
+                "use_sam_masks": False,
+                "use_tracking": False,
+                "cg_distance_threshold": 0.35,
+                "bbox_point_stride": 4,
+            }
+        },
+    )
+    result = CountVideoObjects3DTool(config).invoke(images=frame_paths, objects=["table"])
+
+    assert result["status"] == "success"
+    assert result["payload"]["instance_count"] == 2
+    assert result["payload"]["pipeline_stats"]["sampled_frame_count"] == 3
+    assert result["payload"]["pipeline_stats"]["view_count"] == 3
+    assert Path(result["artifacts"][0]).exists()
+
+
+def test_constrained_greedy_cluster_respects_frame_disjoint_constraint():
+    views = [
+        {"view_id": "a", "object": "chair", "frame_index": 0, "bbox": [0, 0, 1, 1], "center_3d": [0, 0, 0]},
+        {"view_id": "b", "object": "chair", "frame_index": 1, "bbox": [0, 0, 1, 1], "center_3d": [0.1, 0, 0]},
+        {"view_id": "c", "object": "chair", "frame_index": 1, "bbox": [2, 2, 3, 3], "center_3d": [0.12, 0, 0]},
+    ]
+
+    result = constrained_greedy_cluster(views, distance_threshold=0.2)
+
+    assert len(result) == 2
+    assert sorted(instance["member_count"] for instance in result) == [1, 2]
+
+
+def test_constrained_greedy_cluster_uses_tracking_prior():
+    views = [
+        {"view_id": "a", "object": "chair", "frame_index": 0, "bbox": [0, 0, 1, 1], "center_3d": [0.0, 0, 0], "track_id": "t1"},
+        {"view_id": "b", "object": "chair", "frame_index": 1, "bbox": [0, 0, 1, 1], "center_3d": [0.2, 0, 0], "track_id": "t1"},
+        {"view_id": "c", "object": "chair", "frame_index": 2, "bbox": [0, 0, 1, 1], "center_3d": [0.12, 0, 0]},
+    ]
+
+    result = constrained_greedy_cluster(views, distance_threshold=0.05)
+
+    assert len(result) == 1
+    assert result[0]["member_count"] == 3
+    assert sorted(view["track_id"] for view in result[0]["views"] if view["track_id"]) == ["t1", "t1"]
+
+
+def test_count_video_objects_3d_registered_when_configured():
+    registry = build_default_tool_registry(
+        SpatialAgentConfig(tool_config={"video_counting_3d": {"num_frames": 64}})
+    )
+
+    names = registry.list_names()
+    assert "CountVideoObjects3D" in names
+    assert registry.get("CountVideoObjects3D").name == "CountVideoObjects3D"
+
+
+def test_count_video_objects_defaults_to_official_count(tmp_path, monkeypatch):
+    frame_paths = []
+    for i in range(2):
+        p = tmp_path / f"frame_{i}.jpg"
+        Image.new("RGB", (64, 48), "white").save(p)
+        frame_paths.append(str(p))
+
+    def _mock_subprocess(**kwargs):
+        return {
+            "instance_count": 4,
+            "raw_tracks": [
+                {
+                    "track_id": "track_1",
+                    "seed_id": "track_1",
+                    "object": "table",
+                    "start_frame_idx": 0,
+                    "frame_indices": [0, 1],
+                    "points_px": [[10, 10], [11, 11]],
+                },
+                {
+                    "track_id": "track_2",
+                    "seed_id": "track_2",
+                    "object": "table",
+                    "start_frame_idx": 0,
+                    "frame_indices": [0, 1],
+                    "points_px": [[12, 12], [13, 13]],
+                },
+            ],
+            "frame_summaries": [
+                {"image": "image-0", "candidate_count": 2, "filtered_count": 2},
+                {"image": "image-1", "candidate_count": 2, "filtered_count": 2},
+            ],
+            "backend": "countvid:subprocess+test",
+            "countvid_stats": {"official_pipeline": True},
+        }
+
+    monkeypatch.setattr(
+        "spatial_agent.tools.video_counting.run_countvid_subprocess",
+        _mock_subprocess,
+    )
+
+    config = SpatialAgentConfig(
+        artifact_dir=str(tmp_path),
+        tool_config={
+            "video_counting": {
+                "countgd_repo_path": "/tmp/fake",
+                "countgd_checkpoint_path": "/tmp/fake.pth",
+                "sam2_checkpoint_path": "/tmp/fake.pt",
+                "sam2_config_name": "configs/sam2.1/sam2.1_hiera_l.yaml",
+                "device": "cpu",
+                "track_merge_point_threshold_px": 100,
+            }
+        },
+    )
+    result = CountVideoObjectsTool(config).invoke(images=frame_paths, objects=["table"])
+
+    assert result["status"] == "success"
+    assert result["payload"]["instance_count"] == 4
+    assert result["payload"]["pipeline_stats"]["unique_track_count"] == 4
+    assert result["payload"]["pipeline_stats"]["apply_spatialscore_aggregation"] is False
+
+
+def test_countvid_subprocess_uses_full_official_pipeline(tmp_path, monkeypatch):
+    frame_paths = []
+    for i in range(2):
+        p = tmp_path / f"frame_{i}.jpg"
+        Image.new("RGB", (64, 48), "white").save(p)
+        frame_paths.append(str(p))
+
+    repo = tmp_path / "CountVid"
+    repo.mkdir()
+    script = repo / "count_in_videos.py"
+    script.write_text("# fake", encoding="utf-8")
+    countgd_ckpt = tmp_path / "countgd.pth"
+    countgd_ckpt.write_text("x", encoding="utf-8")
+    sam_ckpt = tmp_path / "sam.pt"
+    sam_ckpt.write_text("x", encoding="utf-8")
+
+    captured = {}
+
+    class _Proc:
+        returncode = 0
+        stdout = (
+            "original number of frames: 2\n"
+            "new number of frames: 2\n"
+            "time stage 1: 1.5\n"
+            "time stage 2: 0.5\n"
+            "time stage 3: 2.0\n"
+            "Total Number of Objects: 1\n"
+        )
+        stderr = ""
+
+    def _run(cmd, capture_output, text, timeout, cwd, env):
+        captured["cmd"] = cmd
+        captured["cwd"] = cwd
+        captured["env"] = env
+        output_idx = cmd.index("--output_dir") + 1
+        Path(cmd[output_idx]).mkdir(parents=True)
+        Path(cmd[output_idx], "final-video.mp4").write_text("video", encoding="utf-8")
+        output_file = Path(cmd[cmd.index("--output_file") + 1])
+        frames_dir = cmd[cmd.index("--video_dir") + 1]
+        output_file.write_text(json.dumps({frames_dir: {"table": 1}}), encoding="utf-8")
+        (repo / "T.json").write_text(
+            json.dumps({"1": {"0": [[10, 11], [20, 22]], "1": [[12], [24]]}}),
+            encoding="utf-8",
+        )
+        return _Proc()
+
+    monkeypatch.setattr("spatial_agent.tools.countvid_backend.subprocess.run", _run)
+
+    result = run_countvid_subprocess(
+        image_paths=frame_paths,
+        objects=["table"],
+        countgd_repo_path=str(repo),
+        countgd_checkpoint_path=str(countgd_ckpt),
+        sam2_checkpoint_path=str(sam_ckpt),
+        sam2_config_name="configs/sam2.1/sam2.1_hiera_l.yaml",
+        device="cpu",
+        window_size=5,
+        temporal_filter=True,
+        obj_batch_size=7,
+        obj_batch_size_filter=11,
+        img_batch_size=3,
+        min_obj_area=13,
+        downsample_factor=2,
+        sample_frames=2,
+        convert_to_rgb=True,
+        save_final_video=True,
+        temp_dir=str(tmp_path / "run"),
+    )
+
+    cmd = captured["cmd"]
+    assert "--temporal_filter" in cmd
+    assert cmd[cmd.index("--w") + 1] == "5"
+    assert cmd[cmd.index("--obj_batch_size") + 1] == "7"
+    assert cmd[cmd.index("--obj_batch_size_filter") + 1] == "11"
+    assert cmd[cmd.index("--img_batch_size") + 1] == "3"
+    assert cmd[cmd.index("--min_obj_area") + 1] == "13"
+    assert cmd[cmd.index("--downsample_factor") + 1] == "2.0"
+    assert cmd[cmd.index("--sample_frames") + 1] == "2"
+    assert "--convert_to_rgb" in cmd
+    assert "--save_final_video" in cmd
+    assert "--save_T" in cmd
+
+    assert result["instance_count"] == 1
+    assert len(result["raw_tracks"]) == 1
+    assert result["raw_tracks"][0]["points_px"] == [[21.0, 10.5], [24.0, 12.0]]
+    assert result["countvid_stats"]["official_pipeline"] is True
+    assert result["countvid_stats"]["temporal_filter"] is True
+    assert result["countvid_stats"]["time_stage_1"] == 1.5
+    assert len(result["countvid_artifacts"]) == 1
 
 
 def test_count_video_objects_not_registered_without_backend_config():

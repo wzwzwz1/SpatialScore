@@ -74,11 +74,12 @@ def test_prompt_mentions_video_frame_time_order_for_video_inputs():
 
 
 def test_react_system_prompt_forbids_invented_image_paths():
-    prompt = build_react_system_prompt([{"name": "CountObjects"}])
+    prompt = build_react_system_prompt([{"name": "CountObjects"}, {"name": "CountVideoObjects3D"}])
 
     assert "Do not invent image file names or file paths" in prompt
     assert "runtime binds real sampled frames automatically" in prompt
     assert "CountObjects" in prompt
+    assert "CountVideoObjects3D" in prompt
 
 
 def test_parse_react_decisions_accepts_multiple_concatenated_objects():

@@ -46,6 +46,9 @@ class CountObjectsTool(BaseSpatialTool):
             return self.error("CountObjects requires one or more object names.")
 
         image_path = image_paths[0]
+        if not Path(image_path).is_file():
+            return self.error(f"Image path does not exist: {image_path}")
+
         settings = get_tool_settings(self.config, self.name, aliases=["counting", "count"])
         device = resolve_device(settings.get("device"))
         model_path = str(

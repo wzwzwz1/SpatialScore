@@ -10,11 +10,11 @@ from spatial_agent.graph.tool_args import get_representative_counting_frames, is
 def should_skip_images_for_video_counting(
     state: Mapping[str, Any], available_tools: List[Dict[str, Any]]
 ) -> bool:
-    """Skip sending video frames to the LLM when CountVideoObjects will handle them."""
+    """Skip sending video frames to the LLM when a video counting tool will handle them."""
     if str(state.get("input_modality") or "").lower() != "video":
         return False
     tool_names = {t.get("name", "") for t in available_tools}
-    if "CountVideoObjects" not in tool_names:
+    if not ({"CountVideoObjects3D", "CountVideoObjects"} & tool_names):
         return False
     return is_video_counting_task(state)
 
@@ -45,8 +45,9 @@ def build_text_prompt_from_state(state: Mapping[str, Any]) -> str:
     if _is_counting_question(state):
         if is_video_counting_task(state):
             sections.append(
-                "Video counting rule: prefer CountVideoObjects for video counting tasks "
-                "because it counts unique object instances across frames with cross-frame propagation. "
+                "Video counting rule: prefer CountVideoObjects3D for video counting tasks when available "
+                "because it uses 3D object views and tracking to count unique object instances across frames. "
+                "If CountVideoObjects3D is unavailable, use CountVideoObjects. "
                 "Use CountObjects only for single-image counting. "
                 "Base the final answer on the instance_count from the tool output, "
                 "and return a pure Arabic numeral only."

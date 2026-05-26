@@ -176,7 +176,7 @@ def normalize_tool_arguments(state: Mapping[str, Any], tool_name: str | None, ar
         if key in {"image", "images", "other_images", "image_paths"}:
             args[key] = _normalize_image_value(key, args[key], image_paths)
 
-    if tool_name == "CountVideoObjects":
+    if tool_name in {"CountVideoObjects", "CountVideoObjects3D"}:
         if "images" not in args or not args.get("images"):
             args["images"] = image_paths
 

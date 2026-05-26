@@ -373,6 +373,25 @@ def get_sam2_predictor(
 
 
 @lru_cache(maxsize=2)
+def get_sam2_video_predictor(
+    model_id: str,
+    checkpoint_path: str | None,
+    config_path: str | None,
+    device: str,
+) -> Any:
+    with prepend_sys_path(LEGACY_AGENT_DIR):
+        build_module = importlib.import_module("sam2.build_sam")
+        video_module = importlib.import_module("sam2.sam2_video_predictor")
+    if checkpoint_path and config_path:
+        return build_module.build_sam2_video_predictor(
+            config_path,
+            ckpt_path=checkpoint_path,
+            device=device,
+        )
+    return video_module.SAM2VideoPredictor.from_pretrained(model_id, device=device)
+
+
+@lru_cache(maxsize=2)
 def get_vggt_backend(model_id: str, checkpoint_path: str | None, device: str) -> Dict[str, Any]:
     import torch  # pragma: no cover - optional runtime dependency
 

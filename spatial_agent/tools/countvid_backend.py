@@ -459,6 +459,18 @@ def run_countvid_subprocess(
     sam2_config_name: str,
     device: str = "cuda",
     window_size: int = 3,
+    temporal_filter: bool = False,
+    obj_batch_size: int = 30,
+    obj_batch_size_filter: int = 100,
+    img_batch_size: int = 10,
+    min_obj_area: int = 0,
+    downsample_factor: float = 1.0,
+    sample_frames: int = 0,
+    convert_to_rgb: bool = False,
+    save_countgd_video: bool = False,
+    save_sam_indep_video: bool = False,
+    save_final_video: bool = False,
+    timeout_seconds: int = 1200,
     temp_dir: str | None = None,
 ) -> Dict[str, Any]:
     """Run CountVid pipeline via subprocess calling count_in_videos.py.
@@ -484,16 +496,41 @@ def run_countvid_subprocess(
         return {"instance_count": 0, "raw_tracks": [], "frame_summaries": [], "backend": "countvid:subprocess"}
 
     obj_text = objects[0] if objects else "object"
+    window_size = max(1, int(window_size))
+    obj_batch_size = max(1, int(obj_batch_size))
+    obj_batch_size_filter = max(1, int(obj_batch_size_filter))
+    img_batch_size = max(1, int(img_batch_size))
+    min_obj_area = max(0, int(min_obj_area))
+    downsample_factor = max(1.0, float(downsample_factor))
+    sample_frames = max(0, int(sample_frames))
+    timeout_seconds = max(1, int(timeout_seconds))
 
     # Prepare temp directories
     own_tmpdir = temp_dir is None
     tmpdir = temp_dir or tempfile.mkdtemp(prefix="countvid_run_")
+    Path(tmpdir).mkdir(parents=True, exist_ok=True)
     # output_dir must NOT exist — CountVid creates it itself
     output_dir = Path(tmpdir) / "output"
     result_file = Path(tmpdir) / "result.json"
     t_file = Path(tmpdir) / "T.json"
+    repo_t_file = repo_path / "T.json"
 
     try:
+        # CountVid updates an existing JSON file and saves T.json in cwd.
+        # Keep both locations clean so stale output cannot be parsed.
+        try:
+            t_file.unlink()
+        except FileNotFoundError:
+            pass
+        result_file.write_text("{}", encoding="utf-8")
+        try:
+            repo_t_file.unlink()
+        except FileNotFoundError:
+            pass
+        shutil.rmtree(output_dir, ignore_errors=True)
+        shutil.rmtree(Path(tmpdir) / "frames", ignore_errors=True)
+        shutil.rmtree(Path(tmpdir) / "inference_frames", ignore_errors=True)
+
         # Copy frames to temp directory with CountVid-expected naming
         frames_dir = Path(tmpdir) / "frames"
         frames_dir.mkdir(parents=True, exist_ok=True)
@@ -502,7 +539,9 @@ def run_countvid_subprocess(
             dest = frames_dir / f"{idx:05d}{ext}"
             shutil.copyfile(image_path, str(dest))
 
-        # Build command (temporal_filter disabled — multiprocessing issues in subprocess)
+        # Build command using the official CountVid pipeline:
+        # CountGD-Box independent detections -> optional temporal filter ->
+        # SAM2 video propagation/new-object discovery -> final unique count.
         cmd = [
             sys.executable, str(script_path),
             "--video_dir", str(frames_dir),
@@ -513,8 +552,26 @@ def run_countvid_subprocess(
             "--device", device,
             "--output_dir", str(output_dir),
             "--output_file", str(result_file),
+            "--temp_dir", str(Path(tmpdir) / "inference_frames"),
+            "--obj_batch_size", str(obj_batch_size),
+            "--obj_batch_size_filter", str(obj_batch_size_filter),
+            "--img_batch_size", str(img_batch_size),
+            "--min_obj_area", str(min_obj_area),
+            "--downsample_factor", str(downsample_factor),
             "--save_T",
         ]
+        if sample_frames > 0:
+            cmd.extend(["--sample_frames", str(sample_frames)])
+        if temporal_filter:
+            cmd.extend(["--temporal_filter", "--w", str(window_size)])
+        if convert_to_rgb:
+            cmd.append("--convert_to_rgb")
+        if save_countgd_video:
+            cmd.append("--save_countgd_video")
+        if save_sam_indep_video:
+            cmd.append("--save_sam_indep_video")
+        if save_final_video:
+            cmd.append("--save_final_video")
 
         # Run CountVid with torch lib path for compiled CUDA ops
         import os as _os
@@ -531,27 +588,60 @@ def run_countvid_subprocess(
             cmd,
             capture_output=True,
             text=True,
-            timeout=1200,
+            timeout=timeout_seconds,
             cwd=str(repo_path),
             env=env,
         )
 
         stdout = proc.stdout
         stderr = proc.stderr
+        combined_output = stdout + "\n" + stderr
+
+        if proc.returncode != 0:
+            tail = "\n".join(combined_output.splitlines()[-40:])
+            raise RuntimeError(f"CountVid exited with code {proc.returncode}:\n{tail}")
 
         # Parse result: CountVid prints "Total Number of Objects: N"
         instance_count = 0
-        for line in (stdout + stderr).splitlines():
+        original_frame_count = N
+        processed_frame_count: Optional[int] = None
+        time_stage_1: Optional[float] = None
+        time_stage_2: Optional[float] = None
+        time_stage_3: Optional[float] = None
+        used_frame_names: List[str] = []
+        for line in combined_output.splitlines():
             if "Total Number of Objects:" in line:
                 try:
                     instance_count = int(line.split(":")[-1].strip())
                 except ValueError:
                     pass
+            elif line.startswith("original number of frames:"):
+                try:
+                    original_frame_count = int(line.split(":")[-1].strip())
+                except ValueError:
+                    pass
+            elif line.startswith("new number of frames:"):
+                try:
+                    processed_frame_count = int(line.split(":")[-1].strip())
+                except ValueError:
+                    pass
+            elif line.startswith("time stage 1:"):
+                time_stage_1 = _parse_float_suffix(line)
+            elif line.startswith("time stage 2:"):
+                time_stage_2 = _parse_float_suffix(line)
+            elif line.startswith("time stage 3:"):
+                time_stage_3 = _parse_float_suffix(line)
+            elif line.lower().endswith((".jpg", ".jpeg")):
+                used_frame_names.append(line.strip())
+
+        output_count = _load_countvid_output_count(result_file, str(frames_dir), obj_text)
+        if output_count is not None:
+            instance_count = output_count
 
         # Try to load structured output from T.json
         # CountVid saves T.json in the current working directory (repo_path)
         raw_tracks: List[Dict[str, Any]] = []
-        t_json_paths = [t_file, Path(str(repo_path)) / "T.json"]
+        t_json_paths = [t_file, repo_t_file]
         t_json = None
         for p in t_json_paths:
             if p.exists():
@@ -594,13 +684,84 @@ def run_countvid_subprocess(
                 "filtered_count": tracks_in_frame,
             })
 
+        output_artifacts = _collect_countvid_output_artifacts(output_dir)
+
         return {
             "instance_count": max(instance_count, len(raw_tracks)),
             "raw_tracks": raw_tracks,
             "frame_summaries": frame_summaries,
             "backend": f"countvid:subprocess+{sam2_config_name}",
+            "countvid_artifacts": output_artifacts,
+            "countvid_stats": {
+                "official_pipeline": True,
+                "temporal_filter": bool(temporal_filter),
+                "window_size": window_size,
+                "obj_batch_size": obj_batch_size,
+                "obj_batch_size_filter": obj_batch_size_filter,
+                "img_batch_size": img_batch_size,
+                "min_obj_area": min_obj_area,
+                "downsample_factor": downsample_factor,
+                "sample_frames": sample_frames,
+                "convert_to_rgb": bool(convert_to_rgb),
+                "save_countgd_video": bool(save_countgd_video),
+                "save_sam_indep_video": bool(save_sam_indep_video),
+                "save_final_video": bool(save_final_video),
+                "original_frame_count": original_frame_count,
+                "processed_frame_count": processed_frame_count or len(frame_summaries),
+                "used_frame_names": used_frame_names,
+                "time_stage_1": time_stage_1,
+                "time_stage_2": time_stage_2,
+                "time_stage_3": time_stage_3,
+                "returncode": proc.returncode,
+                "timeout_seconds": timeout_seconds,
+            },
         }
 
     finally:
         if own_tmpdir:
             shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+def _parse_float_suffix(line: str) -> Optional[float]:
+    try:
+        return float(line.split(":")[-1].strip().rstrip("s"))
+    except ValueError:
+        return None
+
+
+def _load_countvid_output_count(
+    result_file: Path,
+    frames_dir: str,
+    obj_text: str,
+) -> Optional[int]:
+    if not result_file.exists():
+        return None
+    try:
+        data = json.loads(result_file.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    if not isinstance(data, dict):
+        return None
+    candidates = [
+        data.get(frames_dir, {}).get(obj_text),
+        data.get(str(frames_dir), {}).get(obj_text),
+    ]
+    for value in candidates:
+        if isinstance(value, int):
+            return value
+        if isinstance(value, str):
+            try:
+                return int(value)
+            except ValueError:
+                pass
+    return None
+
+
+def _collect_countvid_output_artifacts(output_dir: Path) -> List[str]:
+    if not output_dir.exists():
+        return []
+    artifacts: List[str] = []
+    for path in sorted(output_dir.iterdir()):
+        if path.is_file() and path.suffix.lower() in {".avi", ".mp4"}:
+            artifacts.append(str(path))
+    return artifacts

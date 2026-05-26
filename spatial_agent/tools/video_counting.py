@@ -75,6 +75,19 @@ class CountVideoObjectsTool(BaseSpatialTool):
         window_size = int(settings.get("window_size", 3))
         min_track_support = int(settings.get("min_track_support", 1))
         device = settings.get("device", "cuda")
+        temporal_filter = bool(settings.get("temporal_filter", False))
+        obj_batch_size = int(settings.get("obj_batch_size", 30))
+        obj_batch_size_filter = int(settings.get("obj_batch_size_filter", 100))
+        img_batch_size = int(settings.get("img_batch_size", 10))
+        min_obj_area = int(settings.get("min_obj_area", 0))
+        downsample_factor = float(settings.get("downsample_factor", 1.0))
+        sample_frames = int(settings.get("sample_frames", 0))
+        convert_to_rgb = bool(settings.get("convert_to_rgb", False))
+        save_countgd_video = bool(settings.get("save_countgd_video", False))
+        save_sam_indep_video = bool(settings.get("save_sam_indep_video", False))
+        save_final_video = bool(settings.get("save_final_video", False))
+        timeout_seconds = int(settings.get("timeout_seconds", 1200))
+        apply_spatialscore_aggregation = bool(settings.get("apply_spatialscore_aggregation", False))
 
         # Use the subprocess-based approach (primary). It calls CountVid's
         # count_in_videos.py directly, avoiding complex in-process dependencies
@@ -89,6 +102,18 @@ class CountVideoObjectsTool(BaseSpatialTool):
                 sam2_config_name=str(sam2_config) if sam2_config else "",
                 device=str(device),
                 window_size=window_size,
+                temporal_filter=temporal_filter,
+                obj_batch_size=obj_batch_size,
+                obj_batch_size_filter=obj_batch_size_filter,
+                img_batch_size=img_batch_size,
+                min_obj_area=min_obj_area,
+                downsample_factor=downsample_factor,
+                sample_frames=sample_frames,
+                convert_to_rgb=convert_to_rgb,
+                save_countgd_video=save_countgd_video,
+                save_sam_indep_video=save_sam_indep_video,
+                save_final_video=save_final_video,
+                timeout_seconds=timeout_seconds,
             )
         except FileNotFoundError:
             return self.unavailable(
@@ -103,6 +128,7 @@ class CountVideoObjectsTool(BaseSpatialTool):
         raw_tracks = subprocess_result["raw_tracks"]
         frame_summaries = subprocess_result["frame_summaries"]
         backend_label = subprocess_result["backend"]
+        countvid_stats = {"official_pipeline": False, **subprocess_result.get("countvid_stats", {})}
 
         # Phase 4: Unique Instance Aggregation — merge raw tracks into canonical tracks
         point_threshold_px = float(settings.get("track_merge_point_threshold_px", 50))
@@ -117,14 +143,17 @@ class CountVideoObjectsTool(BaseSpatialTool):
             except Exception:
                 image_sizes.append((1, 1))
 
-        accepted_tracks = aggregate_unique_tracks(
-            raw_tracks,
-            min_track_support=min_track_support,
-            point_threshold_px=point_threshold_px,
-            merge_overlap_min_frames=merge_overlap_min,
-        )
+        if apply_spatialscore_aggregation:
+            accepted_tracks = aggregate_unique_tracks(
+                raw_tracks,
+                min_track_support=min_track_support,
+                point_threshold_px=point_threshold_px,
+                merge_overlap_min_frames=merge_overlap_min,
+            )
+        else:
+            accepted_tracks = raw_tracks
         formatted_tracks = build_track_payload(accepted_tracks, image_aliases, image_sizes)
-        instance_count = len(accepted_tracks)
+        instance_count = len(accepted_tracks) if apply_spatialscore_aggregation else raw_instance_count
 
         # Artifacts
         artifact_dir = artifact_dir_for_tool(self.config, self.name)
@@ -152,6 +181,8 @@ class CountVideoObjectsTool(BaseSpatialTool):
                 )
         except Exception:
             pass
+
+        artifacts.extend(subprocess_result.get("countvid_artifacts", []))
 
         # Raw tracks manifest
         import json
@@ -208,11 +239,13 @@ class CountVideoObjectsTool(BaseSpatialTool):
                 "raw_instance_count": raw_instance_count,
                 "raw_track_count": len(raw_tracks),
                 "unique_track_count": instance_count,
-                "merged_tracks": len(raw_tracks) - instance_count,
+                "merged_tracks": (len(raw_tracks) - instance_count) if apply_spatialscore_aggregation else 0,
                 "dropped_tracks": raw_instance_count - len(raw_tracks) if raw_instance_count > len(raw_tracks) else 0,
                 "point_threshold_px": point_threshold_px,
                 "merge_overlap_min_frames": merge_overlap_min,
                 "min_track_support": min_track_support,
+                "apply_spatialscore_aggregation": apply_spatialscore_aggregation,
+                **countvid_stats,
             },
             "backend_status": "ok",
             "artifact_descriptions": [
