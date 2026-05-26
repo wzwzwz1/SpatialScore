@@ -172,16 +172,16 @@ def test_localize_objects_returns_instance_count_and_bbox_artifact(tmp_path, mon
 
 
 def test_count_video_objects_returns_unavailable_when_backend_missing(tmp_path, monkeypatch):
-    """CountVideoObjects should return unavailable when backend init fails."""
+    """CountVideoObjects should return unavailable when CountVid script not found."""
     image_path = tmp_path / "frame.jpg"
     Image.new("RGB", (32, 24), "white").save(image_path)
 
-    def _raise_backend(**kwargs):
-        raise ModuleNotFoundError("No module named 'countgd'")
+    def _raise_not_found(**kwargs):
+        raise FileNotFoundError("No such file: count_in_videos.py")
 
     monkeypatch.setattr(
-        "spatial_agent.tools.video_counting.get_countvid_backend",
-        _raise_backend,
+        "spatial_agent.tools.video_counting.run_countvid_subprocess",
+        _raise_not_found,
     )
 
     config = SpatialAgentConfig(
@@ -191,7 +191,7 @@ def test_count_video_objects_returns_unavailable_when_backend_missing(tmp_path, 
                 "countgd_repo_path": "/nonexistent",
                 "countgd_checkpoint_path": "/nonexistent.pth",
                 "sam2_checkpoint_path": "/nonexistent.pt",
-                "sam2_config_name": "/nonexistent.yaml",
+                "sam2_config_name": "configs/sam2.1/sam2.1_hiera_l.yaml",
                 "device": "cpu",
             }
         },
@@ -200,21 +200,20 @@ def test_count_video_objects_returns_unavailable_when_backend_missing(tmp_path, 
     result = tool.invoke(images=[str(image_path)], objects=["table"])
 
     assert result["status"] == "unavailable"
-    assert "No module named 'countgd'" in result["error"]
+    assert "not found" in result["error"].lower()
 
 
 def test_count_video_objects_returns_unavailable_when_partial_backend(tmp_path, monkeypatch):
-    """CountVideoObjects should return unavailable when one component is missing."""
+    """CountVideoObjects should return error when subprocess fails."""
     image_path = tmp_path / "frame.jpg"
     Image.new("RGB", (32, 24), "white").save(image_path)
 
+    def _raise_error(**kwargs):
+        raise RuntimeError("CountVid subprocess failed: SAM 2.1 not available")
+
     monkeypatch.setattr(
-        "spatial_agent.tools.video_counting.get_countvid_backend",
-        lambda **kwargs: {
-            "countgd_available": True,
-            "sam2_available": False,
-            "device": "cpu",
-        },
+        "spatial_agent.tools.video_counting.run_countvid_subprocess",
+        _raise_error,
     )
 
     config = SpatialAgentConfig(
@@ -224,7 +223,7 @@ def test_count_video_objects_returns_unavailable_when_partial_backend(tmp_path, 
                 "countgd_repo_path": "/nonexistent",
                 "countgd_checkpoint_path": "/nonexistent.pth",
                 "sam2_checkpoint_path": "/nonexistent.pt",
-                "sam2_config_name": "/nonexistent.yaml",
+                "sam2_config_name": "configs/sam2.1/sam2.1_hiera_l.yaml",
                 "device": "cpu",
             }
         },
@@ -232,7 +231,7 @@ def test_count_video_objects_returns_unavailable_when_partial_backend(tmp_path, 
     tool = CountVideoObjectsTool(config)
     result = tool.invoke(images=[str(image_path)], objects=["table"])
 
-    assert result["status"] == "unavailable"
+    assert result["status"] == "error"
     assert "SAM 2.1" in result["error"]
 
 
@@ -251,55 +250,37 @@ def test_count_video_objects_returns_error_on_missing_objects():
 
 
 def test_count_video_objects_success_with_mock_backend(tmp_path, monkeypatch):
-    """Full pipeline test with mocked backend components."""
-    # Create dummy frames
+    """Full pipeline test with mocked subprocess backend."""
     frame_paths = []
     for i in range(3):
         p = tmp_path / f"frame_{i}.jpg"
         Image.new("RGB", (64, 48), "white").save(p)
         frame_paths.append(str(p))
 
-    monkeypatch.setattr(
-        "spatial_agent.tools.video_counting.get_countvid_backend",
-        lambda **kwargs: {
-            "countgd_model": None,
-            "countgd_available": True,
-            "sam2_predictor": None,
-            "sam2_available": True,
-            "torch": type("DummyTorch", (), {"no_grad": lambda: type("DummyCtx", (), {"__enter__": lambda s: None, "__exit__": lambda s, *a: None})()})(),
-            "device": "cpu",
-        },
-    )
-
-    # Mock candidate generation (pixel coords, image is 64x48)
-    def _mock_generate(backend, image_paths, objects):
-        return [
-            {"candidates": [{"point_px": [6.4, 9.6], "score": 0.9}]},
-            {"candidates": [{"point_px": [7.68, 10.56], "score": 0.85}]},
-            {"candidates": []},
-        ]
-
-    monkeypatch.setattr(
-        "spatial_agent.tools.video_counting.generate_candidates_countgd",
-        _mock_generate,
-    )
-
-    # Mock SAM propagation (returns points_px in pixel coords)
-    def _mock_propagate(backend, image_paths, frame_detections, objects):
-        return [
-            {
-                "track_id": "table_000",
-                "seed_id": "table_0_0",
-                "object": "table",
-                "start_frame_idx": 0,
-                "frame_indices": [0, 1],
-                "points_px": [[6.4, 9.6], [7.68, 10.56]],
-            }
-        ]
+    def _mock_subprocess(**kwargs):
+        return {
+            "instance_count": 1,
+            "raw_tracks": [
+                {
+                    "track_id": "track_1",
+                    "seed_id": "track_1",
+                    "object": "table",
+                    "start_frame_idx": 0,
+                    "frame_indices": [0, 1],
+                    "points_px": [[6.4, 9.6], [7.68, 10.56]],
+                }
+            ],
+            "frame_summaries": [
+                {"image": "image-0", "candidate_count": 1, "filtered_count": 1},
+                {"image": "image-1", "candidate_count": 1, "filtered_count": 1},
+                {"image": "image-2", "candidate_count": 0, "filtered_count": 0},
+            ],
+            "backend": "countvid:subprocess+test",
+        }
 
     monkeypatch.setattr(
-        "spatial_agent.tools.video_counting.run_sam2_propagation",
-        _mock_propagate,
+        "spatial_agent.tools.video_counting.run_countvid_subprocess",
+        _mock_subprocess,
     )
 
     config = SpatialAgentConfig(
@@ -309,7 +290,7 @@ def test_count_video_objects_success_with_mock_backend(tmp_path, monkeypatch):
                 "countgd_repo_path": "/tmp/fake",
                 "countgd_checkpoint_path": "/tmp/fake.pth",
                 "sam2_checkpoint_path": "/tmp/fake.pt",
-                "sam2_config_name": "/tmp/fake.yaml",
+                "sam2_config_name": "configs/sam2.1/sam2.1_hiera_l.yaml",
                 "device": "cpu",
             }
         },
@@ -320,12 +301,12 @@ def test_count_video_objects_success_with_mock_backend(tmp_path, monkeypatch):
     assert result["status"] == "success"
     assert result["payload"]["instance_count"] == 1
     assert len(result["payload"]["tracks"]) == 1
-    assert result["payload"]["tracks"][0]["track_id"] == "table_000"
+    assert result["payload"]["tracks"][0]["track_id"] == "track_1"
     assert result["payload"]["tracks"][0]["object"] == "table"
     assert "image-0" in result["payload"]["tracks"][0]["supporting_frames"]
     assert "image-1" in result["payload"]["tracks"][0]["supporting_frames"]
     assert len(result["payload"]["frame_summaries"]) == 3
-    assert result["payload"]["backend"] == "countvid:countgd_box+sam2.1"
+    assert "countvid" in result["payload"]["backend"]
     assert len(result["artifacts"]) >= 1
 
 
@@ -337,24 +318,20 @@ def test_count_video_objects_zero_instance_success(tmp_path, monkeypatch):
         Image.new("RGB", (64, 48), "white").save(p)
         frame_paths.append(str(p))
 
+    def _mock_subprocess(**kwargs):
+        return {
+            "instance_count": 0,
+            "raw_tracks": [],
+            "frame_summaries": [
+                {"image": "image-0", "candidate_count": 0, "filtered_count": 0},
+                {"image": "image-1", "candidate_count": 0, "filtered_count": 0},
+            ],
+            "backend": "countvid:subprocess+test",
+        }
+
     monkeypatch.setattr(
-        "spatial_agent.tools.video_counting.get_countvid_backend",
-        lambda **kwargs: {
-            "countgd_model": None,
-            "countgd_available": True,
-            "sam2_predictor": None,
-            "sam2_available": True,
-            "torch": type("DummyTorch", (), {"no_grad": lambda: type("DummyCtx", (), {"__enter__": lambda s: None, "__exit__": lambda s, *a: None})()})(),
-            "device": "cpu",
-        },
-    )
-    monkeypatch.setattr(
-        "spatial_agent.tools.video_counting.generate_candidates_countgd",
-        lambda backend, image_paths, objects: [{"candidates": []}, {"candidates": []}],
-    )
-    monkeypatch.setattr(
-        "spatial_agent.tools.video_counting.run_sam2_propagation",
-        lambda backend, image_paths, frame_detections, objects: [],
+        "spatial_agent.tools.video_counting.run_countvid_subprocess",
+        _mock_subprocess,
     )
 
     config = SpatialAgentConfig(
@@ -364,7 +341,7 @@ def test_count_video_objects_zero_instance_success(tmp_path, monkeypatch):
                 "countgd_repo_path": "/tmp/fake",
                 "countgd_checkpoint_path": "/tmp/fake.pth",
                 "sam2_checkpoint_path": "/tmp/fake.pt",
-                "sam2_config_name": "/tmp/fake.yaml",
+                "sam2_config_name": "configs/sam2.1/sam2.1_hiera_l.yaml",
                 "device": "cpu",
             }
         },
@@ -384,15 +361,13 @@ def test_count_video_objects_not_registered_without_backend_config():
 
 
 def test_count_video_objects_registered_with_backend_config(tmp_path):
-    """CountVideoObjects should be registered when all CountVid paths exist on disk."""
+    """CountVideoObjects should be registered when CountVid paths exist on disk."""
     repo_dir = tmp_path / "CountVid"
     repo_dir.mkdir()
     ckpt_file = tmp_path / "countgd_box.pth"
     ckpt_file.write_text("dummy")
     sam2_ckpt = tmp_path / "sam2.1_hiera_large.pt"
     sam2_ckpt.write_text("dummy")
-    sam2_config = tmp_path / "sam2.1_hiera_l.yaml"
-    sam2_config.write_text("dummy")
 
     config = SpatialAgentConfig(
         tool_config={
@@ -400,7 +375,7 @@ def test_count_video_objects_registered_with_backend_config(tmp_path):
                 "countgd_repo_path": str(repo_dir),
                 "countgd_checkpoint_path": str(ckpt_file),
                 "sam2_checkpoint_path": str(sam2_ckpt),
-                "sam2_config_name": str(sam2_config),
+                "sam2_config_name": "sam2.1/sam2.1_hiera_l.yaml",
             }
         }
     )
@@ -429,7 +404,7 @@ def test_count_video_objects_not_registered_when_repo_missing(tmp_path):
                 "countgd_repo_path": str(tmp_path / "nonexistent_repo"),
                 "countgd_checkpoint_path": str(ckpt),
                 "sam2_checkpoint_path": str(sam2_ckpt),
-                "sam2_config_name": str(cfg),
+                "sam2_config_name": "sam2.1/sam2.1_hiera_l.yaml",
             }
         }
     )
@@ -452,7 +427,7 @@ def test_count_video_objects_not_registered_when_checkpoint_missing(tmp_path):
                 "countgd_repo_path": str(repo),
                 "countgd_checkpoint_path": str(tmp_path / "missing.pth"),
                 "sam2_checkpoint_path": str(sam2_ckpt),
-                "sam2_config_name": str(cfg),
+                "sam2_config_name": "sam2.1/sam2.1_hiera_l.yaml",
             }
         }
     )

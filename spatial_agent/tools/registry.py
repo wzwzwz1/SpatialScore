@@ -47,7 +47,9 @@ def _video_counting_configured(config) -> bool:
     sam2_ckpt = settings.get("sam2_checkpoint_path")
     sam2_config = settings.get("sam2_config_name")
 
-    # All four paths must be configured and exist on disk
+    # countgd_repo, countgd_ckpt, sam2_ckpt must exist on disk.
+    # sam2_config is a Hydra config name (e.g. "sam2.1/sam2.1_hiera_l.yaml"),
+    # not a file path — only check it is a non-empty string.
     if not all([countgd_repo, countgd_ckpt, sam2_ckpt, sam2_config]):
         return False
     if not Path(str(countgd_repo)).is_dir():
@@ -55,8 +57,6 @@ def _video_counting_configured(config) -> bool:
     if not Path(str(countgd_ckpt)).is_file():
         return False
     if not Path(str(sam2_ckpt)).is_file():
-        return False
-    if not Path(str(sam2_config)).is_file():
         return False
     return True
 

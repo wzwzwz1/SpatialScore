@@ -56,9 +56,9 @@
   },
   "video_counting": {
     "backend": "countvid",
-    "countgd_repo_path": "/path/to/CountVid",
-    "countgd_checkpoint_path": "/path/to/countgd_box.pth",
-    "sam2_checkpoint_path": "/path/to/sam2.1_hiera_large.pt",
+    "countgd_repo_path": "/disk/wangzhe/CountVid",
+    "countgd_checkpoint_path": "/disk/wangzhe/CountVid/checkpoints/countgd_box.pth",
+    "sam2_checkpoint_path": "/disk/wangzhe/CountVid/checkpoints/sam2.1_hiera_large.pt",
     "sam2_config_name": "configs/sam2.1/sam2.1_hiera_l.yaml",
     "device": "cuda",
     "window_size": 3,

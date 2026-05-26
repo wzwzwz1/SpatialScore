@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -14,6 +15,7 @@ from spatial_agent.tools.base import BaseSpatialTool
 from spatial_agent.tools.countvid_backend import (
     generate_candidates_countgd,
     get_countvid_backend,
+    run_countvid_subprocess,
     run_sam2_propagation,
 )
 from spatial_agent.tools.video_counting_utils import (
@@ -74,67 +76,44 @@ class CountVideoObjectsTool(BaseSpatialTool):
         min_track_support = int(settings.get("min_track_support", 1))
         device = settings.get("device", "cuda")
 
-        backend = None
-        backend_label = "countvid:unavailable"
+        # Use the subprocess-based approach (primary). It calls CountVid's
+        # count_in_videos.py directly, avoiding complex in-process dependencies
+        # (GroundingDINO custom CUDA ops, GCC, etc.).
         try:
-            backend = get_countvid_backend(
+            subprocess_result = run_countvid_subprocess(
+                image_paths=image_paths,
+                objects=objects,
                 countgd_repo_path=str(countgd_repo) if countgd_repo else "",
                 countgd_checkpoint_path=str(countgd_ckpt) if countgd_ckpt else "",
                 sam2_checkpoint_path=str(sam2_ckpt) if sam2_ckpt else "",
                 sam2_config_name=str(sam2_config) if sam2_config else "",
                 device=str(device),
             )
-        except Exception as exc:
-            return self.unavailable(f"CountVid backend initialization failed: {exc}")
-
-        countgd_ok = backend.get("countgd_available", False)
-        sam2_ok = backend.get("sam2_available", False)
-
-        if not countgd_ok or not sam2_ok:
-            diag_parts: List[str] = []
-            if not countgd_ok:
-                diag_parts.append("CountGD-Box not available")
-                diag_parts.extend(backend.get("countgd_diag", []))
-            if not sam2_ok:
-                diag_parts.append("SAM 2.1 not available")
-                diag_parts.extend(backend.get("sam2_diag", []))
+        except FileNotFoundError:
             return self.unavailable(
-                "CountVid backend partially unavailable. " + "; ".join(diag_parts)
+                f"CountVid script not found at {countgd_repo}/count_in_videos.py"
             )
-
-        backend_label = "countvid:countgd_box+sam2.1"
-
-        # Stage 1: Candidate generation
-        try:
-            frame_detections = generate_candidates_countgd(backend, image_paths, objects)
+        except subprocess.TimeoutExpired:
+            return self.error("CountVid subprocess timed out (10 min limit)")
         except Exception as exc:
-            return self.error(f"CountGD-Box candidate generation failed: {exc}")
+            return self.error(f"CountVid subprocess failed: {exc}")
 
-        # Stage 2: Temporal filtering
-        try:
-            frame_detections = temporal_window_filter(frame_detections, window_size=window_size)
-        except Exception as exc:
-            return self.error(f"Temporal filtering failed: {exc}")
+        instance_count = subprocess_result["instance_count"]
+        raw_tracks = subprocess_result["raw_tracks"]
+        frame_summaries = subprocess_result["frame_summaries"]
+        backend_label = subprocess_result["backend"]
 
-        # Stage 3: Video propagation / tracking
-        try:
-            raw_tracks = run_sam2_propagation(backend, image_paths, frame_detections, objects)
-        except Exception as exc:
-            return self.error(f"SAM 2.1 propagation failed: {exc}")
-
-        # Stage 4: Unique instance aggregation
+        # Aggregate and format tracks
         image_aliases = [f"image-{i}" for i in range(len(image_paths))]
         image_sizes: List[Tuple[int, int]] = []
         for p in image_paths:
             try:
                 img = load_pil_image(p)
-                image_sizes.append(img.size)  # (width, height)
+                image_sizes.append(img.size)
             except Exception:
                 image_sizes.append((1, 1))
         accepted_tracks = aggregate_unique_tracks(raw_tracks, min_track_support=min_track_support)
         formatted_tracks = build_track_payload(accepted_tracks, image_aliases, image_sizes)
-        frame_summaries = build_frame_summaries(frame_detections, image_aliases)
-        instance_count = len(accepted_tracks)
 
         # Artifacts
         artifact_dir = artifact_dir_for_tool(self.config, self.name)
@@ -142,17 +121,10 @@ class CountVideoObjectsTool(BaseSpatialTool):
 
         track_overlay_path = artifact_dir / "track_overlay.png"
         try:
-            artifacts.append(
-                save_track_overlay(image_paths, accepted_tracks, track_overlay_path)
-            )
-        except Exception:
-            pass
-
-        candidate_overlay_path = artifact_dir / "candidate_overlay.png"
-        try:
-            artifacts.append(
-                save_candidate_overlay(image_paths, frame_detections, candidate_overlay_path)
-            )
+            if accepted_tracks:
+                artifacts.append(
+                    save_track_overlay(image_paths, accepted_tracks, track_overlay_path)
+                )
         except Exception:
             pass
 
@@ -183,14 +155,9 @@ class CountVideoObjectsTool(BaseSpatialTool):
             "backend": backend_label,
             "artifact_descriptions": [
                 {
-                    "path": track_overlay_path,
+                    "path": str(track_overlay_path),
                     "kind": "track_overlay",
                     "description": "Propagated object tracks overlaid on sampled video frames.",
-                },
-                {
-                    "path": candidate_overlay_path,
-                    "kind": "candidate_overlay",
-                    "description": "Per-frame candidate detections with temporal filtering results.",
                 },
                 {
                     "path": str(manifest_path),
