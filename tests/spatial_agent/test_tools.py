@@ -8,6 +8,7 @@ from spatial_agent.tools.localization import LocalizeObjectsTool
 from spatial_agent.tools.placeholders import PlaceholderTool
 from spatial_agent.tools.registry import build_default_tool_registry
 from spatial_agent.tools.video_counting import CountVideoObjectsTool
+from spatial_agent.tools.video_counting_utils import aggregate_unique_tracks
 
 
 def test_placeholder_tool_returns_unavailable_status():
@@ -433,3 +434,78 @@ def test_count_video_objects_not_registered_when_checkpoint_missing(tmp_path):
     )
     registry = build_default_tool_registry(config)
     assert "CountVideoObjects" not in registry.list_names()
+
+
+# --- Phase 4: Unique Instance Aggregation ---
+
+def test_aggregate_merges_similar_tracks():
+    tracks = [
+        {"track_id": "A", "object": "table",
+         "frame_indices": [0, 1, 2, 3], "points_px": [[100, 200], [102, 198], [105, 202], [108, 199]]},
+        {"track_id": "B", "object": "table",
+         "frame_indices": [2, 3, 4, 5], "points_px": [[103, 201], [107, 200], [110, 198], [112, 197]]},
+    ]
+    result = aggregate_unique_tracks(tracks, point_threshold_px=50, merge_overlap_min_frames=2)
+    assert len(result) == 1
+    assert set(result[0]["frame_indices"]) == {0, 1, 2, 3, 4, 5}
+
+
+def test_aggregate_keeps_distant_tracks_separate():
+    tracks = [
+        {"track_id": "A", "object": "table",
+         "frame_indices": [0, 1, 2], "points_px": [[100, 200], [102, 198], [105, 202]]},
+        {"track_id": "B", "object": "table",
+         "frame_indices": [0, 1, 2], "points_px": [[500, 600], [502, 598], [505, 602]]},
+    ]
+    result = aggregate_unique_tracks(tracks, point_threshold_px=50, merge_overlap_min_frames=2)
+    assert len(result) == 2
+
+
+def test_aggregate_keeps_non_overlapping_separate():
+    tracks = [
+        {"track_id": "A", "object": "table",
+         "frame_indices": [0, 1], "points_px": [[100, 200], [102, 198]]},
+        {"track_id": "B", "object": "table",
+         "frame_indices": [3, 4], "points_px": [[100, 200], [102, 198]]},
+    ]
+    result = aggregate_unique_tracks(tracks, point_threshold_px=50, merge_overlap_min_frames=2)
+    assert len(result) == 2
+
+
+def test_aggregate_filters_by_min_support():
+    tracks = [
+        {"track_id": "A", "object": "table",
+         "frame_indices": [0], "points_px": [[100, 200]]},
+        {"track_id": "B", "object": "table",
+         "frame_indices": [0, 1, 2], "points_px": [[500, 600], [502, 598], [505, 602]]},
+    ]
+    result = aggregate_unique_tracks(tracks, min_track_support=2, point_threshold_px=50)
+    assert len(result) == 1
+    assert result[0]["track_id"] == "B"
+
+
+def test_aggregate_empty_returns_empty():
+    assert aggregate_unique_tracks([]) == []
+
+
+def test_aggregate_single_track_passes_through():
+    tracks = [
+        {"track_id": "A", "object": "table",
+         "frame_indices": [0, 1, 2], "points_px": [[100, 200], [102, 198], [105, 202]]},
+    ]
+    result = aggregate_unique_tracks(tracks)
+    assert len(result) == 1
+
+
+def test_aggregate_multi_component_clustering():
+    """A+B merge, C stays alone → 2 unique instances."""
+    tracks = [
+        {"track_id": "A", "object": "table",
+         "frame_indices": [0, 1, 2, 3], "points_px": [[100, 200], [102, 198], [105, 202], [107, 201]]},
+        {"track_id": "B", "object": "table",
+         "frame_indices": [2, 3, 4, 5], "points_px": [[103, 201], [106, 200], [108, 199], [110, 198]]},
+        {"track_id": "C", "object": "table",
+         "frame_indices": [0, 1, 2, 3], "points_px": [[500, 600], [502, 598], [505, 602], [507, 601]]},
+    ]
+    result = aggregate_unique_tracks(tracks, point_threshold_px=50, merge_overlap_min_frames=2)
+    assert len(result) == 2

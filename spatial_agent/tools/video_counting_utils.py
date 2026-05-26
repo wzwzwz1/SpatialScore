@@ -105,13 +105,143 @@ def build_frame_summaries(
 def aggregate_unique_tracks(
     tracks: List[Dict[str, Any]],
     min_track_support: int = 1,
+    point_threshold_px: float = 50.0,
+    merge_overlap_min_frames: int = 2,
 ) -> List[Dict[str, Any]]:
-    """Filter tracks by minimum frame support threshold."""
-    return [
-        track
-        for track in tracks
-        if len(track.get("frame_indices", [])) >= min_track_support
+    """Merge raw tracks into canonical unique instances via connected components.
+
+    Two tracks are considered the same instance if they:
+    1. Share at least ``merge_overlap_min_frames`` frames (temporal overlap), AND
+    2. In those shared frames, their centroid distance is <= ``point_threshold_px``
+       pixels (spatial proximity).
+
+    Tracks with fewer than ``min_track_support`` frames are discarded before merging.
+    The result is one canonical track per connected component.
+    """
+    if not tracks:
+        return []
+
+    # Filter by minimum support
+    candidates = [
+        t for t in tracks
+        if len(t.get("frame_indices", [])) >= min_track_support
     ]
+    if not candidates:
+        return []
+    if len(candidates) == 1:
+        return [_canonicalize_track(candidates[0], [candidates[0]])]
+
+    n = len(candidates)
+
+    # Build adjacency graph: edge[i][j] = True if tracks i and j are the same instance
+    adj = [[False] * n for _ in range(n)]
+
+    for i in range(n):
+        frames_i = set(candidates[i].get("frame_indices", []))
+        points_i = _build_frame_point_map(candidates[i])
+        for j in range(i + 1, n):
+            frames_j = set(candidates[j].get("frame_indices", []))
+            # Temporal overlap
+            shared_frames = frames_i & frames_j
+            if len(shared_frames) < merge_overlap_min_frames:
+                continue
+            # Spatial proximity in shared frames (exclude occluded [0,0] points)
+            close_count = 0
+            pj_map = _build_frame_point_map(candidates[j])
+            for f in shared_frames:
+                pi = points_i.get(f)
+                pj = pj_map.get(f)
+                if pi is None or pj is None:
+                    continue
+                # Skip degenerate [0, 0] points (occluded / no mask)
+                if (pi[0] == 0.0 and pi[1] == 0.0) or (pj[0] == 0.0 and pj[1] == 0.0):
+                    continue
+                dist = ((pi[0] - pj[0]) ** 2 + (pi[1] - pj[1]) ** 2) ** 0.5
+                if dist <= point_threshold_px:
+                    close_count += 1
+            if close_count >= merge_overlap_min_frames:
+                adj[i][j] = True
+                adj[j][i] = True
+
+    # Connected components (DFS)
+    visited = [False] * n
+    components: List[List[int]] = []
+    for i in range(n):
+        if not visited[i]:
+            comp: List[int] = []
+            _dfs(i, adj, visited, comp)
+            components.append(comp)
+
+    # Build canonical unique tracks, one per component
+    unique: List[Dict[str, Any]] = []
+    for comp in components:
+        members = [candidates[i] for i in comp]
+        unique.append(_canonicalize_track(members[0], members))
+
+    return unique
+
+
+def _build_frame_point_map(track: Dict[str, Any]) -> Dict[int, List[float]]:
+    """Return {frame_idx: [cx, cy]} for a track."""
+    mapping: Dict[int, List[float]] = {}
+    frames = track.get("frame_indices", [])
+    points = track.get("points_px", [])
+    for idx, f in enumerate(frames):
+        if idx < len(points):
+            mapping[f] = points[idx]
+    return mapping
+
+
+def _dfs(
+    node: int,
+    adj: List[List[bool]],
+    visited: List[bool],
+    component: List[int],
+) -> None:
+    visited[node] = True
+    component.append(node)
+    for neighbor, connected in enumerate(adj[node]):
+        if connected and not visited[neighbor]:
+            _dfs(neighbor, adj, visited, component)
+
+
+def _canonicalize_track(
+    primary: Dict[str, Any],
+    members: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Merge a group of tracks into one canonical unique track.
+
+    Frame coverage is the union of all member frames, with points averaged
+    where multiple members cover the same frame.
+    """
+    all_frames: Dict[int, List[List[float]]] = {}
+    for track in members:
+        for idx, f in enumerate(track.get("frame_indices", [])):
+            pts = track.get("points_px", [])
+            if idx < len(pts) and pts[idx] != [0.0, 0.0]:
+                all_frames.setdefault(f, []).append(pts[idx])
+
+    frames_sorted = sorted(all_frames.keys())
+    points_merged: List[List[float]] = []
+    for f in frames_sorted:
+        pts_list = all_frames[f]
+        if len(pts_list) == 1:
+            points_merged.append(pts_list[0])
+        else:
+            cx = sum(p[0] for p in pts_list) / len(pts_list)
+            cy = sum(p[1] for p in pts_list) / len(pts_list)
+            points_merged.append([cx, cy])
+
+    seed_ids = [m.get("seed_id", m.get("track_id", "?")) for m in members]
+    return {
+        "seed_id": seed_ids[0],
+        "track_id": primary.get("track_id", "unique"),
+        "object": primary.get("object", "unknown"),
+        "start_frame_idx": frames_sorted[0] if frames_sorted else 0,
+        "frame_indices": frames_sorted,
+        "points_px": points_merged,
+        "member_seed_ids": seed_ids,
+    }
 
 
 def save_track_overlay(

@@ -99,12 +99,15 @@ class CountVideoObjectsTool(BaseSpatialTool):
         except Exception as exc:
             return self.error(f"CountVid subprocess failed: {exc}")
 
-        instance_count = subprocess_result["instance_count"]
+        raw_instance_count = subprocess_result["instance_count"]
         raw_tracks = subprocess_result["raw_tracks"]
         frame_summaries = subprocess_result["frame_summaries"]
         backend_label = subprocess_result["backend"]
 
-        # Aggregate and format tracks
+        # Phase 4: Unique Instance Aggregation — merge raw tracks into canonical tracks
+        point_threshold_px = float(settings.get("track_merge_point_threshold_px", 50))
+        merge_overlap_min = int(settings.get("track_merge_overlap_min_frames", 2))
+
         image_aliases = [f"image-{i}" for i in range(len(image_paths))]
         image_sizes: List[Tuple[int, int]] = []
         for p in image_paths:
@@ -113,8 +116,15 @@ class CountVideoObjectsTool(BaseSpatialTool):
                 image_sizes.append(img.size)
             except Exception:
                 image_sizes.append((1, 1))
-        accepted_tracks = aggregate_unique_tracks(raw_tracks, min_track_support=min_track_support)
+
+        accepted_tracks = aggregate_unique_tracks(
+            raw_tracks,
+            min_track_support=min_track_support,
+            point_threshold_px=point_threshold_px,
+            merge_overlap_min_frames=merge_overlap_min,
+        )
         formatted_tracks = build_track_payload(accepted_tracks, image_aliases, image_sizes)
+        instance_count = len(accepted_tracks)
 
         # Artifacts
         artifact_dir = artifact_dir_for_tool(self.config, self.name)
@@ -154,6 +164,14 @@ class CountVideoObjectsTool(BaseSpatialTool):
             "tracks": formatted_tracks,
             "frame_summaries": frame_summaries,
             "backend": backend_label,
+            "aggregation_stats": {
+                "raw_instance_count": raw_instance_count,
+                "raw_track_count": len(raw_tracks),
+                "unique_track_count": instance_count,
+                "merged_tracks": len(raw_tracks) - instance_count,
+                "point_threshold_px": point_threshold_px,
+                "merge_overlap_min_frames": merge_overlap_min,
+            },
             "artifact_descriptions": [
                 {
                     "path": str(track_overlay_path),

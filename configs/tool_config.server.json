@@ -62,6 +62,8 @@
     "sam2_config_name": "configs/sam2.1/sam2.1_hiera_l.yaml",
     "device": "cuda",
     "window_size": 3,
-    "min_track_support": 1
+    "min_track_support": 1,
+    "track_merge_point_threshold_px": 200,
+    "track_merge_overlap_min_frames": 2
   }
 }
