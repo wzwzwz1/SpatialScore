@@ -102,6 +102,80 @@ def build_frame_summaries(
     return summaries
 
 
+def save_unique_track_overlay(
+    frame_paths: List[str],
+    unique_tracks: List[Dict[str, Any]],
+    raw_tracks: List[Dict[str, Any]],
+    output_path: Path,
+) -> str:
+    """Visualize final unique instances with distinct colors.
+
+    Each unique track gets a different color. Raw member tracks of the same
+    unique instance share the same color but have lighter alpha.
+    """
+    if not frame_paths or not unique_tracks:
+        return str(output_path)
+
+    frames = [load_pil_image(p) for p in frame_paths]
+    palette = [
+        (220, 50, 50), (50, 180, 50), (50, 120, 220),
+        (220, 160, 40), (160, 80, 220), (50, 180, 180),
+        (220, 100, 160), (140, 200, 80),
+    ]
+
+    # Build mapping: seed_id -> unique track index
+    seed_to_unique: Dict[str, int] = {}
+    for ui, ut in enumerate(unique_tracks):
+        for sid in ut.get("member_seed_ids", [ut.get("track_id", "")]):
+            seed_to_unique[sid] = ui
+
+    rendered = []
+    for frame_idx, frame in enumerate(frames):
+        canvas = frame.copy().convert("RGBA")
+        overlay = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+        draw_overlay = ImageDraw.Draw(overlay)
+        w, h = canvas.size
+
+        for track in raw_tracks:
+            if frame_idx in track.get("frame_indices", []):
+                sid = track.get("seed_id", track.get("track_id", ""))
+                ui = seed_to_unique.get(sid, 0)
+                color = palette[ui % len(palette)]
+                pt_idx = track["frame_indices"].index(frame_idx)
+                points = track.get("points_px", [])
+                if pt_idx < len(points) and not (points[pt_idx][0] == 0 and points[pt_idx][1] == 0):
+                    x = max(0.0, min(float(w - 1), float(points[pt_idx][0])))
+                    y = max(0.0, min(float(h - 1), float(points[pt_idx][1])))
+                    draw_overlay.ellipse((x - 5, y - 5, x + 5, y + 5),
+                                         fill=color + (180,), outline="black", width=1)
+                    label = f"U{ui}"
+                    draw_overlay.text((x + 8, y - 8), label, fill=color + (220,))
+
+        # Draw legend
+        legend_y = 8
+        for ui in range(len(unique_tracks)):
+            color = palette[ui % len(palette)]
+            draw_overlay.rectangle((8, legend_y, 20, legend_y + 12), fill=color + (220,), outline="black")
+            member_count = len(unique_tracks[ui].get("member_seed_ids", []))
+            draw_overlay.text((24, legend_y - 1),
+                              f"Instance {ui} ({member_count} tracks)",
+                              fill=color + (220,))
+            legend_y += 16
+
+        canvas = Image.alpha_composite(canvas, overlay).convert("RGB")
+        rendered.append(canvas)
+
+    total_w = sum(f.width for f in rendered)
+    max_h = max(f.height for f in rendered)
+    grid = Image.new("RGB", (total_w, max_h))
+    cursor = 0
+    for f in rendered:
+        grid.paste(f, (cursor, 0))
+        cursor += f.width
+    grid.save(output_path)
+    return str(output_path)
+
+
 def aggregate_unique_tracks(
     tracks: List[Dict[str, Any]],
     min_track_support: int = 1,

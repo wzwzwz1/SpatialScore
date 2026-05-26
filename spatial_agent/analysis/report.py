@@ -499,6 +499,14 @@ def _write_markdown(
                         for fs in payload["frame_summaries"]
                     )
                     lines.append(f"- frame_summaries: {fs_summary}")
+                pipeline = payload.get("pipeline_stats", {})
+                if pipeline:
+                    lines.append(f"- pipeline: {pipeline.get('frame_count', '?')} frames, "
+                                 f"{pipeline.get('raw_track_count', '?')} raw → "
+                                 f"{pipeline.get('unique_track_count', '?')} unique "
+                                 f"(merged {pipeline.get('merged_tracks', '?')}, "
+                                 f"dropped {pipeline.get('dropped_tracks', '?')})")
+                    lines.append(f"- backend_status: {payload.get('backend_status', 'unknown')}")
                 lines.append("")
                 lines.extend(
                     [
@@ -583,6 +591,11 @@ def _write_html(report: Dict[str, Any], chart_files: Dict[str, str], case_rows: 
                     for fs in payload['frame_summaries']
                 ]
                 extra_info += f" | <strong>frames:</strong> {', '.join(fs_parts)}"
+            pipeline = payload.get('pipeline_stats', {})
+            if pipeline:
+                extra_info += (f" | <strong>pipeline:</strong> {pipeline.get('frame_count', '?')} frames, "
+                               f"{pipeline.get('raw_track_count', '?')} raw → "
+                               f"{pipeline.get('unique_track_count', '?')} unique")
             tool_detail_html.append(
                 f"""
                 <section style="margin-top: 12px; padding: 12px; background: #fafafa; border-radius: 8px;">

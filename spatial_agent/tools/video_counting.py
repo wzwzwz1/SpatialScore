@@ -22,8 +22,8 @@ from spatial_agent.tools.video_counting_utils import (
     aggregate_unique_tracks,
     build_frame_summaries,
     build_track_payload,
-    save_candidate_overlay,
     save_track_overlay,
+    save_unique_track_overlay,
     temporal_window_filter,
 )
 
@@ -130,16 +130,30 @@ class CountVideoObjectsTool(BaseSpatialTool):
         artifact_dir = artifact_dir_for_tool(self.config, self.name)
         artifacts: List[str] = []
 
+        # Raw track overlay
         track_overlay_path = artifact_dir / "track_overlay.png"
         try:
-            if accepted_tracks:
+            if raw_tracks:
                 artifacts.append(
-                    save_track_overlay(image_paths, accepted_tracks, track_overlay_path)
+                    save_track_overlay(image_paths, raw_tracks, track_overlay_path)
                 )
         except Exception:
             pass
 
-        # Track manifest JSON artifact
+        # Unique track overlay (color-coded per instance)
+        unique_track_overlay_path = artifact_dir / "unique_track_overlay.png"
+        try:
+            if accepted_tracks:
+                artifacts.append(
+                    save_unique_track_overlay(
+                        image_paths, accepted_tracks, raw_tracks,
+                        unique_track_overlay_path,
+                    )
+                )
+        except Exception:
+            pass
+
+        # Raw tracks manifest
         import json
         manifest_path = artifact_dir / "countvid_tracks.json"
         try:
@@ -147,6 +161,7 @@ class CountVideoObjectsTool(BaseSpatialTool):
                 json.dumps(
                     {
                         "instance_count": instance_count,
+                        "raw_track_count": len(raw_tracks),
                         "tracks": formatted_tracks,
                         "frame_summaries": frame_summaries,
                     },
@@ -159,29 +174,67 @@ class CountVideoObjectsTool(BaseSpatialTool):
         except Exception:
             pass
 
+        # Unique tracks manifest
+        unique_manifest_path = artifact_dir / "countvid_unique_tracks.json"
+        try:
+            unique_manifest = {
+                "unique_instance_count": instance_count,
+                "raw_track_count": len(raw_tracks),
+                "merged_track_count": len(raw_tracks) - instance_count,
+                "unique_tracks": [],
+            }
+            for t in accepted_tracks:
+                unique_manifest["unique_tracks"].append({
+                    "track_id": t.get("track_id", ""),
+                    "object": t.get("object", ""),
+                    "frame_count": len(t.get("frame_indices", [])),
+                    "member_seed_ids": t.get("member_seed_ids", []),
+                })
+            unique_manifest_path.write_text(
+                json.dumps(unique_manifest, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            artifacts.append(str(unique_manifest_path))
+        except Exception:
+            pass
+
         payload = {
             "instance_count": instance_count,
             "tracks": formatted_tracks,
             "frame_summaries": frame_summaries,
             "backend": backend_label,
-            "aggregation_stats": {
+            "pipeline_stats": {
+                "frame_count": len(image_paths),
                 "raw_instance_count": raw_instance_count,
                 "raw_track_count": len(raw_tracks),
                 "unique_track_count": instance_count,
                 "merged_tracks": len(raw_tracks) - instance_count,
+                "dropped_tracks": raw_instance_count - len(raw_tracks) if raw_instance_count > len(raw_tracks) else 0,
                 "point_threshold_px": point_threshold_px,
                 "merge_overlap_min_frames": merge_overlap_min,
+                "min_track_support": min_track_support,
             },
+            "backend_status": "ok",
             "artifact_descriptions": [
                 {
                     "path": str(track_overlay_path),
-                    "kind": "track_overlay",
-                    "description": "Propagated object tracks overlaid on sampled video frames.",
+                    "kind": "raw_track_overlay",
+                    "description": "Raw propagated object tracks overlaid on sampled video frames.",
+                },
+                {
+                    "path": str(unique_track_overlay_path),
+                    "kind": "unique_track_overlay",
+                    "description": "Final unique instances color-coded per instance across frames.",
                 },
                 {
                     "path": str(manifest_path),
                     "kind": "track_manifest",
-                    "description": "Unique propagated object tracks used for final video-level counting.",
+                    "description": "Raw tracks manifest with instance count and frame summaries.",
+                },
+                {
+                    "path": str(unique_manifest_path),
+                    "kind": "unique_track_manifest",
+                    "description": "Unique instance manifest showing which raw tracks were merged.",
                 },
             ],
         }
