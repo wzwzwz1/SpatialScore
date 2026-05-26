@@ -37,10 +37,28 @@ class ToolRegistry:
 
 
 def _video_counting_configured(config) -> bool:
-    """Only register CountVideoObjects if the CountVid backend paths are configured."""
+    """Only register CountVideoObjects if all CountVid backend paths exist on disk."""
+    from pathlib import Path
     from spatial_agent.tools.backends import get_tool_settings
+
     settings = get_tool_settings(config, "CountVideoObjects", aliases=["video_counting", "countvid"])
-    return bool(settings.get("countgd_checkpoint_path") and settings.get("sam2_checkpoint_path"))
+    countgd_repo = settings.get("countgd_repo_path")
+    countgd_ckpt = settings.get("countgd_checkpoint_path")
+    sam2_ckpt = settings.get("sam2_checkpoint_path")
+    sam2_config = settings.get("sam2_config_name")
+
+    # All four paths must be configured and exist on disk
+    if not all([countgd_repo, countgd_ckpt, sam2_ckpt, sam2_config]):
+        return False
+    if not Path(str(countgd_repo)).is_dir():
+        return False
+    if not Path(str(countgd_ckpt)).is_file():
+        return False
+    if not Path(str(sam2_ckpt)).is_file():
+        return False
+    if not Path(str(sam2_config)).is_file():
+        return False
+    return True
 
 
 def build_default_tool_registry(config) -> ToolRegistry:

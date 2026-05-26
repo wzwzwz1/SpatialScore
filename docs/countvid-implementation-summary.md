@@ -1,8 +1,15 @@
 # CountVid 视频计数工具 — 实现总结
 
+## 当前状态（Phase 0 完成）
+
+Phase 0（基线修正）已完成。工具骨架、接入层、调用协议、坐标统一、注册收紧均已就绪。
+**CountVid 核心对齐（Phase 1-6）尚未完成**，需要接入真实的 CountGD-Box + SAM 2.1 后端。
+
+详见 `docs/countvid-core-alignment-development-plan.md`。
+
 ## 概述
 
-按照 `countvid-video-counting-workflow-design.md` 的设计，完成了 CountVideoObjects 工具的全部后端实现。该工具将视频计数问题建模为：候选框生成 → 时序滤波 → 跨帧传播 tracking → unique instance 聚合，替代原有的"多帧 CountObjects + LLM 推测去重"方案。
+按照 `countvid-video-counting-workflow-design.md` 的设计，完成了 CountVideoObjects 工具的工程骨架。该工具将视频计数问题建模为：候选框生成 → 时序滤波 → 跨帧传播 tracking → unique instance 聚合，替代原有的"多帧 CountObjects + LLM 推测去重"方案。
 
 ## 实现文件清单
 
@@ -100,6 +107,14 @@ doc-id 0 (test split): "How many table(s) are in this room?"
 - 当前结果: **1** (success)
 - 流程：LLM 使用 CountObjects × 8 帧，每帧 count=1，推断为 1 张 table
 - 暴露问题：缺少跨帧去重，每帧只看到同一 table 的不同角度
+
+## Phase 0 已完成项（2026-05-26）
+
+1. **收紧注册条件**：`_video_counting_configured()` 现在检查所有四条路径（countgd_repo_path, countgd_checkpoint_path, sam2_checkpoint_path, sam2_config_name）是否真实存在于磁盘，而非仅检查非空字符串。
+2. **统一坐标语义**：所有内部中间结构统一使用像素坐标（`point_px`, `bbox_px`），仅在最终对外输出 payload 时归一化到 [0,1]。
+3. **改进错误诊断**：`get_countvid_backend()` 返回 `countgd_diag` 和 `sam2_diag` 列表，unavailable 消息包含具体缺失路径或加载错误。
+4. **全局唯一 seed_id**：track 的 seed_id 格式为 `{object}_{start_frame_idx}_{seed_idx}`，避免跨起始帧 ID 冲突。
+5. **注册测试完善**：新增 repo 缺失、checkpoint 缺失路径的测试用例。
 
 ## 待完成：CountVid Backend 接入
 

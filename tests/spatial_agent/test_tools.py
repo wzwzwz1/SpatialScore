@@ -233,7 +233,7 @@ def test_count_video_objects_returns_unavailable_when_partial_backend(tmp_path, 
     result = tool.invoke(images=[str(image_path)], objects=["table"])
 
     assert result["status"] == "unavailable"
-    assert "SAM2.1" in result["error"]
+    assert "SAM 2.1" in result["error"]
 
 
 def test_count_video_objects_returns_error_on_missing_images():
@@ -271,11 +271,11 @@ def test_count_video_objects_success_with_mock_backend(tmp_path, monkeypatch):
         },
     )
 
-    # Mock candidate generation
+    # Mock candidate generation (pixel coords, image is 64x48)
     def _mock_generate(backend, image_paths, objects):
         return [
-            {"candidates": [{"point": [0.1, 0.2], "score": 0.9}]},
-            {"candidates": [{"point": [0.12, 0.22], "score": 0.85}]},
+            {"candidates": [{"point_px": [6.4, 9.6], "score": 0.9}]},
+            {"candidates": [{"point_px": [7.68, 10.56], "score": 0.85}]},
             {"candidates": []},
         ]
 
@@ -284,14 +284,16 @@ def test_count_video_objects_success_with_mock_backend(tmp_path, monkeypatch):
         _mock_generate,
     )
 
-    # Mock SAM propagation
+    # Mock SAM propagation (returns points_px in pixel coords)
     def _mock_propagate(backend, image_paths, frame_detections, objects):
         return [
             {
                 "track_id": "table_000",
+                "seed_id": "table_0_0",
                 "object": "table",
+                "start_frame_idx": 0,
                 "frame_indices": [0, 1],
-                "points": [[0.1, 0.2], [0.12, 0.22]],
+                "points_px": [[6.4, 9.6], [7.68, 10.56]],
             }
         ]
 
@@ -381,14 +383,24 @@ def test_count_video_objects_not_registered_without_backend_config():
     assert "CountVideoObjects" not in registry.list_names()
 
 
-def test_count_video_objects_registered_with_backend_config():
-    """CountVideoObjects should be registered when CountVid checkpoint paths are provided."""
+def test_count_video_objects_registered_with_backend_config(tmp_path):
+    """CountVideoObjects should be registered when all CountVid paths exist on disk."""
+    repo_dir = tmp_path / "CountVid"
+    repo_dir.mkdir()
+    ckpt_file = tmp_path / "countgd_box.pth"
+    ckpt_file.write_text("dummy")
+    sam2_ckpt = tmp_path / "sam2.1_hiera_large.pt"
+    sam2_ckpt.write_text("dummy")
+    sam2_config = tmp_path / "sam2.1_hiera_l.yaml"
+    sam2_config.write_text("dummy")
+
     config = SpatialAgentConfig(
         tool_config={
             "video_counting": {
-                "countgd_checkpoint_path": "/data/models/countgd_box.pth",
-                "sam2_checkpoint_path": "/data/models/sam2.1_hiera_large.pt",
-                "sam2_config_name": "configs/sam2.1/sam2.1_hiera_l.yaml",
+                "countgd_repo_path": str(repo_dir),
+                "countgd_checkpoint_path": str(ckpt_file),
+                "sam2_checkpoint_path": str(sam2_ckpt),
+                "sam2_config_name": str(sam2_config),
             }
         }
     )
@@ -397,7 +409,52 @@ def test_count_video_objects_registered_with_backend_config():
     tool = registry.get("CountVideoObjects")
     assert tool is not None
     assert tool.name == "CountVideoObjects"
-    # CountObjects should still come first
     names = registry.list_names()
     assert names[0] == "CountObjects"
     assert names[1] == "CountVideoObjects"
+
+
+def test_count_video_objects_not_registered_when_repo_missing(tmp_path):
+    """CountVideoObjects should not register when countgd_repo_path doesn't exist."""
+    ckpt = tmp_path / "ckpt.pth"
+    ckpt.write_text("dummy")
+    sam2_ckpt = tmp_path / "sam2.pt"
+    sam2_ckpt.write_text("dummy")
+    cfg = tmp_path / "cfg.yaml"
+    cfg.write_text("dummy")
+
+    config = SpatialAgentConfig(
+        tool_config={
+            "video_counting": {
+                "countgd_repo_path": str(tmp_path / "nonexistent_repo"),
+                "countgd_checkpoint_path": str(ckpt),
+                "sam2_checkpoint_path": str(sam2_ckpt),
+                "sam2_config_name": str(cfg),
+            }
+        }
+    )
+    registry = build_default_tool_registry(config)
+    assert "CountVideoObjects" not in registry.list_names()
+
+
+def test_count_video_objects_not_registered_when_checkpoint_missing(tmp_path):
+    """CountVideoObjects should not register when a checkpoint file doesn't exist."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    sam2_ckpt = tmp_path / "sam2.pt"
+    sam2_ckpt.write_text("dummy")
+    cfg = tmp_path / "cfg.yaml"
+    cfg.write_text("dummy")
+
+    config = SpatialAgentConfig(
+        tool_config={
+            "video_counting": {
+                "countgd_repo_path": str(repo),
+                "countgd_checkpoint_path": str(tmp_path / "missing.pth"),
+                "sam2_checkpoint_path": str(sam2_ckpt),
+                "sam2_config_name": str(cfg),
+            }
+        }
+    )
+    registry = build_default_tool_registry(config)
+    assert "CountVideoObjects" not in registry.list_names()

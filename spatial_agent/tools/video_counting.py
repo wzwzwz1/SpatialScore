@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from spatial_agent.tools.backends import (
     artifact_dir_for_tool,
     ensure_image_paths,
     ensure_object_names,
     get_tool_settings,
+    load_pil_image,
 )
 from spatial_agent.tools.base import BaseSpatialTool
 from spatial_agent.tools.countvid_backend import (
@@ -90,14 +91,15 @@ class CountVideoObjectsTool(BaseSpatialTool):
         sam2_ok = backend.get("sam2_available", False)
 
         if not countgd_ok or not sam2_ok:
-            missing = []
+            diag_parts: List[str] = []
             if not countgd_ok:
-                missing.append("CountGD-Box")
+                diag_parts.append("CountGD-Box not available")
+                diag_parts.extend(backend.get("countgd_diag", []))
             if not sam2_ok:
-                missing.append("SAM2.1")
+                diag_parts.append("SAM 2.1 not available")
+                diag_parts.extend(backend.get("sam2_diag", []))
             return self.unavailable(
-                f"CountVid backend partially unavailable: {', '.join(missing)} not available. "
-                f"Check countgd_repo_path, countgd_checkpoint_path, sam2_checkpoint_path, sam2_config_name in tool_config."
+                "CountVid backend partially unavailable. " + "; ".join(diag_parts)
             )
 
         backend_label = "countvid:countgd_box+sam2.1"
@@ -122,8 +124,15 @@ class CountVideoObjectsTool(BaseSpatialTool):
 
         # Stage 4: Unique instance aggregation
         image_aliases = [f"image-{i}" for i in range(len(image_paths))]
+        image_sizes: List[Tuple[int, int]] = []
+        for p in image_paths:
+            try:
+                img = load_pil_image(p)
+                image_sizes.append(img.size)  # (width, height)
+            except Exception:
+                image_sizes.append((1, 1))
         accepted_tracks = aggregate_unique_tracks(raw_tracks, min_track_support=min_track_support)
-        formatted_tracks = build_track_payload(accepted_tracks, image_aliases)
+        formatted_tracks = build_track_payload(accepted_tracks, image_aliases, image_sizes)
         frame_summaries = build_frame_summaries(frame_detections, image_aliases)
         instance_count = len(accepted_tracks)
 

@@ -7,6 +7,13 @@ from PIL import Image, ImageDraw
 
 from spatial_agent.tools.backends import load_pil_image
 
+# Coordinate convention (Phase 0 unified):
+#   Internal (point_px, bbox_px): pixel coordinates relative to the original image.
+#     - point_px: [x, y] where x ∈ [0, width), y ∈ [0, height)
+#     - bbox_px:   [x1, y1, x2, y2] in pixel space
+#   Output (supporting_points): normalized [0, 1] for LLM consumption.
+#   All overlay/drawing functions accept pixel coordinates directly.
+
 
 def temporal_window_filter(
     frame_detections: List[Dict[str, Any]],
@@ -37,18 +44,34 @@ def temporal_window_filter(
 def build_track_payload(
     tracks: List[Dict[str, Any]],
     image_aliases: List[str],
+    image_sizes: List[Tuple[int, int]],
 ) -> List[Dict[str, Any]]:
-    """Format raw tracks into the standardized output schema."""
+    """Format raw tracks (pixel coords) into the standardized output schema (normalized).
+
+    Args:
+        tracks: Raw tracks with ``points_px`` in pixel coordinates.
+        image_aliases: Ordered list of ``"image-N"`` aliases.
+        image_sizes: Ordered list of ``(width, height)`` per frame, for normalization.
+
+    Returns:
+        Tracks with ``supporting_points`` in normalized [0, 1] coordinates.
+    """
     formatted: List[Dict[str, Any]] = []
     for index, track in enumerate(tracks):
-        supporting_frames = []
-        supporting_points = []
+        supporting_frames: List[str] = []
+        supporting_points: List[List[float]] = []
         for frame_idx in track.get("frame_indices", []):
             if 0 <= frame_idx < len(image_aliases):
                 supporting_frames.append(image_aliases[frame_idx])
-        for point in track.get("points", []):
+        for pt_idx, point in enumerate(track.get("points_px", [])):
             if isinstance(point, (list, tuple)) and len(point) >= 2:
-                supporting_points.append([round(float(point[0]), 6), round(float(point[1]), 6)])
+                frame_idx = track.get("frame_indices", [pt_idx])[0] if pt_idx < len(track.get("frame_indices", [])) else 0
+                w, h = (1, 1)
+                if 0 <= frame_idx < len(image_sizes):
+                    w, h = image_sizes[frame_idx]
+                x_norm = round(max(0.0, min(1.0, float(point[0]) / max(1, w))), 6)
+                y_norm = round(max(0.0, min(1.0, float(point[1]) / max(1, h))), 6)
+                supporting_points.append([x_norm, y_norm])
         formatted.append(
             {
                 "track_id": track.get("track_id", f"object_{index:03d}"),
@@ -96,7 +119,10 @@ def save_track_overlay(
     tracks: List[Dict[str, Any]],
     output_path: Path,
 ) -> str:
-    """Visualize propagated tracks on sampled frames."""
+    """Visualize propagated tracks on sampled frames.
+
+    Expects ``points_px`` in pixel coordinates on each track.
+    """
     if not frame_paths or not tracks:
         return str(output_path)
 
@@ -120,13 +146,12 @@ def save_track_overlay(
         for track_idx, track in enumerate(tracks):
             color = palette[track_idx % len(palette)]
             frame_indices = track.get("frame_indices", [])
-            points = track.get("points", [])
+            points_px = track.get("points_px", [])
             if frame_idx in frame_indices:
                 pt_idx = frame_indices.index(frame_idx)
-                if pt_idx < len(points):
-                    x_norm, y_norm = float(points[pt_idx][0]), float(points[pt_idx][1])
-                    x = max(0.0, min(float(w - 1), x_norm * w))
-                    y = max(0.0, min(float(h - 1), y_norm * h))
+                if pt_idx < len(points_px):
+                    x = max(0.0, min(float(w - 1), float(points_px[pt_idx][0])))
+                    y = max(0.0, min(float(h - 1), float(points_px[pt_idx][1])))
                     draw.ellipse((x - 5, y - 5, x + 5, y + 5), fill=color, outline="black", width=1)
                     label = track.get("track_id", f"T{track_idx}")
                     draw.text((x + 8, y - 8), label, fill=color)
@@ -148,7 +173,10 @@ def save_candidate_overlay(
     frame_detections: List[Dict[str, Any]],
     output_path: Path,
 ) -> str:
-    """Visualize per-frame candidate detections."""
+    """Visualize per-frame candidate detections.
+
+    Expects candidates with ``bbox_px`` (pixel) and ``point_px`` (pixel).
+    """
     if not frame_paths:
         return str(output_path)
 
@@ -169,15 +197,13 @@ def save_candidate_overlay(
         candidates = detections.get("candidates", [])
         for ci, cand in enumerate(candidates):
             color = palette[ci % len(palette)]
-            if "bbox" in cand:
-                x1, y1, x2, y2 = cand["bbox"]
+            if "bbox_px" in cand:
+                x1, y1, x2, y2 = cand["bbox_px"]
                 draw.rectangle((x1, y1, x2, y2), outline=color, width=2)
-            if "point" in cand:
-                px_norm, py_norm = float(cand["point"][0]), float(cand["point"][1])
-                px = max(0.0, min(float(w - 1), px_norm * w))
-                py = max(0.0, min(float(h - 1), py_norm * h))
+            if "point_px" in cand:
+                px = max(0.0, min(float(w - 1), float(cand["point_px"][0])))
+                py = max(0.0, min(float(h - 1), float(cand["point_px"][1])))
                 draw.ellipse((px - 4, py - 4, px + 4, py + 4), fill=color, outline="black", width=1)
-        # summary label
         label = f"frame {frame_idx}: {len(candidates)} candidates"
         draw.rectangle((4, 4, 4 + len(label) * 7, 22), fill=(255, 255, 255))
         draw.text((8, 6), label, fill="black")
