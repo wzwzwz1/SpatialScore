@@ -1,0 +1,34 @@
+{
+  "run": "runs/object_abs_distance_full_qwen25vl_gpu3_20260615_160000",
+  "hard_error_count": 63,
+  "hard_error_categories": {
+    "post_selection_missing": 1,
+    "detector_zero_candidate": 62
+  },
+  "zero_candidate_objects": {
+    "trash bin": 55,
+    "towel": 2,
+    "stove": 1,
+    "bucket": 2,
+    "heater": 1,
+    "pan": 1
+  },
+  "success_count": 771,
+  "success_p90_mra0_count": 324,
+  "success_p90_mra0_categories": {
+    "large_overestimate": 115,
+    "large_underestimate": 209
+  },
+  "success_p90_mra0_by_bucket": {
+    "<1m": {
+      "large_overestimate": 89
+    },
+    ">=3m": {
+      "large_underestimate": 136
+    },
+    "1-3m": {
+      "large_underestimate": 73,
+      "large_overestimate": 26
+    }
+  }
+}

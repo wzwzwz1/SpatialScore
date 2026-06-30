@@ -1,0 +1,264 @@
+{
+  "fixed_p90_mra_percent": 31.556420233463033,
+  "core2_tree_cv_mra_percent": 32.4124513618677,
+  "fixed_pattern_cv_mra_percent": 32.51621271076524,
+  "quadrant_grid_cv": {
+    "cv_mra": 0.3077821011673152,
+    "cv_mra_percent": 30.77821011673152,
+    "counts": {
+      "median": 18,
+      "p75": 131,
+      "p90": 622
+    },
+    "folds": [
+      {
+        "fold": 0,
+        "rule": {
+          "skew_threshold": 4.479937986922173,
+          "acc_threshold": 2.587005649717514,
+          "bucket_quantiles": {
+            "low_low": "p90",
+            "low_high": "p90",
+            "high_low": "p75",
+            "high_high": "p90"
+          },
+          "train_mra": 0.32646103896103895
+        },
+        "val_mra": 0.3,
+        "val_mra_percent": 30.0,
+        "counts": {
+          "p75": 9,
+          "p90": 146
+        }
+      },
+      {
+        "fold": 1,
+        "rule": {
+          "skew_threshold": 2.3308623794338716,
+          "acc_threshold": 3.0692493946731236,
+          "bucket_quantiles": {
+            "low_low": "p90",
+            "low_high": "p90",
+            "high_low": "p90",
+            "high_high": "median"
+          },
+          "train_mra": 0.3286871961102107
+        },
+        "val_mra": 0.29350649350649355,
+        "val_mra_percent": 29.350649350649352,
+        "counts": {
+          "median": 12,
+          "p90": 142
+        }
+      },
+      {
+        "fold": 2,
+        "rule": {
+          "skew_threshold": 2.4915658366080895,
+          "acc_threshold": 3.6245110821382007,
+          "bucket_quantiles": {
+            "low_low": "p90",
+            "low_high": "median",
+            "high_low": "p90",
+            "high_high": "p75"
+          },
+          "train_mra": 0.33354943273905996
+        },
+        "val_mra": 0.2857142857142857,
+        "val_mra_percent": 28.571428571428573,
+        "counts": {
+          "median": 6,
+          "p75": 3,
+          "p90": 145
+        }
+      },
+      {
+        "fold": 3,
+        "rule": {
+          "skew_threshold": 4.442851040688698,
+          "acc_threshold": 2.805855161787365,
+          "bucket_quantiles": {
+            "low_low": "p90",
+            "low_high": "p75",
+            "high_low": "p75",
+            "high_high": "p75"
+          },
+          "train_mra": 0.3184764991896273
+        },
+        "val_mra": 0.34545454545454546,
+        "val_mra_percent": 34.54545454545455,
+        "counts": {
+          "p75": 77,
+          "p90": 77
+        }
+      },
+      {
+        "fold": 4,
+        "rule": {
+          "skew_threshold": 1.5579814392987714,
+          "acc_threshold": 2.659355267530741,
+          "bucket_quantiles": {
+            "low_low": "p90",
+            "low_high": "p90",
+            "high_low": "p90",
+            "high_high": "p75"
+          },
+          "train_mra": 0.3241491085899514
+        },
+        "val_mra": 0.3142857142857143,
+        "val_mra_percent": 31.428571428571427,
+        "counts": {
+          "p75": 42,
+          "p90": 112
+        }
+      }
+    ]
+  },
+  "quadrant_grid_p75_p90_only_cv": {
+    "cv_mra": 0.3114137483787289,
+    "cv_mra_percent": 31.141374837872892,
+    "counts": {
+      "p75": 165,
+      "p90": 606
+    },
+    "folds": [
+      {
+        "fold": 0,
+        "rule": {
+          "skew_threshold": 4.479937986922173,
+          "acc_threshold": 2.587005649717514,
+          "bucket_quantiles": {
+            "low_low": "p90",
+            "low_high": "p90",
+            "high_low": "p75",
+            "high_high": "p90"
+          },
+          "train_mra": 0.32646103896103895
+        },
+        "val_mra": 0.3,
+        "val_mra_percent": 30.0,
+        "counts": {
+          "p75": 9,
+          "p90": 146
+        }
+      },
+      {
+        "fold": 1,
+        "rule": {
+          "skew_threshold": 2.2612998752228846,
+          "acc_threshold": 3.0692493946731236,
+          "bucket_quantiles": {
+            "low_low": "p90",
+            "low_high": "p90",
+            "high_low": "p90",
+            "high_high": "p75"
+          },
+          "train_mra": 0.326904376012966
+        },
+        "val_mra": 0.3116883116883117,
+        "val_mra_percent": 31.16883116883117,
+        "counts": {
+          "p75": 13,
+          "p90": 141
+        }
+      },
+      {
+        "fold": 2,
+        "rule": {
+          "skew_threshold": 1.012235024437101,
+          "acc_threshold": 3.0912172573189522,
+          "bucket_quantiles": {
+            "low_low": "p90",
+            "low_high": "p90",
+            "high_low": "p90",
+            "high_high": "p75"
+          },
+          "train_mra": 0.33192868719611024
+        },
+        "val_mra": 0.2857142857142857,
+        "val_mra_percent": 28.571428571428573,
+        "counts": {
+          "p75": 24,
+          "p90": 130
+        }
+      },
+      {
+        "fold": 3,
+        "rule": {
+          "skew_threshold": 4.442851040688698,
+          "acc_threshold": 2.805855161787365,
+          "bucket_quantiles": {
+            "low_low": "p90",
+            "low_high": "p75",
+            "high_low": "p75",
+            "high_high": "p75"
+          },
+          "train_mra": 0.3184764991896273
+        },
+        "val_mra": 0.34545454545454546,
+        "val_mra_percent": 34.54545454545455,
+        "counts": {
+          "p75": 77,
+          "p90": 77
+        }
+      },
+      {
+        "fold": 4,
+        "rule": {
+          "skew_threshold": 1.5579814392987714,
+          "acc_threshold": 2.659355267530741,
+          "bucket_quantiles": {
+            "low_low": "p90",
+            "low_high": "p90",
+            "high_low": "p90",
+            "high_high": "p75"
+          },
+          "train_mra": 0.3241491085899514
+        },
+        "val_mra": 0.3142857142857143,
+        "val_mra_percent": 31.428571428571427,
+        "counts": {
+          "p75": 42,
+          "p90": 112
+        }
+      }
+    ]
+  },
+  "quadrant_grid_insample": {
+    "mra_percent": 32.64591439688716,
+    "rule": {
+      "skew_threshold": 4.760010740605811,
+      "acc_threshold": 3.0690716690716693,
+      "bucket_quantiles": {
+        "low_low": "p90",
+        "low_high": "p75",
+        "high_low": "p75",
+        "high_high": "median"
+      },
+      "train_mra": 0.3264591439688716
+    },
+    "counts": {
+      "median": 22,
+      "p75": 241,
+      "p90": 508
+    }
+  },
+  "quadrant_grid_p75_p90_only_insample": {
+    "mra_percent": 32.555123216601814,
+    "rule": {
+      "skew_threshold": 4.760010740605811,
+      "acc_threshold": 3.0690716690716693,
+      "bucket_quantiles": {
+        "low_low": "p90",
+        "low_high": "p75",
+        "high_low": "p75",
+        "high_high": "p75"
+      },
+      "train_mra": 0.32555123216601817
+    },
+    "counts": {
+      "p75": 263,
+      "p90": 508
+    }
+  }
+}

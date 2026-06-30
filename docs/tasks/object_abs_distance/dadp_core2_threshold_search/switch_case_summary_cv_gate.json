@@ -1,0 +1,113 @@
+{
+  "cv_mra_percent": 32.51621271076524,
+  "fixed_p90_percent": 31.556420233463033,
+  "counts": {
+    "keep_p90": 634,
+    "switch_p75": 137
+  },
+  "switch_outcomes": {
+    "benefit": 38,
+    "harm": 46,
+    "tie": 53
+  },
+  "switch_reasons": {
+    "accepted_candidate_mean": 97,
+    "skew": 40
+  },
+  "switch_by_bucket": {
+    "1-3m": {
+      "benefit": 26,
+      "harm": 38,
+      "tie": 15
+    },
+    ">=3m": {
+      "harm": 5,
+      "tie": 20
+    },
+    "<1m": {
+      "benefit": 12,
+      "tie": 18,
+      "harm": 3
+    }
+  },
+  "switch_by_reason_outcome": {
+    "accepted_candidate_mean": {
+      "benefit": 25,
+      "harm": 36,
+      "tie": 36
+    },
+    "skew": {
+      "benefit": 13,
+      "tie": 17,
+      "harm": 10
+    }
+  },
+  "folds": [
+    {
+      "fold": 0,
+      "rule": {
+        "skew_threshold": 8.807857243598226,
+        "acc_threshold": 3.7390109890109895,
+        "train_mra": 0.33230519480519477
+      },
+      "val_mra_percent": 31.870967741935484,
+      "counts": {
+        "keep_p90": 143,
+        "switch_p75": 12
+      }
+    },
+    {
+      "fold": 1,
+      "rule": {
+        "skew_threshold": 7.977136259110443,
+        "acc_threshold": 3.6153846153846154,
+        "train_mra": 0.3304700162074554
+      },
+      "val_mra_percent": 32.532467532467535,
+      "counts": {
+        "keep_p90": 131,
+        "switch_p75": 23
+      }
+    },
+    {
+      "fold": 2,
+      "rule": {
+        "skew_threshold": 8.59221115213051,
+        "acc_threshold": 3.5961538461538467,
+        "train_mra": 0.34149108589951377
+      },
+      "val_mra_percent": 28.57142857142857,
+      "counts": {
+        "keep_p90": 139,
+        "switch_p75": 15
+      }
+    },
+    {
+      "fold": 3,
+      "rule": {
+        "skew_threshold": 7.988986059652204,
+        "acc_threshold": 3.0755142293603837,
+        "train_mra": 0.3225283630470016
+      },
+      "val_mra_percent": 35.45454545454545,
+      "counts": {
+        "keep_p90": 110,
+        "switch_p75": 44
+      }
+    },
+    {
+      "fold": 4,
+      "rule": {
+        "skew_threshold": 8.025487836965246,
+        "acc_threshold": 3.078402366863905,
+        "train_mra": 0.3272285251215559
+      },
+      "val_mra_percent": 34.15584415584416,
+      "counts": {
+        "keep_p90": 111,
+        "switch_p75": 43
+      }
+    }
+  ],
+  "output_csv": "docs/tasks/object_abs_distance/dadp_core2_threshold_search/switch_cases_cv_gate.csv"
+}

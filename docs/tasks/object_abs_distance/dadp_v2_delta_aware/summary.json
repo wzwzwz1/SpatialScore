@@ -1,0 +1,1207 @@
+{
+  "count": 771,
+  "folds": 5,
+  "seed": 42,
+  "fixed": {
+    "p90_mra_percent": 31.556420233463033,
+    "p75_mra_percent": 29.66277561608301
+  },
+  "p75_p90_oracle_percent": 37.32814526588846,
+  "experiments": [
+    {
+      "name": "v1_core2",
+      "cv_mra_percent": 32.51621271076524,
+      "counts": {
+        "p75": 137,
+        "p90": 634
+      },
+      "switch_outcomes": {
+        "benefit": 38,
+        "tie": 53,
+        "harm": 46
+      },
+      "switch_delta_sum": 7.3999999999999995,
+      "folds": [
+        {
+          "fold": 0,
+          "rule": {
+            "family": "core2",
+            "skew_threshold": 8.807857243598226,
+            "accepted_candidate_mean_threshold": 3.7390109890109895,
+            "train_mra": 0.33230519480519477
+          },
+          "val_mra_percent": 31.870967741935484,
+          "counts": {
+            "p75": 12,
+            "p90": 143
+          },
+          "switch_outcomes": {
+            "benefit": 7,
+            "tie": 3,
+            "harm": 2
+          },
+          "switch_delta_sum": 2.8
+        },
+        {
+          "fold": 1,
+          "rule": {
+            "family": "core2",
+            "skew_threshold": 7.977136259110443,
+            "accepted_candidate_mean_threshold": 3.6153846153846154,
+            "train_mra": 0.3304700162074554
+          },
+          "val_mra_percent": 32.532467532467535,
+          "counts": {
+            "p75": 23,
+            "p90": 131
+          },
+          "switch_outcomes": {
+            "benefit": 10,
+            "tie": 6,
+            "harm": 7
+          },
+          "switch_delta_sum": 3.3
+        },
+        {
+          "fold": 2,
+          "rule": {
+            "family": "core2",
+            "skew_threshold": 8.59221115213051,
+            "accepted_candidate_mean_threshold": 3.5961538461538467,
+            "train_mra": 0.34149108589951377
+          },
+          "val_mra_percent": 28.57142857142857,
+          "counts": {
+            "p75": 15,
+            "p90": 139
+          },
+          "switch_outcomes": {
+            "benefit": 1,
+            "tie": 10,
+            "harm": 4
+          },
+          "switch_delta_sum": -0.5999999999999999
+        },
+        {
+          "fold": 3,
+          "rule": {
+            "family": "core2",
+            "skew_threshold": 7.988986059652204,
+            "accepted_candidate_mean_threshold": 3.0755142293603837,
+            "train_mra": 0.3225283630470016
+          },
+          "val_mra_percent": 35.45454545454545,
+          "counts": {
+            "p75": 44,
+            "p90": 110
+          },
+          "switch_outcomes": {
+            "benefit": 10,
+            "tie": 20,
+            "harm": 14
+          },
+          "switch_delta_sum": 0.09999999999999973
+        },
+        {
+          "fold": 4,
+          "rule": {
+            "family": "core2",
+            "skew_threshold": 8.025487836965246,
+            "accepted_candidate_mean_threshold": 3.078402366863905,
+            "train_mra": 0.3272285251215559
+          },
+          "val_mra_percent": 34.15584415584416,
+          "counts": {
+            "p75": 43,
+            "p90": 111
+          },
+          "switch_outcomes": {
+            "benefit": 10,
+            "tie": 14,
+            "harm": 19
+          },
+          "switch_delta_sum": 1.7999999999999998
+        }
+      ]
+    },
+    {
+      "name": "v2_core2_far_guard_p90",
+      "cv_mra_percent": 32.85343709468223,
+      "counts": {
+        "p75": 112,
+        "p90": 659
+      },
+      "switch_outcomes": {
+        "benefit": 38,
+        "tie": 41,
+        "harm": 33
+      },
+      "switch_delta_sum": 10.0,
+      "folds": [
+        {
+          "fold": 0,
+          "rule": {
+            "family": "core2_far_guard",
+            "proxy": "p90",
+            "far_threshold": 4.014407950565416,
+            "skew_threshold": 7.027924458664696,
+            "accepted_candidate_mean_threshold": 3.713714285714286,
+            "train_mra": 0.3280844155844156
+          },
+          "val_mra_percent": 32.645161290322584,
+          "counts": {
+            "p75": 15,
+            "p90": 140
+          },
+          "switch_outcomes": {
+            "benefit": 10,
+            "tie": 3,
+            "harm": 2
+          },
+          "switch_delta_sum": 4.0
+        },
+        {
+          "fold": 1,
+          "rule": {
+            "family": "core2_far_guard",
+            "proxy": "p90",
+            "far_threshold": 4.608902772525971,
+            "skew_threshold": 8.707885547945274,
+            "accepted_candidate_mean_threshold": 3.6354545454545453,
+            "train_mra": 0.3312803889789303
+          },
+          "val_mra_percent": 32.532467532467535,
+          "counts": {
+            "p75": 23,
+            "p90": 131
+          },
+          "switch_outcomes": {
+            "benefit": 10,
+            "tie": 6,
+            "harm": 7
+          },
+          "switch_delta_sum": 3.3
+        },
+        {
+          "fold": 2,
+          "rule": {
+            "family": "core2_far_guard",
+            "proxy": "p90",
+            "far_threshold": 4.608902772525971,
+            "skew_threshold": 9.823014093449778,
+            "accepted_candidate_mean_threshold": 3.621538461538462,
+            "train_mra": 0.3405186385737439
+          },
+          "val_mra_percent": 28.76623376623376,
+          "counts": {
+            "p75": 14,
+            "p90": 140
+          },
+          "switch_outcomes": {
+            "benefit": 1,
+            "tie": 10,
+            "harm": 3
+          },
+          "switch_delta_sum": -0.2999999999999998
+        },
+        {
+          "fold": 3,
+          "rule": {
+            "family": "core2_far_guard",
+            "proxy": "p90",
+            "far_threshold": 4.608902772525971,
+            "skew_threshold": 9.079193077317093,
+            "accepted_candidate_mean_threshold": 3.1066666666666665,
+            "train_mra": 0.3220421393841167
+          },
+          "val_mra_percent": 35.714285714285715,
+          "counts": {
+            "p75": 37,
+            "p90": 117
+          },
+          "switch_outcomes": {
+            "benefit": 9,
+            "tie": 15,
+            "harm": 13
+          },
+          "switch_delta_sum": 0.4999999999999999
+        },
+        {
+          "fold": 4,
+          "rule": {
+            "family": "core2_far_guard",
+            "proxy": "p90",
+            "far_threshold": 4.608902772525971,
+            "skew_threshold": 9.523201810627837,
+            "accepted_candidate_mean_threshold": 3.578095238095238,
+            "train_mra": 0.32609400324149107
+          },
+          "val_mra_percent": 34.61038961038961,
+          "counts": {
+            "p75": 23,
+            "p90": 131
+          },
+          "switch_outcomes": {
+            "benefit": 8,
+            "tie": 7,
+            "harm": 8
+          },
+          "switch_delta_sum": 2.5
+        }
+      ]
+    },
+    {
+      "name": "v2_core2_far_guard_median",
+      "cv_mra_percent": 32.47730220492866,
+      "counts": {
+        "p75": 131,
+        "p90": 640
+      },
+      "switch_outcomes": {
+        "benefit": 39,
+        "tie": 47,
+        "harm": 45
+      },
+      "switch_delta_sum": 7.099999999999998,
+      "folds": [
+        {
+          "fold": 0,
+          "rule": {
+            "family": "core2_far_guard",
+            "proxy": "median",
+            "far_threshold": 1.5610248451485438,
+            "skew_threshold": 7.027924458664696,
+            "accepted_candidate_mean_threshold": 3.713714285714286,
+            "train_mra": 0.3293831168831169
+          },
+          "val_mra_percent": 32.70967741935484,
+          "counts": {
+            "p75": 13,
+            "p90": 142
+          },
+          "switch_outcomes": {
+            "benefit": 10,
+            "tie": 2,
+            "harm": 1
+          },
+          "switch_delta_sum": 4.1
+        },
+        {
+          "fold": 1,
+          "rule": {
+            "family": "core2_far_guard",
+            "proxy": "median",
+            "far_threshold": 1.5668217344550346,
+            "skew_threshold": 8.707885547945274,
+            "accepted_candidate_mean_threshold": 3.6354545454545453,
+            "train_mra": 0.33144246353322526
+          },
+          "val_mra_percent": 32.532467532467535,
+          "counts": {
+            "p75": 23,
+            "p90": 131
+          },
+          "switch_outcomes": {
+            "benefit": 10,
+            "tie": 6,
+            "harm": 7
+          },
+          "switch_delta_sum": 3.3
+        },
+        {
+          "fold": 2,
+          "rule": {
+            "family": "core2_far_guard",
+            "proxy": "median",
+            "far_threshold": 1.6210799097091189,
+            "skew_threshold": 9.823014093449778,
+            "accepted_candidate_mean_threshold": 3.621538461538462,
+            "train_mra": 0.3406807131280389
+          },
+          "val_mra_percent": 28.76623376623376,
+          "counts": {
+            "p75": 13,
+            "p90": 141
+          },
+          "switch_outcomes": {
+            "benefit": 1,
+            "tie": 9,
+            "harm": 3
+          },
+          "switch_delta_sum": -0.2999999999999998
+        },
+        {
+          "fold": 3,
+          "rule": {
+            "family": "core2_far_guard",
+            "proxy": "median",
+            "far_threshold": 1.2898691706844247,
+            "skew_threshold": 4.7972135066676085,
+            "accepted_candidate_mean_threshold": 3.1066666666666665,
+            "train_mra": 0.3225283630470016
+          },
+          "val_mra_percent": 34.15584415584416,
+          "counts": {
+            "p75": 46,
+            "p90": 108
+          },
+          "switch_outcomes": {
+            "benefit": 9,
+            "tie": 18,
+            "harm": 19
+          },
+          "switch_delta_sum": -1.900000000000001
+        },
+        {
+          "fold": 4,
+          "rule": {
+            "family": "core2_far_guard",
+            "proxy": "median",
+            "far_threshold": 1.6210799097091189,
+            "skew_threshold": 9.523201810627837,
+            "accepted_candidate_mean_threshold": 3.112777777777778,
+            "train_mra": 0.32641815235008104
+          },
+          "val_mra_percent": 34.22077922077922,
+          "counts": {
+            "p75": 36,
+            "p90": 118
+          },
+          "switch_outcomes": {
+            "benefit": 9,
+            "tie": 12,
+            "harm": 15
+          },
+          "switch_delta_sum": 1.9
+        }
+      ]
+    },
+    {
+      "name": "v3_delta_tree",
+      "cv_mra_percent": 31.517509727626457,
+      "counts": {
+        "p75": 394,
+        "p90": 377
+      },
+      "switch_outcomes": {
+        "benefit": 84,
+        "tie": 155,
+        "harm": 155
+      },
+      "switch_delta_sum": -0.30000000000000215,
+      "folds": [
+        {
+          "fold": 0,
+          "rule": {
+            "family": "delta_tree",
+            "margin": 0.1,
+            "switch_margin": 0.0,
+            "far_proxy": null,
+            "far_threshold": Infinity,
+            "tree": {
+              "type": "node",
+              "feature": "skew",
+              "threshold": 9.791709992449563,
+              "count": 616,
+              "left": {
+                "type": "node",
+                "feature": "accepted_candidate_mean",
+                "threshold": 2.468371696504689,
+                "count": 589,
+                "left": {
+                  "type": "leaf",
+                  "count": 288,
+                  "predicted_delta": -0.1301075268817205
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 301,
+                  "predicted_delta": 0.1280112044817928
+                }
+              },
+              "right": {
+                "type": "leaf",
+                "count": 27,
+                "predicted_delta": 0.5627450980392157
+              }
+            },
+            "train_mra": 0.32191558441558443
+          },
+          "val_mra_percent": 31.548387096774196,
+          "counts": {
+            "p75": 87,
+            "p90": 68
+          },
+          "switch_outcomes": {
+            "benefit": 25,
+            "tie": 31,
+            "harm": 31
+          },
+          "switch_delta_sum": 2.3
+        },
+        {
+          "fold": 1,
+          "rule": {
+            "family": "delta_tree",
+            "margin": 0.1,
+            "switch_margin": 0.0,
+            "far_proxy": null,
+            "far_threshold": Infinity,
+            "tree": {
+              "type": "node",
+              "feature": "skew",
+              "threshold": 8.522703871360704,
+              "count": 617,
+              "left": {
+                "type": "node",
+                "feature": "accepted_candidate_mean",
+                "threshold": 2.7699739873652915,
+                "count": 590,
+                "left": {
+                  "type": "leaf",
+                  "count": 366,
+                  "predicted_delta": -0.1217616580310882
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 224,
+                  "predicted_delta": 0.15886792452830195
+                }
+              },
+              "right": {
+                "type": "leaf",
+                "count": 27,
+                "predicted_delta": 0.5724137931034482
+              }
+            },
+            "train_mra": 0.32706645056726097
+          },
+          "val_mra_percent": 32.4025974025974,
+          "counts": {
+            "p75": 62,
+            "p90": 92
+          },
+          "switch_outcomes": {
+            "benefit": 18,
+            "tie": 21,
+            "harm": 23
+          },
+          "switch_delta_sum": 3.099999999999999
+        },
+        {
+          "fold": 2,
+          "rule": {
+            "family": "delta_tree",
+            "margin": 0.1,
+            "switch_margin": 0.0,
+            "far_proxy": null,
+            "far_threshold": Infinity,
+            "tree": {
+              "type": "node",
+              "feature": "skew",
+              "threshold": 9.448883393274194,
+              "count": 617,
+              "left": {
+                "type": "node",
+                "feature": "accepted_candidate_mean",
+                "threshold": 2.6730072463768115,
+                "count": 590,
+                "left": {
+                  "type": "leaf",
+                  "count": 336,
+                  "predicted_delta": -0.14984423676012482
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 254,
+                  "predicted_delta": 0.170948012232416
+                }
+              },
+              "right": {
+                "type": "leaf",
+                "count": 27,
+                "predicted_delta": 0.6205479452054796
+              }
+            },
+            "train_mra": 0.33452188006482986
+          },
+          "val_mra_percent": 29.22077922077922,
+          "counts": {
+            "p75": 65,
+            "p90": 89
+          },
+          "switch_outcomes": {
+            "benefit": 13,
+            "tie": 32,
+            "harm": 20
+          },
+          "switch_delta_sum": 0.4
+        },
+        {
+          "fold": 3,
+          "rule": {
+            "family": "delta_tree",
+            "margin": 0.1,
+            "switch_margin": 0.0,
+            "far_proxy": null,
+            "far_threshold": Infinity,
+            "tree": {
+              "type": "node",
+              "feature": "skew",
+              "threshold": 8.700979144794953,
+              "count": 617,
+              "left": {
+                "type": "node",
+                "feature": "lower_tail",
+                "threshold": 0.24092875972184247,
+                "count": 590,
+                "left": {
+                  "type": "leaf",
+                  "count": 461,
+                  "predicted_delta": 0.14
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 129,
+                  "predicted_delta": -0.19510489510489512
+                }
+              },
+              "right": {
+                "type": "leaf",
+                "count": 27,
+                "predicted_delta": 0.6403508771929824
+              }
+            },
+            "train_mra": 0.3090761750405186
+          },
+          "val_mra_percent": 30.909090909090907,
+          "counts": {
+            "p75": 119,
+            "p90": 35
+          },
+          "switch_outcomes": {
+            "benefit": 16,
+            "tie": 49,
+            "harm": 54
+          },
+          "switch_delta_sum": -6.900000000000001
+        },
+        {
+          "fold": 4,
+          "rule": {
+            "family": "delta_tree",
+            "margin": 0.1,
+            "switch_margin": 0.0,
+            "far_proxy": null,
+            "far_threshold": Infinity,
+            "tree": {
+              "type": "node",
+              "feature": "skew",
+              "threshold": 8.914596727648014,
+              "count": 617,
+              "left": {
+                "type": "node",
+                "feature": "accepted_candidate_mean",
+                "threshold": 2.7725752508361206,
+                "count": 590,
+                "left": {
+                  "type": "leaf",
+                  "count": 367,
+                  "predicted_delta": -0.14676056338028173
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 223,
+                  "predicted_delta": 0.20812720848056537
+                }
+              },
+              "right": {
+                "type": "leaf",
+                "count": 27,
+                "predicted_delta": 0.6185185185185186
+              }
+            },
+            "train_mra": 0.3238249594813614
+          },
+          "val_mra_percent": 33.506493506493506,
+          "counts": {
+            "p75": 61,
+            "p90": 93
+          },
+          "switch_outcomes": {
+            "benefit": 12,
+            "tie": 22,
+            "harm": 27
+          },
+          "switch_delta_sum": 0.8000000000000002
+        }
+      ]
+    },
+    {
+      "name": "v4_delta_tree_far_guard_p90",
+      "cv_mra_percent": 31.154345006485084,
+      "counts": {
+        "p75": 194,
+        "p90": 577
+      },
+      "switch_outcomes": {
+        "benefit": 39,
+        "tie": 74,
+        "harm": 81
+      },
+      "switch_delta_sum": -3.1,
+      "folds": [
+        {
+          "fold": 0,
+          "rule": {
+            "family": "delta_tree",
+            "margin": 0.1,
+            "switch_margin": 0.0,
+            "far_proxy": "p90",
+            "far_threshold": 1.6978610984953708,
+            "tree": {
+              "type": "node",
+              "feature": "lower_tail",
+              "threshold": 0.24847079967082242,
+              "count": 428,
+              "left": {
+                "type": "node",
+                "feature": "skew",
+                "threshold": 4.721225122685068,
+                "count": 335,
+                "left": {
+                  "type": "leaf",
+                  "count": 291,
+                  "predicted_delta": -0.038396624472573866
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 44,
+                  "predicted_delta": 0.2604651162790697
+                }
+              },
+              "right": {
+                "type": "node",
+                "feature": "accepted_candidate_mean",
+                "threshold": 2.7676568955341336,
+                "count": 93,
+                "left": {
+                  "type": "leaf",
+                  "count": 53,
+                  "predicted_delta": -0.3655172413793103
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 40,
+                  "predicted_delta": 0.09069767441860466
+                }
+              }
+            },
+            "train_mra": 0.32142857142857145
+          },
+          "val_mra_percent": 30.193548387096776,
+          "counts": {
+            "p75": 17,
+            "p90": 138
+          },
+          "switch_outcomes": {
+            "benefit": 7,
+            "tie": 2,
+            "harm": 8
+          },
+          "switch_delta_sum": 0.2000000000000001
+        },
+        {
+          "fold": 1,
+          "rule": {
+            "family": "delta_tree",
+            "margin": 0.1,
+            "switch_margin": 0.0,
+            "far_proxy": "p90",
+            "far_threshold": 1.9633217956961482,
+            "tree": {
+              "type": "node",
+              "feature": "skew",
+              "threshold": 4.788275180992545,
+              "count": 509,
+              "left": {
+                "type": "node",
+                "feature": "accepted_candidate_mean",
+                "threshold": 3.0819397993311037,
+                "count": 442,
+                "left": {
+                  "type": "leaf",
+                  "count": 333,
+                  "predicted_delta": -0.1730375426621161
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 109,
+                  "predicted_delta": 0.21240875912408763
+                }
+              },
+              "right": {
+                "type": "node",
+                "feature": "iqr_norm",
+                "threshold": 0.24350714431687165,
+                "count": 67,
+                "left": {
+                  "type": "leaf",
+                  "count": 29,
+                  "predicted_delta": 0.4878787878787877
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 38,
+                  "predicted_delta": -0.23333333333333334
+                }
+              }
+            },
+            "train_mra": 0.33225283630470015
+          },
+          "val_mra_percent": 29.675324675324678,
+          "counts": {
+            "p75": 29,
+            "p90": 125
+          },
+          "switch_outcomes": {
+            "benefit": 6,
+            "tie": 11,
+            "harm": 12
+          },
+          "switch_delta_sum": -1.1000000000000005
+        },
+        {
+          "fold": 2,
+          "rule": {
+            "family": "delta_tree",
+            "margin": 0.1,
+            "switch_margin": 0.0,
+            "far_proxy": "p90",
+            "far_threshold": 2.4123646158780128,
+            "tree": {
+              "type": "node",
+              "feature": "skew",
+              "threshold": 9.16933516294568,
+              "count": 590,
+              "left": {
+                "type": "node",
+                "feature": "accepted_candidate_mean",
+                "threshold": 3.0968379446640317,
+                "count": 564,
+                "left": {
+                  "type": "leaf",
+                  "count": 440,
+                  "predicted_delta": -0.07500000000000001
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 124,
+                  "predicted_delta": 0.20987654320987664
+                }
+              },
+              "right": {
+                "type": "leaf",
+                "count": 26,
+                "predicted_delta": 0.5746268656716418
+              }
+            },
+            "train_mra": 0.3354943273905997
+          },
+          "val_mra_percent": 28.44155844155844,
+          "counts": {
+            "p75": 32,
+            "p90": 122
+          },
+          "switch_outcomes": {
+            "benefit": 4,
+            "tie": 17,
+            "harm": 11
+          },
+          "switch_delta_sum": -0.7999999999999998
+        },
+        {
+          "fold": 3,
+          "rule": {
+            "family": "delta_tree",
+            "margin": 0.1,
+            "switch_margin": 0.0,
+            "far_proxy": "p90",
+            "far_threshold": 1.87438175732313,
+            "tree": {
+              "type": "node",
+              "feature": "accepted_candidate_mean",
+              "threshold": 2.6521739130434785,
+              "count": 483,
+              "left": {
+                "type": "node",
+                "feature": "skew",
+                "threshold": 4.517004719728334,
+                "count": 283,
+                "left": {
+                  "type": "leaf",
+                  "count": 246,
+                  "predicted_delta": -0.13978494623655918
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 37,
+                  "predicted_delta": 0.2407407407407407
+                }
+              },
+              "right": {
+                "type": "node",
+                "feature": "p90",
+                "threshold": 0.9289155191637379,
+                "count": 200,
+                "left": {
+                  "type": "leaf",
+                  "count": 35,
+                  "predicted_delta": -0.16315789473684209
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 165,
+                  "predicted_delta": 0.31073170731707334
+                }
+              }
+            },
+            "train_mra": 0.3213938411669368
+          },
+          "val_mra_percent": 33.96103896103896,
+          "counts": {
+            "p75": 55,
+            "p90": 99
+          },
+          "switch_outcomes": {
+            "benefit": 10,
+            "tie": 22,
+            "harm": 23
+          },
+          "switch_delta_sum": -2.2
+        },
+        {
+          "fold": 4,
+          "rule": {
+            "family": "delta_tree",
+            "margin": 0.1,
+            "switch_margin": 0.0,
+            "far_proxy": "p90",
+            "far_threshold": 4.608902772525971,
+            "tree": {
+              "type": "node",
+              "feature": "skew",
+              "threshold": 8.919849966413427,
+              "count": 616,
+              "left": {
+                "type": "node",
+                "feature": "accepted_candidate_mean",
+                "threshold": 2.7725752508361206,
+                "count": 589,
+                "left": {
+                  "type": "leaf",
+                  "count": 366,
+                  "predicted_delta": -0.14676056338028173
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 223,
+                  "predicted_delta": 0.20812720848056537
+                }
+              },
+              "right": {
+                "type": "leaf",
+                "count": 27,
+                "predicted_delta": 0.6185185185185186
+              }
+            },
+            "train_mra": 0.3238249594813614
+          },
+          "val_mra_percent": 33.506493506493506,
+          "counts": {
+            "p75": 61,
+            "p90": 93
+          },
+          "switch_outcomes": {
+            "benefit": 12,
+            "tie": 22,
+            "harm": 27
+          },
+          "switch_delta_sum": 0.8000000000000002
+        }
+      ]
+    },
+    {
+      "name": "v4_delta_tree_far_guard_median",
+      "cv_mra_percent": 32.023346303501945,
+      "counts": {
+        "p75": 197,
+        "p90": 574
+      },
+      "switch_outcomes": {
+        "benefit": 42,
+        "tie": 85,
+        "harm": 70
+      },
+      "switch_delta_sum": 3.5999999999999996,
+      "folds": [
+        {
+          "fold": 0,
+          "rule": {
+            "family": "delta_tree",
+            "margin": 0.1,
+            "switch_margin": 0.0,
+            "far_proxy": "median",
+            "far_threshold": 0.7623237626010343,
+            "tree": {
+              "type": "node",
+              "feature": "skew",
+              "threshold": 8.046056912249648,
+              "count": 188,
+              "left": {
+                "type": "node",
+                "feature": "median",
+                "threshold": 0.705357316517867,
+                "count": 163,
+                "left": {
+                  "type": "leaf",
+                  "count": 127,
+                  "predicted_delta": -0.1654545454545455
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 36,
+                  "predicted_delta": 0.22121212121212117
+                }
+              },
+              "right": {
+                "type": "leaf",
+                "count": 25,
+                "predicted_delta": 0.6191489361702127
+              }
+            },
+            "train_mra": 0.3267857142857143
+          },
+          "val_mra_percent": 31.41935483870968,
+          "counts": {
+            "p75": 20,
+            "p90": 135
+          },
+          "switch_outcomes": {
+            "benefit": 6,
+            "tie": 8,
+            "harm": 6
+          },
+          "switch_delta_sum": 2.1
+        },
+        {
+          "fold": 1,
+          "rule": {
+            "family": "delta_tree",
+            "margin": 0.1,
+            "switch_margin": 0.0,
+            "far_proxy": "median",
+            "far_threshold": 1.3086101869175022,
+            "tree": {
+              "type": "node",
+              "feature": "accepted_candidate_mean",
+              "threshold": 3.040579710144927,
+              "count": 509,
+              "left": {
+                "type": "node",
+                "feature": "iqr_norm",
+                "threshold": 0.1915600094672531,
+                "count": 390,
+                "left": {
+                  "type": "leaf",
+                  "count": 68,
+                  "predicted_delta": 0.3617021276595744
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 322,
+                  "predicted_delta": -0.12994652406417112
+                }
+              },
+              "right": {
+                "type": "node",
+                "feature": "median",
+                "threshold": 0.6615489777400425,
+                "count": 119,
+                "left": {
+                  "type": "leaf",
+                  "count": 26,
+                  "predicted_delta": -0.1909090909090909
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 93,
+                  "predicted_delta": 0.36969696969696964
+                }
+              }
+            },
+            "train_mra": 0.3346839546191248
+          },
+          "val_mra_percent": 31.233766233766236,
+          "counts": {
+            "p75": 39,
+            "p90": 115
+          },
+          "switch_outcomes": {
+            "benefit": 8,
+            "tie": 18,
+            "harm": 13
+          },
+          "switch_delta_sum": 1.3
+        },
+        {
+          "fold": 2,
+          "rule": {
+            "family": "delta_tree",
+            "margin": 0.1,
+            "switch_margin": 0.0,
+            "far_proxy": "median",
+            "far_threshold": 1.5738373636738967,
+            "tree": {
+              "type": "node",
+              "feature": "skew",
+              "threshold": 9.887819074467751,
+              "count": 563,
+              "left": {
+                "type": "node",
+                "feature": "accepted_candidate_mean",
+                "threshold": 3.0830546265328875,
+                "count": 538,
+                "left": {
+                  "type": "leaf",
+                  "count": 410,
+                  "predicted_delta": -0.07892376681614352
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 128,
+                  "predicted_delta": 0.25053763440860216
+                }
+              },
+              "right": {
+                "type": "leaf",
+                "count": 25,
+                "predicted_delta": 0.6121212121212123
+              }
+            },
+            "train_mra": 0.33841166936790923
+          },
+          "val_mra_percent": 29.415584415584412,
+          "counts": {
+            "p75": 36,
+            "p90": 118
+          },
+          "switch_outcomes": {
+            "benefit": 8,
+            "tie": 17,
+            "harm": 11
+          },
+          "switch_delta_sum": 0.6999999999999996
+        },
+        {
+          "fold": 3,
+          "rule": {
+            "family": "delta_tree",
+            "margin": 0.1,
+            "switch_margin": 0.0,
+            "far_proxy": "median",
+            "far_threshold": 1.5602463760066352,
+            "tree": {
+              "type": "node",
+              "feature": "skew",
+              "threshold": 9.187993947522648,
+              "count": 563,
+              "left": {
+                "type": "node",
+                "feature": "accepted_candidate_mean",
+                "threshold": 3.07943143812709,
+                "count": 538,
+                "left": {
+                  "type": "leaf",
+                  "count": 411,
+                  "predicted_delta": -0.029665071770334926
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 127,
+                  "predicted_delta": 0.2967741935483872
+                }
+              },
+              "right": {
+                "type": "leaf",
+                "count": 25,
+                "predicted_delta": 0.6403508771929824
+              }
+            },
+            "train_mra": 0.32269043760129656
+          },
+          "val_mra_percent": 36.038961038961034,
+          "counts": {
+            "p75": 38,
+            "p90": 116
+          },
+          "switch_outcomes": {
+            "benefit": 10,
+            "tie": 17,
+            "harm": 11
+          },
+          "switch_delta_sum": 0.9999999999999997
+        },
+        {
+          "fold": 4,
+          "rule": {
+            "family": "delta_tree",
+            "margin": 0.1,
+            "switch_margin": 0.0,
+            "far_proxy": "median",
+            "far_threshold": 1.570643390509413,
+            "tree": {
+              "type": "node",
+              "feature": "skew",
+              "threshold": 9.58288446905792,
+              "count": 563,
+              "left": {
+                "type": "node",
+                "feature": "accepted_candidate_mean",
+                "threshold": 2.6441359152356596,
+                "count": 538,
+                "left": {
+                  "type": "leaf",
+                  "count": 304,
+                  "predicted_delta": -0.1776315789473686
+                },
+                "right": {
+                  "type": "leaf",
+                  "count": 234,
+                  "predicted_delta": 0.21210191082802557
+                }
+              },
+              "right": {
+                "type": "leaf",
+                "count": 25,
+                "predicted_delta": 0.65
+              }
+            },
+            "train_mra": 0.32609400324149107
+          },
+          "val_mra_percent": 32.01298701298701,
+          "counts": {
+            "p75": 64,
+            "p90": 90
+          },
+          "switch_outcomes": {
+            "benefit": 10,
+            "tie": 25,
+            "harm": 29
+          },
+          "switch_delta_sum": -1.5
+        }
+      ]
+    }
+  ]
+}

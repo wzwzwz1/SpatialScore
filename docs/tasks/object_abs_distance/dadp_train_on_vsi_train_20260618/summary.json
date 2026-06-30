@@ -1,0 +1,276 @@
+{
+  "train": {
+    "count": 1311,
+    "fixed_p90_mra_percent": 30.122044241037393,
+    "fixed_p75_mra_percent": 26.987032799389805,
+    "p75_p90_oracle_percent": 35.59115179252479
+  },
+  "test": {
+    "count": 818,
+    "fixed_p90_mra_percent": 31.76039119804403,
+    "fixed_p75_mra_percent": 29.706601466992666,
+    "p75_p90_oracle_percent": 37.34718826405868
+  },
+  "experiments": [
+    {
+      "name": "core2",
+      "train": {
+        "name": "core2",
+        "mra_percent": 30.32799389778795,
+        "counts": {
+          "p75": 253,
+          "p90": 1058
+        },
+        "switch_outcomes": {
+          "benefit": 64,
+          "tie": 98,
+          "harm": 91
+        },
+        "switch_delta_sum": 2.699999999999999,
+        "rule": {
+          "family": "core2",
+          "skew_threshold": 6.982328483920573,
+          "accepted_candidate_mean_threshold": 3.5338461538461536,
+          "train_mra": 0.3032799389778795
+        }
+      },
+      "test": {
+        "name": "core2",
+        "mra_percent": 32.7872860635697,
+        "counts": {
+          "p75": 149,
+          "p90": 669
+        },
+        "switch_outcomes": {
+          "benefit": 47,
+          "tie": 57,
+          "harm": 45
+        },
+        "switch_delta_sum": 8.400000000000004,
+        "rule": {
+          "family": "core2",
+          "skew_threshold": 6.982328483920573,
+          "accepted_candidate_mean_threshold": 3.5338461538461536,
+          "train_mra": 0.3032799389778795
+        }
+      }
+    },
+    {
+      "name": "core2_far_guard_p90",
+      "train": {
+        "name": "core2_far_guard_p90",
+        "mra_percent": 30.3585049580473,
+        "counts": {
+          "p75": 233,
+          "p90": 1078
+        },
+        "switch_outcomes": {
+          "benefit": 63,
+          "tie": 80,
+          "harm": 90
+        },
+        "switch_delta_sum": 3.0999999999999965,
+        "rule": {
+          "family": "core2_far_guard",
+          "proxy": "p90",
+          "far_threshold": 1.8856165479154443,
+          "skew_threshold": 5.60497993789382,
+          "accepted_candidate_mean_threshold": 3.5338461538461536,
+          "train_mra": 0.303585049580473
+        }
+      },
+      "test": {
+        "name": "core2_far_guard_p90",
+        "mra_percent": 32.37163814180932,
+        "counts": {
+          "p75": 124,
+          "p90": 694
+        },
+        "switch_outcomes": {
+          "benefit": 39,
+          "tie": 46,
+          "harm": 39
+        },
+        "switch_delta_sum": 5.0000000000000036,
+        "rule": {
+          "family": "core2_far_guard",
+          "proxy": "p90",
+          "far_threshold": 1.8856165479154443,
+          "skew_threshold": 5.60497993789382,
+          "accepted_candidate_mean_threshold": 3.5338461538461536,
+          "train_mra": 0.303585049580473
+        }
+      }
+    },
+    {
+      "name": "core2_far_guard_median",
+      "train": {
+        "name": "core2_far_guard_median",
+        "mra_percent": 30.51106025934401,
+        "counts": {
+          "p75": 113,
+          "p90": 1198
+        },
+        "switch_outcomes": {
+          "benefit": 30,
+          "tie": 41,
+          "harm": 42
+        },
+        "switch_delta_sum": 5.1000000000000005,
+        "rule": {
+          "family": "core2_far_guard",
+          "proxy": "median",
+          "far_threshold": 0.630319219214575,
+          "skew_threshold": 4.636290046278683,
+          "accepted_candidate_mean_threshold": 3.5338461538461536,
+          "train_mra": 0.3051106025934401
+        }
+      },
+      "test": {
+        "name": "core2_far_guard_median",
+        "mra_percent": 31.58924205378974,
+        "counts": {
+          "p75": 60,
+          "p90": 758
+        },
+        "switch_outcomes": {
+          "benefit": 11,
+          "tie": 25,
+          "harm": 24
+        },
+        "switch_delta_sum": -1.4000000000000001,
+        "rule": {
+          "family": "core2_far_guard",
+          "proxy": "median",
+          "far_threshold": 0.630319219214575,
+          "skew_threshold": 4.636290046278683,
+          "accepted_candidate_mean_threshold": 3.5338461538461536,
+          "train_mra": 0.3051106025934401
+        }
+      }
+    },
+    {
+      "name": "delta_tree_far_guard_p90",
+      "train": {
+        "name": "delta_tree_far_guard_p90",
+        "mra_percent": 30.549199084668192,
+        "counts": {
+          "p75": 139,
+          "p90": 1172
+        },
+        "switch_outcomes": {
+          "benefit": 37,
+          "tie": 59,
+          "harm": 43
+        },
+        "switch_delta_sum": 5.600000000000002,
+        "rule": {
+          "family": "delta_tree",
+          "margin": 0.1,
+          "switch_margin": 0.0,
+          "far_proxy": "p90",
+          "far_threshold": 4.505938761784606,
+          "tree": {
+            "type": "node",
+            "feature": "iqr_norm",
+            "threshold": 0.16043013054166153,
+            "count": 1310,
+            "left": {
+              "type": "node",
+              "feature": "lower_tail",
+              "threshold": 0.1047488849220378,
+              "count": 158,
+              "left": {
+                "type": "leaf",
+                "count": 120,
+                "predicted_delta": -0.03114754098360657
+              },
+              "right": {
+                "type": "leaf",
+                "count": 38,
+                "predicted_delta": -0.4728813559322034
+              }
+            },
+            "right": {
+              "type": "node",
+              "feature": "skew",
+              "threshold": 5.335183182275069,
+              "count": 1152,
+              "left": {
+                "type": "leaf",
+                "count": 1013,
+                "predicted_delta": -0.006422018348623843
+              },
+              "right": {
+                "type": "leaf",
+                "count": 139,
+                "predicted_delta": 0.2507142857142858
+              }
+            }
+          },
+          "train_mra": 0.30549199084668194
+        }
+      },
+      "test": {
+        "name": "delta_tree_far_guard_p90",
+        "mra_percent": 31.577017114914447,
+        "counts": {
+          "p75": 75,
+          "p90": 743
+        },
+        "switch_outcomes": {
+          "benefit": 15,
+          "tie": 29,
+          "harm": 31
+        },
+        "switch_delta_sum": -1.5000000000000004,
+        "rule": {
+          "family": "delta_tree",
+          "margin": 0.1,
+          "switch_margin": 0.0,
+          "far_proxy": "p90",
+          "far_threshold": 4.505938761784606,
+          "tree": {
+            "type": "node",
+            "feature": "iqr_norm",
+            "threshold": 0.16043013054166153,
+            "count": 1310,
+            "left": {
+              "type": "node",
+              "feature": "lower_tail",
+              "threshold": 0.1047488849220378,
+              "count": 158,
+              "left": {
+                "type": "leaf",
+                "count": 120,
+                "predicted_delta": -0.03114754098360657
+              },
+              "right": {
+                "type": "leaf",
+                "count": 38,
+                "predicted_delta": -0.4728813559322034
+              }
+            },
+            "right": {
+              "type": "node",
+              "feature": "skew",
+              "threshold": 5.335183182275069,
+              "count": 1152,
+              "left": {
+                "type": "leaf",
+                "count": 1013,
+                "predicted_delta": -0.006422018348623843
+              },
+              "right": {
+                "type": "leaf",
+                "count": 139,
+                "predicted_delta": 0.2507142857142858
+              }
+            }
+          },
+          "train_mra": 0.30549199084668194
+        }
+      }
+    }
+  ]
+}

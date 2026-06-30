@@ -1,0 +1,66 @@
+{
+  "status": "success",
+  "tool_name": "LocalizeObjects",
+  "payload": {
+    "regions": [
+      {
+        "label": "wastebasket",
+        "bbox": [
+          411.8733215332031,
+          136.6795654296875,
+          586.8265380859375,
+          357.810302734375
+        ],
+        "score": 0.3491120934486389
+      },
+      {
+        "label": "trash bin",
+        "bbox": [
+          411.8733215332031,
+          136.6795654296875,
+          586.8265380859375,
+          357.810302734375
+        ],
+        "score": 0.3491120934486389,
+        "matched_alias": "wastebasket",
+        "detector_label": "wastebasket"
+      },
+      {
+        "label": "garbage",
+        "bbox": [
+          411.9649963378906,
+          136.88653564453125,
+          586.6143188476562,
+          352.9543151855469
+        ],
+        "score": 0.3015998601913452
+      },
+      {
+        "label": "bin",
+        "bbox": [
+          341.8064880371094,
+          221.68370056152344,
+          502.01116943359375,
+          443.0116882324219
+        ],
+        "score": 0.3003736138343811
+      }
+    ],
+    "missing_objects": [
+      "microwave"
+    ],
+    "backend": "grounding_dino:/disk/wangzhe/.cache/huggingface/hub/models--IDEA-Research--grounding-dino-base/snapshots/12bdfa3120f3e7ec7b434d90674b3396eccf88eb",
+    "instance_count": 4,
+    "artifact_descriptions": [
+      {
+        "path": "docs/tasks/object_abs_distance/failure_analysis_full_20260615/doc_2215_trash_bin_detection/alias_patch_test/tools/LocalizeObjects/scene0149_00_frame_00581_64e55d25fc_bbox.png",
+        "kind": "bbox_overlay",
+        "description": "Object localization bounding boxes with label and confidence."
+      }
+    ]
+  },
+  "artifacts": [
+    "docs/tasks/object_abs_distance/failure_analysis_full_20260615/doc_2215_trash_bin_detection/alias_patch_test/tools/LocalizeObjects/scene0149_00_frame_00581_64e55d25fc_bbox.png"
+  ],
+  "error": null
+}

@@ -1,0 +1,397 @@
+# SpatialAgent + VSI-Bench 使用说明
+
+这份文档说明如何在同一台服务器上，把新的 `spatial_agent` 接到 [`VSI-Bench`](https://huggingface.co/datasets/nyu-visionx/VSI-Bench) 做评测。
+
+适用前提：
+
+- benchmark 仓库在 `/Users/wz/code/thinking-in-space`
+- agent 仓库在 `/disk/wangzhe/SpatialScore`
+- 两者运行在同一台服务器
+
+这个接法的目标是：**尽量不修改 `thinking-in-space` 内部代码**。  
+具体做法是通过 `LMMS_EVAL_PLUGINS`，让 `lmms-eval` 从当前仓库发现并加载一个插件模型。
+
+## 1. 这套集成里新增了什么
+
+新增内容主要在当前仓库：
+
+- `spatial_agent/`
+  - ReAct 图
+  - 本地 HuggingFace 后端
+  - OpenAI-compatible API 后端
+  - 视频转帧桥接
+- `lmms_eval_spatialagent_plugin/`
+  - 一个 `lmms-eval` 插件模型：`spatial_agent_api`
+
+`thinking-in-space` 仍然继续使用它自己的 `vsibench` task 和 metric。
+
+## 2. 环境准备
+
+建议让两个仓库共用同一个 Python 环境。
+
+至少需要满足：
+
+1. `thinking-in-space` 能在当前环境中运行。
+2. `SpatialScore` 的依赖也在同一个环境里可用。
+3. benchmark 数据和模型资源已经在服务器上准备好。
+
+如果你不想把 `SpatialScore` 安装成 package，也没关系，下面的方式会用 `PYTHONPATH` 解决导入。
+
+## 3. 必要环境变量
+
+在你运行 `VSI-Bench` 的 shell 里先执行：
+
+```bash
+export PYTHONPATH=/disk/wangzhe/SpatialScore:$PYTHONPATH
+export LMMS_EVAL_PLUGINS=lmms_eval_spatialagent_plugin
+```
+
+如果你走 API 推理，再补一个：
+
+```bash
+export OPENAI_API_KEY=your_api_key_here
+export OPENAI_API_BASE_URL=https://yunwu.ai/v1
+```
+
+如果你用的不是 `OPENAI_API_KEY` 这个环境变量名，也可以在 `model_args` 里传：
+
+```text
+api_key_env=你的变量名
+```
+
+如果你用的不是 `OPENAI_API_BASE_URL` 这个环境变量名，也可以在 `model_args` 里传：
+
+```text
+api_base_url_env=你的变量名
+```
+
+## 4. 先做 smoke test
+
+正式全量跑之前，建议先用 `--limit 2` 做一个小样本 dry run。
+
+先进入 benchmark 仓库：
+
+```bash
+cd /Users/wz/code/thinking-in-space
+```
+
+### 4.1 API 后端
+
+```bash
+python -m lmms_eval \
+  --model spatial_agent_api \
+  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,video_num_frames=64,artifact_dir=/tmp/spatial_agent_runs,tool_config_path=/disk/wangzhe/SpatialScore/docs/guides/tool_config.server.template.json \
+  --tasks vsibench \
+  --batch_size 1 \
+  --limit 2 \
+  --log_samples \
+  --output_path ./logs/vsibench_smoke
+```
+
+### 4.2 本地模型后端
+
+```bash
+python -m lmms_eval \
+  --model spatial_agent_api \
+  --model_args llm_backend=hf,model_path=/path/to/Qwen2.5-VL-7B-Instruct,video_num_frames=64,artifact_dir=/tmp/spatial_agent_runs,tool_config_path=/disk/wangzhe/SpatialScore/docs/guides/tool_config.server.template.json \
+  --tasks vsibench \
+  --batch_size 1 \
+  --limit 2 \
+  --log_samples \
+  --output_path ./logs/vsibench_smoke
+```
+
+如果 smoke test 没问题，再去掉 `--limit 2` 跑全量。
+
+## 5. 全量 VSI-Bench 评测
+
+### 5.1 API 后端
+
+```bash
+python -m lmms_eval \
+  --model spatial_agent_api \
+  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,video_num_frames=64,artifact_dir=/tmp/spatial_agent_runs,tool_config_path=/disk/wangzhe/SpatialScore/docs/guides/tool_config.server.template.json \
+  --tasks vsibench \
+  --batch_size 1 \
+  --log_samples \
+  --output_path ./logs/vsibench
+```
+
+### 5.2 本地模型后端
+
+```bash
+python -m lmms_eval \
+  --model spatial_agent_api \
+  --model_args llm_backend=hf,model_path=/path/to/Qwen2.5-VL-7B-Instruct,video_num_frames=64,artifact_dir=/tmp/spatial_agent_runs,tool_config_path=/disk/wangzhe/SpatialScore/docs/guides/tool_config.server.template.json \
+  --tasks vsibench \
+  --batch_size 1 \
+  --log_samples \
+  --output_path ./logs/vsibench
+```
+
+## 6. 支持的 `model_args`
+
+插件模型名固定是：
+
+```text
+--model spatial_agent_api
+```
+
+支持的 `model_args` 包括：
+
+- `llm_backend=hf|openai_compatible`
+- `model_path=/path/to/local/model`
+- `model_name=<远端模型名>`
+- `api_base_url=<OpenAI-compatible base URL>`
+- `api_base_url_env=<从哪个环境变量读取 base URL>`
+- `api_key=<可选，直接传 key>`
+- `api_key_env=<从哪个环境变量读取 key>`
+- `api_timeout=<秒>`
+- `max_steps=<推理步数>`
+- `video_num_frames=<每个视频均匀采样多少帧>`
+- `video_frame_dir=<可选，显式指定帧缓存目录>`
+- `artifact_dir=<trace 和临时产物目录>`
+- `keep_video_frames=true|false`
+- `tool_config_path=<JSON 配置文件路径>`
+
+例如，下面这个命令会保留采样后的帧，便于排查问题：
+
+```bash
+python -m lmms_eval \
+  --model spatial_agent_api \
+  --model_args llm_backend=openai_compatible,model_name=gpt-4o-mini,video_num_frames=24,video_frame_dir=/tmp/vsi_frames,artifact_dir=/tmp/spatial_agent_runs,keep_video_frames=true,tool_config_path=/disk/wangzhe/SpatialScore/docs/guides/tool_config.server.template.json \
+  --tasks vsibench \
+  --batch_size 1 \
+  --limit 2 \
+  --log_samples \
+  --output_path ./logs/vsibench_debug
+```
+
+## 7. 插件内部做了什么
+
+对每一个 VSI-Bench 样本，流程是：
+
+1. `thinking-in-space` 从数据集缓存里解析出视频路径
+2. `spatial_agent_api` 把视频均匀采样成多帧
+3. 这些帧被映射成 `SpatialAgent` 的输入任务
+4. `SpatialAgent` 跑 ReAct 推理并返回 `final_answer`
+5. `lmms-eval` 继续使用原始 `vsibench` metric 对答案打分
+
+## 8. Counting 工具策略
+
+当前 `SpatialAgent` 已经按论文思路把 counting 类问题切到 `CountObjects` 优先：
+
+- `CountObjects` 后端使用 **Rex-Omni**
+- tool 输入遵循论文接口：`image` + `objects`
+- tool 输出会返回实例点位，点数就是计数依据
+- 当前默认通过 `attn_implementation=sdpa` 加载 `transformers` 后端，尽量避免卡在 `flash-attn`
+- 系统不会在 `CountObjects` 失败时自动回退到 `GetObjectMask` 或 `LocalizeObjects`
+
+这意味着如果服务器上没有准备好 Rex-Omni 依赖或权重，counting 样本会明确显示 `CountObjects unavailable`，而不是悄悄走替代链路。
+
+## 9. 你应该看哪些输出
+
+### 9.1 Benchmark 输出
+
+`thinking-in-space` 会把评测结果写到你传入的 `--output_path` 下，例如：
+
+```text
+/Users/wz/code/thinking-in-space/logs/vsibench/
+```
+
+通常这里会有：
+
+- 聚合结果 `results.json`
+- 如果开启了 `--log_samples`，还会有逐样本日志
+
+### 9.2 SpatialAgent trace
+
+`SpatialAgent` 会把每个样本的 trace 写到：
+
+```text
+<artifact_dir>/<task_id>.json
+```
+
+例如：
+
+```text
+/tmp/spatial_agent_runs/vsibench___test___42.json
+```
+
+这些 trace 里会包含：
+
+- final answer
+- status / error
+- tool calls
+- tool observations
+- reasoning trace
+
+## 10. 额外说明
+
+- `VSI-Bench` 是视频任务，所以桥接层会先采样帧，再调用 agent
+- `batch_size 1` 是最稳妥的默认值，因为每个样本都可能触发多步推理和 tool 调用
+- 如果 `keep_video_frames=false`，每个样本结束后采样帧会被清理掉
+- 如果你想检查 agent 的实际输入帧，建议设成 `keep_video_frames=true`
+- 如果你还需要把空间工具链一起配好，可以继续看：
+  - [`/disk/wangzhe/SpatialScore/docs/guides/spatial_agent_tool_config_template.md`](/disk/wangzhe/SpatialScore/docs/guides/spatial_agent_tool_config_template.md)
+
+## 11. 用云雾中转站的推荐写法
+
+如果你走 `yunwu.ai` 这类 OpenAI-compatible 中转站，推荐直接在环境变量里写：
+
+```bash
+export OPENAI_API_KEY=你的云雾令牌
+export OPENAI_API_BASE_URL=https://yunwu.ai/v1
+```
+
+然后 `model_args` 里只保留：
+
+```text
+llm_backend=openai_compatible,model_name=你的模型名,...
+```
+
+这样命令行会更短，也更方便切换不同中转站。
+
+## 11. 结果分析与可视化
+
+如果你已经跑出了 `VSI-Bench` 结果，推荐直接使用仓库内置的分析器，把 `lmms_eval` 样本日志和 `SpatialAgent` trace 合并起来做可视化：
+
+```bash
+python -m spatial_agent.analysis \
+  --samples-path /disk/wangzhe/thinking-in-space/logs/vsibench \
+  --trace-dir /tmp/spatial_agent_runs \
+  --output-dir /disk/wangzhe/SpatialScore/analysis/vsibench
+```
+
+分析器会输出：
+
+- `summary.json`
+- `samples.csv`
+- `report.md`
+- `report.html`
+- `charts/*.png`
+
+## 12. 不进入 `thinking-in-space`，直接在 `SpatialScore` 里跑一条样本
+
+如果你只是想快速验证 agent 本身，而不是走完整 `lmms_eval` 流程，现在也可以直接在 `SpatialScore` 项目里抽一条 `VSI-Bench` 样本来跑。
+
+适合场景：
+
+- 先检查某条样本的 sampled frames、trace、tool 调用
+- 不想每次都从 `thinking-in-space` 入口启动
+- 想直接在 agent 仓库里做单样本调试
+
+进入 `SpatialScore` 仓库后执行：
+
+```bash
+cd /disk/wangzhe/SpatialScore
+python -m spatial_agent.vsibench_cli \
+  --doc-id 0 \
+  --split test \
+  --llm-backend openai_compatible \
+  --model-name gpt-4o-mini \
+  --artifact-dir /tmp/spatial_agent_runs \
+  --tool-config-path /disk/wangzhe/SpatialScore/docs/guides/tool_config.server.template.json \
+  --keep-video-frames
+```
+
+如果你走本地模型：
+
+```bash
+cd /disk/wangzhe/SpatialScore
+python -m spatial_agent.vsibench_cli \
+  --doc-id 0 \
+  --split test \
+  --llm-backend hf \
+  --model-path /path/to/Qwen2.5-VL-7B-Instruct \
+  --artifact-dir /tmp/spatial_agent_runs \
+  --tool-config-path /disk/wangzhe/SpatialScore/docs/guides/tool_config.server.template.json \
+  --keep-video-frames
+```
+
+现在这个入口默认**不再把完整运行结果直接打印成大段 JSON**，而是优先写文件。默认输出目录是：
+
+```text
+<artifact_dir>/single_runs/<split>/<doc_id>/
+```
+
+例如：
+
+```text
+/tmp/spatial_agent_runs/single_runs/test/0/
+```
+
+里面至少会有：
+
+- `run.json`
+  - 完整单样本运行结果
+- `vsibench.json`
+  - 一个和分析器兼容的样本日志 bundle
+
+CLI 结束后只会打印这些文件路径，例如：
+
+```text
+Run complete.
+run_json: /tmp/spatial_agent_runs/single_runs/test/0/run.json
+samples_json: /tmp/spatial_agent_runs/single_runs/test/0/vsibench.json
+trace_path: /tmp/spatial_agent_runs/vsibench___test___0.json
+```
+
+如果你想自定义输出目录，可以显式传：
+
+```bash
+--output-dir /disk/wangzhe/SpatialScore/runs/vsibench/test_0
+```
+
+如果你想在单样本运行结束后，直接顺手调用我们之前的分析报告脚本，也可以加：
+
+```bash
+--run-analysis
+```
+
+例如：
+
+```bash
+python -m spatial_agent.vsibench_cli \
+  --doc-id 0 \
+  --split test \
+  --llm-backend openai_compatible \
+  --model-name gpt-4o-mini \
+  --artifact-dir /tmp/spatial_agent_runs \
+  --output-dir /disk/wangzhe/SpatialScore/runs/vsibench/test_0 \
+  --tool-config-path /disk/wangzhe/SpatialScore/docs/guides/tool_config.server.template.json \
+  --keep-video-frames \
+  --run-analysis
+```
+
+这样运行后，你会同时得到：
+
+- 单样本原始结果：`run.json`
+- 分析器样本输入：`vsibench.json`
+- 分析报告目录：`analysis/`
+
+说明：
+
+- `--doc-id` 是 `VSI-Bench` 对应 split 里的样本索引
+- `--split` 默认是 `test`
+- 这个入口会：
+  1. 直接从 Hugging Face `nyu-visionx/VSI-Bench` 读取样本
+  2. 按 `scene_name` 和 `dataset` 拼出本地缓存视频路径
+  3. 均匀抽帧
+  4. 构造 `SpatialAgent` 的 `task_input`
+  5. 输出完整运行结果 JSON
+
+如果你没有显式传 `--dataset-cache-dir`，默认会使用：
+
+```text
+$HF_HOME/vsibench
+```
+
+也就是和 `thinking-in-space` 当前 `vsibench` 任务一致的缓存布局。
+- `artifacts/`
+
+其中 `report.html` 会尽量把 trace 里的分割、深度、光流、运动轨迹等 artifact 一起带上，方便你直观看 agent 对场景的中间建模结果。
+
+更详细的使用方式见：
+
+- [`/disk/wangzhe/SpatialScore/docs/guides/spatial_agent_vsibench_analysis.md`](/disk/wangzhe/SpatialScore/docs/guides/spatial_agent_vsibench_analysis.md)

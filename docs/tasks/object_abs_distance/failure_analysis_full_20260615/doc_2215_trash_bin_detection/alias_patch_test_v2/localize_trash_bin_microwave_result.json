@@ -1,0 +1,68 @@
+{
+  "status": "success",
+  "tool_name": "LocalizeObjects",
+  "payload": {
+    "regions": [
+      {
+        "label": "microwave",
+        "bbox": [
+          374.5838928222656,
+          0.0,
+          465.14947509765625,
+          36.97997283935547
+        ],
+        "score": 0.597930371761322
+      },
+      {
+        "label": "wastebasket",
+        "bbox": [
+          411.7089538574219,
+          136.50457763671875,
+          586.90478515625,
+          358.2335205078125
+        ],
+        "score": 0.3444958031177521,
+        "matched_alias": "wastebasket",
+        "detector_label": "wastebasket"
+      },
+      {
+        "label": "trash bin",
+        "bbox": [
+          411.7089538574219,
+          136.50457763671875,
+          586.90478515625,
+          358.2335205078125
+        ],
+        "score": 0.3444958031177521,
+        "matched_alias": "wastebasket",
+        "detector_label": "wastebasket"
+      },
+      {
+        "label": "bin",
+        "bbox": [
+          341.8292236328125,
+          221.77992248535156,
+          502.1248779296875,
+          443.1039733886719
+        ],
+        "score": 0.30968764424324036,
+        "matched_alias": "garbage bin",
+        "detector_label": "bin"
+      }
+    ],
+    "missing_objects": [],
+    "backend": "grounding_dino:/disk/wangzhe/.cache/huggingface/hub/models--IDEA-Research--grounding-dino-base/snapshots/12bdfa3120f3e7ec7b434d90674b3396eccf88eb",
+    "instance_count": 4,
+    "artifact_descriptions": [
+      {
+        "path": "docs/tasks/object_abs_distance/failure_analysis_full_20260615/doc_2215_trash_bin_detection/alias_patch_test_v2/tools/LocalizeObjects/scene0149_00_frame_00581_64e55d25fc_bbox.png",
+        "kind": "bbox_overlay",
+        "description": "Object localization bounding boxes with label and confidence."
+      }
+    ]
+  },
+  "artifacts": [
+    "docs/tasks/object_abs_distance/failure_analysis_full_20260615/doc_2215_trash_bin_detection/alias_patch_test_v2/tools/LocalizeObjects/scene0149_00_frame_00581_64e55d25fc_bbox.png"
+  ],
+  "error": null
+}

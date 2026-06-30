@@ -1,0 +1,30 @@
+{
+  "doc_id": 2215,
+  "question": "Measuring from the closest point of each object, what is the distance between the trash bin and the microwave (in meters)?",
+  "scene_name": "scene0149_00",
+  "dataset": "scannet",
+  "video_path": "/disk/wangzhe/VSI-Bench/scannet/scene0149_00.mp4",
+  "objects": [
+    "trash bin",
+    "microwave"
+  ],
+  "status": "error",
+  "error": "Selected frames did not include finite localizations for both objects.",
+  "trash_bin_instance_verification": {
+    "candidate_count": 0,
+    "hypothesis_count": 0,
+    "accepted_hypotheses": 0,
+    "fallback_rechecks": [],
+    "best_match_fallback": null,
+    "hypotheses": []
+  },
+  "microwave_instance_verification_summary": {
+    "candidate_count": 29,
+    "hypothesis_count": 10,
+    "accepted_hypotheses": 9
+  },
+  "frame_has_trash_bin_count": 0,
+  "frame_has_microwave_count": 27,
+  "detection_overlay_count": 27,
+  "notes": "LocalizeObjects returned zero trash bin candidates across 64 sampled frames; saved detection overlays are microwave detections only."
+}

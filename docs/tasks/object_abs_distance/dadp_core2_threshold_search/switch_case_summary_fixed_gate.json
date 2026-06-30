@@ -1,0 +1,56 @@
+{
+  "gate": {
+    "skew_threshold": 8.0,
+    "accepted_candidate_mean_threshold": 3.1,
+    "action_space": [
+      "p90",
+      "p75"
+    ]
+  },
+  "mra_percent": 32.85343709468223,
+  "fixed_p90_percent": 31.556420233463033,
+  "counts": {
+    "keep_p90": 575,
+    "switch_p75": 196
+  },
+  "switch_outcomes": {
+    "benefit": 56,
+    "tie": 75,
+    "harm": 65
+  },
+  "switch_reasons": {
+    "skew": 43,
+    "accepted_candidate_mean": 153
+  },
+  "switch_by_bucket": {
+    "<1m": {
+      "benefit": 19,
+      "tie": 25,
+      "harm": 3
+    },
+    "1-3m": {
+      "benefit": 37,
+      "tie": 22,
+      "harm": 53
+    },
+    ">=3m": {
+      "tie": 28,
+      "harm": 9
+    }
+  },
+  "switch_by_reason_outcome": {
+    "skew": {
+      "benefit": 15,
+      "tie": 18,
+      "harm": 10
+    },
+    "accepted_candidate_mean": {
+      "benefit": 41,
+      "tie": 57,
+      "harm": 55
+    }
+  },
+  "switch_delta_mra_sum": 10.0,
+  "switch_delta_mra_mean": 0.05102040816326531,
+  "output_csv": "docs/tasks/object_abs_distance/dadp_core2_threshold_search/switch_cases_fixed_gate.csv"
+}

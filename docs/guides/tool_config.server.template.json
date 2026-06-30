@@ -1,0 +1,82 @@
+{
+  "raft": {
+    "checkpoint_path": "/data/models/raft/raft-things.pth",
+    "small": false,
+    "mixed_precision": true,
+    "alternate_corr": false,
+    "iters": 20,
+    "device": "cuda"
+  },
+  "depth": {
+    "checkpoint_path": "/data/models/depth_anything/depth_anything_v2_metric_hypersim_vitl.pth",
+    "encoder": "vitl",
+    "max_depth": 20,
+    "input_size": 518,
+    "device": "cuda"
+  },
+  "counting": {
+    "model_path": "IDEA-Research/Rex-Omni",
+    "backend": "transformers",
+    "device": "cuda",
+    "attn_implementation": "sdpa",
+    "device_map": "auto",
+    "max_tokens": 2048,
+    "temperature": 0.0,
+    "top_p": 0.05,
+    "top_k": 1,
+    "repetition_penalty": 1.05
+  },
+  "mask": {
+    "model_id": "facebook/sam2.1-hiera-large",
+    "device": "cuda"
+  },
+  "camera": {
+    "hf_model_id": "facebook/VGGT-1B",
+    "preprocess_mode": "pad",
+    "device": "cuda"
+  },
+  "distance": {
+    "hf_model_id": "facebook/VGGT-1B",
+    "preprocess_mode": "pad",
+    "device": "cuda",
+    "neighbor_search_radius": 3
+  },
+  "object_distance_3d": {
+    "hf_model_id": "facebook/VGGT-1B",
+    "preprocess_mode": "pad",
+    "device": "cuda",
+    "top_distance_frames": 6,
+    "pointcloud_aggregate": "adaptive_p05_p90",
+    "mask_max_points": 128
+  },
+  "compare_object_distance_3d": {
+    "hf_model_id": "facebook/VGGT-1B",
+    "preprocess_mode": "pad",
+    "device": "cuda",
+    "frames_per_candidate": 1,
+    "max_compare_frames": 4,
+    "pointcloud_aggregate": "p75",
+    "mask_max_points": 128,
+    "min_mask_pixels": 1000,
+    "duplicate_bbox_iou_threshold": 0.95
+  },
+  "orientation": {
+    "checkpoint_repo_id": "Viglong/Orient-Anything",
+    "checkpoint_filename": "croplargeEX2/dino_weight.pt",
+    "dino_mode": "large",
+    "remove_background": true,
+    "device": "cuda"
+  },
+  "localization": {
+    "model_id": "IDEA-Research/grounding-dino-base",
+    "box_threshold": 0.3,
+    "text_threshold": 0.25,
+    "enable_ram_tags": false,
+    "device": "cuda"
+  },
+  "motion": {
+    "hf_model_id": "facebook/VGGT-1B",
+    "preprocess_mode": "pad",
+    "device": "cuda"
+  }
+}

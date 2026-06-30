@@ -1,0 +1,2014 @@
+[
+  {
+    "doc_id": 228,
+    "question": "Measuring from the closest point of each object, what is the distance between the table and the bathtub (in meters)?",
+    "objects": [
+      "table",
+      "bathtub"
+    ],
+    "ground_truth": 0.9,
+    "gt_bucket": "<1m",
+    "best_mra": 0.3,
+    "best_mra_quantiles": [
+      "median"
+    ],
+    "best_tiebreak_quantile": "median",
+    "best_abs_quantile": "median",
+    "best_abs_error": 0.3387281793682422,
+    "p90_p05_ratio": 11.841315140097624,
+    "p90_p05_spread": 1.5440297111699226,
+    "iqr_p75_p25": 0.8960455945477013,
+    "median": 0.5612718206317578,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.3,
+      "p75": 0.1,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 0.8954487811527579,
+      "p05": 0.7575791136760537,
+      "p10": 0.6269024344902236,
+      "p25": 0.4661910859784913,
+      "median": 0.3387281793682422,
+      "p75": 0.4298545085692099,
+      "p90": 0.786450597493869
+    },
+    "predictions": {
+      "min": 0.004551218847242086,
+      "p05": 0.1424208863239464,
+      "p10": 0.27309756550977643,
+      "p25": 0.43380891402150873,
+      "median": 0.5612718206317578,
+      "p75": 1.32985450856921,
+      "p90": 1.686450597493869
+    }
+  },
+  {
+    "doc_id": 229,
+    "question": "Measuring from the closest point of each object, what is the distance between the toilet and the table (in meters)?",
+    "objects": [
+      "toilet",
+      "table"
+    ],
+    "ground_truth": 0.7,
+    "gt_bucket": "<1m",
+    "best_mra": 0.6,
+    "best_mra_quantiles": [
+      "p75"
+    ],
+    "best_tiebreak_quantile": "p75",
+    "best_abs_quantile": "p75",
+    "best_abs_error": 0.14618163353798663,
+    "p90_p05_ratio": 7.600308707897602,
+    "p90_p05_spread": 1.67374228965191,
+    "iqr_p75_p25": 0.2103913465299373,
+    "median": 0.3825759389723934,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.1,
+      "p75": 0.6,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 0.691766296534621,
+      "p05": 0.44641454457286317,
+      "p10": 0.4160361813633865,
+      "p25": 0.35657298006792393,
+      "median": 0.31742406102760656,
+      "p75": 0.14618163353798663,
+      "p90": 1.227327745079047
+    },
+    "predictions": {
+      "min": 0.008233703465379036,
+      "p05": 0.2535854554271368,
+      "p10": 0.28396381863661346,
+      "p25": 0.343427019932076,
+      "median": 0.3825759389723934,
+      "p75": 0.5538183664620133,
+      "p90": 1.927327745079047
+    }
+  },
+  {
+    "doc_id": 230,
+    "question": "Measuring from the closest point of each object, what is the distance between the bed and the toilet (in meters)?",
+    "objects": [
+      "bed",
+      "toilet"
+    ],
+    "ground_truth": 4.2,
+    "gt_bucket": ">=3m",
+    "best_mra": 0.0,
+    "best_mra_quantiles": [
+      "min",
+      "p05",
+      "p10",
+      "p25",
+      "median",
+      "p75",
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 2.3325938961331127,
+    "p90_p05_ratio": 7.965578367949625,
+    "p90_p05_spread": 1.632971638771346,
+    "iqr_p75_p25": 0.9865748918064263,
+    "median": 1.4858970562000025,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 4.099637865683162,
+      "p05": 3.9655655349044587,
+      "p10": 3.8853493810519377,
+      "p25": 3.399957361849296,
+      "median": 2.7141029437999977,
+      "p75": 2.41338247004287,
+      "p90": 2.3325938961331127
+    },
+    "predictions": {
+      "min": 0.10036213431683798,
+      "p05": 0.2344344650955416,
+      "p10": 0.31465061894806245,
+      "p25": 0.8000426381507042,
+      "median": 1.4858970562000025,
+      "p75": 1.7866175299571305,
+      "p90": 1.8674061038668877
+    }
+  },
+  {
+    "doc_id": 231,
+    "question": "Measuring from the closest point of each object, what is the distance between the table and the stove (in meters)?",
+    "objects": [
+      "table",
+      "stove"
+    ],
+    "ground_truth": 3.0,
+    "gt_bucket": ">=3m",
+    "best_mra": 0.0,
+    "best_mra_quantiles": [
+      "min",
+      "p05",
+      "p10",
+      "p25",
+      "median",
+      "p75",
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 1.5706567215642162,
+    "p90_p05_ratio": 4.760510178772113,
+    "p90_p05_spread": 1.1290932580053146,
+    "iqr_p75_p25": 0.49359757766644874,
+    "median": 1.1141162984648516,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 2.999489918367933,
+      "p05": 2.6997499795695306,
+      "p10": 2.5685540312983544,
+      "p25": 2.212796831259129,
+      "median": 1.8858837015351484,
+      "p75": 1.7191992535926806,
+      "p90": 1.5706567215642162
+    },
+    "predictions": {
+      "min": 0.0005100816320670912,
+      "p05": 0.3002500204304693,
+      "p10": 0.43144596870164575,
+      "p25": 0.7872031687408707,
+      "median": 1.1141162984648516,
+      "p75": 1.2808007464073194,
+      "p90": 1.4293432784357838
+    }
+  },
+  {
+    "doc_id": 232,
+    "question": "Measuring from the closest point of each object, what is the distance between the stool and the fireplace (in meters)?",
+    "objects": [
+      "stool",
+      "fireplace"
+    ],
+    "ground_truth": 1.6,
+    "gt_bucket": "1-3m",
+    "best_mra": 0.3,
+    "best_mra_quantiles": [
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 0.6098625151158672,
+    "p90_p05_ratio": 3.6920914343656244,
+    "p90_p05_spread": 0.7219595422503101,
+    "iqr_p75_p25": 0.3162395043344813,
+    "median": 0.6037165699438396,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.3
+    },
+    "errors": {
+      "min": 1.5912572054534397,
+      "p05": 1.3318220573661774,
+      "p10": 1.2991753845747105,
+      "p25": 1.21631680312808,
+      "median": 0.9962834300561605,
+      "p75": 0.9000772987935988,
+      "p90": 0.6098625151158672
+    },
+    "predictions": {
+      "min": 0.00874279454656028,
+      "p05": 0.2681779426338228,
+      "p10": 0.30082461542528965,
+      "p25": 0.38368319687192004,
+      "median": 0.6037165699438396,
+      "p75": 0.6999227012064013,
+      "p90": 0.9901374848841329
+    }
+  },
+  {
+    "doc_id": 233,
+    "question": "Measuring from the closest point of each object, what is the distance between the table and the sofa (in meters)?",
+    "objects": [
+      "table",
+      "sofa"
+    ],
+    "ground_truth": 1.4,
+    "gt_bucket": "1-3m",
+    "best_mra": 1.0,
+    "best_mra_quantiles": [
+      "p75"
+    ],
+    "best_tiebreak_quantile": "p75",
+    "best_abs_quantile": "p75",
+    "best_abs_error": 0.0009505578409001458,
+    "p90_p05_ratio": 1.4439674066328865,
+    "p90_p05_spread": 0.461273271327314,
+    "iqr_p75_p25": 0.21563552321804402,
+    "median": 1.2918769914214006,
+    "scores": {
+      "min": 0.3,
+      "p05": 0.5,
+      "p10": 0.6,
+      "p25": 0.7,
+      "median": 0.9,
+      "p75": 1.0,
+      "p90": 0.9
+    },
+    "errors": {
+      "min": 0.5528882949120094,
+      "p05": 0.36101996579956674,
+      "p10": 0.3080700554969966,
+      "p25": 0.21468496537714388,
+      "median": 0.10812300857859936,
+      "p75": 0.0009505578409001458,
+      "p90": 0.10025330552774725
+    },
+    "predictions": {
+      "min": 0.8471117050879905,
+      "p05": 1.0389800342004332,
+      "p10": 1.0919299445030033,
+      "p25": 1.185315034622856,
+      "median": 1.2918769914214006,
+      "p75": 1.4009505578409,
+      "p90": 1.5002533055277472
+    }
+  },
+  {
+    "doc_id": 234,
+    "question": "Measuring from the closest point of each object, what is the distance between the chair and the sofa (in meters)?",
+    "objects": [
+      "chair",
+      "sofa"
+    ],
+    "ground_truth": 2.7,
+    "gt_bucket": "1-3m",
+    "best_mra": 0.0,
+    "best_mra_quantiles": [
+      "min",
+      "p05",
+      "p10",
+      "p25",
+      "median",
+      "p75",
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 1.5508354042646402,
+    "p90_p05_ratio": 4.070193774254652,
+    "p90_p05_spread": 0.8668280143656439,
+    "iqr_p75_p25": 0.4929769563905013,
+    "median": 0.7729306093563654,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 2.694168911672193,
+      "p05": 2.4176634186302843,
+      "p10": 2.3232880775103255,
+      "p25": 2.16824157557713,
+      "median": 1.9270693906436347,
+      "p75": 1.675264619186629,
+      "p90": 1.5508354042646402
+    },
+    "predictions": {
+      "min": 0.005831088327806854,
+      "p05": 0.282336581369716,
+      "p10": 0.37671192248967467,
+      "p25": 0.5317584244228699,
+      "median": 0.7729306093563654,
+      "p75": 1.0247353808133712,
+      "p90": 1.14916459573536
+    }
+  },
+  {
+    "doc_id": 235,
+    "question": "Measuring from the closest point of each object, what is the distance between the fireplace and the sofa (in meters)?",
+    "objects": [
+      "fireplace",
+      "sofa"
+    ],
+    "ground_truth": 0.4,
+    "gt_bucket": "<1m",
+    "best_mra": 1.0,
+    "best_mra_quantiles": [
+      "p05"
+    ],
+    "best_tiebreak_quantile": "p05",
+    "best_abs_quantile": "p05",
+    "best_abs_error": 0.01429117021266213,
+    "p90_p05_ratio": 3.513842252761741,
+    "p90_p05_spread": 0.9696111535826963,
+    "iqr_p75_p25": 0.5555439380460081,
+    "median": 0.910643501423271,
+    "scores": {
+      "min": 0.0,
+      "p05": 1.0,
+      "p10": 0.6,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 0.2836103773993275,
+      "p05": 0.01429117021266213,
+      "p10": 0.09621124956788923,
+      "p25": 0.28236308077512995,
+      "median": 0.510643501423271,
+      "p75": 0.837907018821138,
+      "p90": 0.9553199833700342
+    },
+    "predictions": {
+      "min": 0.11638962260067257,
+      "p05": 0.3857088297873379,
+      "p10": 0.49621124956788926,
+      "p25": 0.68236308077513,
+      "median": 0.910643501423271,
+      "p75": 1.237907018821138,
+      "p90": 1.3553199833700342
+    }
+  },
+  {
+    "doc_id": 236,
+    "question": "Measuring from the closest point of each object, what is the distance between the fireplace and the table (in meters)?",
+    "objects": [
+      "fireplace",
+      "table"
+    ],
+    "ground_truth": 2.6,
+    "gt_bucket": "1-3m",
+    "best_mra": 0.0,
+    "best_mra_quantiles": [
+      "min",
+      "p05",
+      "p10",
+      "p25",
+      "median",
+      "p75",
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 1.3241711918408339,
+    "p90_p05_ratio": 3.9452703148207013,
+    "p90_p05_spread": 0.952446959425907,
+    "iqr_p75_p25": 0.6974462355283318,
+    "median": 0.5899988525878781,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 2.4840962910423943,
+      "p05": 2.276618151266741,
+      "p10": 2.2272781671883797,
+      "p25": 2.134573084318165,
+      "median": 2.010001147412122,
+      "p75": 1.437126848789833,
+      "p90": 1.3241711918408339
+    },
+    "predictions": {
+      "min": 0.11590370895760577,
+      "p05": 0.32338184873325926,
+      "p10": 0.37272183281162047,
+      "p25": 0.46542691568183525,
+      "median": 0.5899988525878781,
+      "p75": 1.162873151210167,
+      "p90": 1.2758288081591662
+    }
+  },
+  {
+    "doc_id": 237,
+    "question": "Measuring from the closest point of each object, what is the distance between the fireplace and the chair (in meters)?",
+    "objects": [
+      "fireplace",
+      "chair"
+    ],
+    "ground_truth": 3.6,
+    "gt_bucket": ">=3m",
+    "best_mra": 0.2,
+    "best_mra_quantiles": [
+      "p75",
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 1.4998635718744078,
+    "p90_p05_ratio": 5.526753518263571,
+    "p90_p05_spread": 1.7201418397681536,
+    "iqr_p75_p25": 1.309583439118461,
+    "median": 1.4896929601670306,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.2,
+      "p90": 0.2
+    },
+    "errors": {
+      "min": 3.4546682807126996,
+      "p05": 3.2200054116425614,
+      "p10": 3.111867286388409,
+      "p25": 2.916749001365483,
+      "median": 2.1103070398329695,
+      "p75": 1.607165562247022,
+      "p90": 1.4998635718744078
+    },
+    "predictions": {
+      "min": 0.14533171928730046,
+      "p05": 0.3799945883574388,
+      "p10": 0.4881327136115911,
+      "p25": 0.6832509986345171,
+      "median": 1.4896929601670306,
+      "p75": 1.992834437752978,
+      "p90": 2.1001364281255923
+    }
+  },
+  {
+    "doc_id": 238,
+    "question": "Measuring from the closest point of each object, what is the distance between the washer and the refrigerator (in meters)?",
+    "objects": [
+      "washer",
+      "refrigerator"
+    ],
+    "ground_truth": 2.4,
+    "gt_bucket": "1-3m",
+    "best_mra": 0.0,
+    "best_mra_quantiles": [
+      "min",
+      "p05",
+      "p10",
+      "p25",
+      "median",
+      "p75",
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 1.3937709252868336,
+    "p90_p05_ratio": 5.164730957114136,
+    "p90_p05_spread": 0.8114020676399052,
+    "iqr_p75_p25": 0.516575227444587,
+    "median": 0.7408516037172834,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 2.3992405543267052,
+      "p05": 2.2051729929267387,
+      "p10": 2.1680336780102936,
+      "p25": 2.0683740250239904,
+      "median": 1.6591483962827165,
+      "p75": 1.5517987975794032,
+      "p90": 1.3937709252868336
+    },
+    "predictions": {
+      "min": 0.0007594456732945971,
+      "p05": 0.19482700707326112,
+      "p10": 0.23196632198970651,
+      "p25": 0.33162597497600976,
+      "median": 0.7408516037172834,
+      "p75": 0.8482012024205967,
+      "p90": 1.0062290747131664
+    }
+  },
+  {
+    "doc_id": 239,
+    "question": "Measuring from the closest point of each object, what is the distance between the table and the dishwasher (in meters)?",
+    "objects": [
+      "table",
+      "dishwasher"
+    ],
+    "ground_truth": 2.1,
+    "gt_bucket": "1-3m",
+    "best_mra": 0.6,
+    "best_mra_quantiles": [
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 0.44162776143010984,
+    "p90_p05_ratio": 13.686181128343543,
+    "p90_p05_spread": 1.537200947395359,
+    "iqr_p75_p25": 0.6303338310403532,
+    "median": 0.6703479289399041,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.6
+    },
+    "errors": {
+      "min": 2.0969092997259677,
+      "p05": 1.9788287088254688,
+      "p10": 1.9379344138691574,
+      "p25": 1.8165308121430472,
+      "median": 1.429652071060096,
+      "p75": 1.186196981102694,
+      "p90": 0.44162776143010984
+    },
+    "predictions": {
+      "min": 0.0030907002740324847,
+      "p05": 0.12117129117453125,
+      "p10": 0.16206558613084254,
+      "p25": 0.2834691878569529,
+      "median": 0.6703479289399041,
+      "p75": 0.9138030188973062,
+      "p90": 1.6583722385698902
+    }
+  },
+  {
+    "doc_id": 240,
+    "question": "Measuring from the closest point of each object, what is the distance between the table and the washer (in meters)?",
+    "objects": [
+      "table",
+      "washer"
+    ],
+    "ground_truth": 0.9,
+    "gt_bucket": "<1m",
+    "best_mra": 0.9,
+    "best_mra_quantiles": [
+      "median"
+    ],
+    "best_tiebreak_quantile": "median",
+    "best_abs_quantile": "median",
+    "best_abs_error": 0.07091082846338403,
+    "p90_p05_ratio": 8.355125670796093,
+    "p90_p05_spread": 1.1383398453643399,
+    "iqr_p75_p25": 0.47136590799129907,
+    "median": 0.829089171536616,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.4,
+      "median": 0.9,
+      "p75": 0.7,
+      "p90": 0.2
+    },
+    "errors": {
+      "min": 0.8952676612145748,
+      "p05": 0.7452317613165772,
+      "p10": 0.5907229077437539,
+      "p25": 0.2999432816674167,
+      "median": 0.07091082846338403,
+      "p75": 0.1714226263238824,
+      "p90": 0.39310808404776265
+    },
+    "predictions": {
+      "min": 0.004732338785425258,
+      "p05": 0.1547682386834228,
+      "p10": 0.3092770922562461,
+      "p25": 0.6000567183325833,
+      "median": 0.829089171536616,
+      "p75": 1.0714226263238824,
+      "p90": 1.2931080840477627
+    }
+  },
+  {
+    "doc_id": 241,
+    "question": "Measuring from the closest point of each object, what is the distance between the chair and the sofa (in meters)?",
+    "objects": [
+      "chair",
+      "sofa"
+    ],
+    "ground_truth": 0.5,
+    "gt_bucket": "<1m",
+    "best_mra": 1.0,
+    "best_mra_quantiles": [
+      "p05",
+      "p10"
+    ],
+    "best_tiebreak_quantile": "p10",
+    "best_abs_quantile": "p10",
+    "best_abs_error": 0.015519752309768653,
+    "p90_p05_ratio": 2.5361473486955655,
+    "p90_p05_spread": 0.7336745077625315,
+    "iqr_p75_p25": 0.4560998821016691,
+    "median": 0.8295855553325997,
+    "scores": {
+      "min": 0.4,
+      "p05": 1.0,
+      "p10": 1.0,
+      "p25": 0.6,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 0.15009766538657515,
+      "p05": 0.022393142568296998,
+      "p10": 0.015519752309768653,
+      "p25": 0.12324662762428407,
+      "median": 0.3295855553325997,
+      "p75": 0.5793465097259531,
+      "p90": 0.7112813651942345
+    },
+    "predictions": {
+      "min": 0.34990233461342485,
+      "p05": 0.477606857431703,
+      "p10": 0.5155197523097687,
+      "p25": 0.6232466276242841,
+      "median": 0.8295855553325997,
+      "p75": 1.0793465097259531,
+      "p90": 1.2112813651942345
+    }
+  },
+  {
+    "doc_id": 242,
+    "question": "Measuring from the closest point of each object, what is the distance between the fireplace and the table (in meters)?",
+    "objects": [
+      "fireplace",
+      "table"
+    ],
+    "ground_truth": 0.7,
+    "gt_bucket": "<1m",
+    "best_mra": 1.0,
+    "best_mra_quantiles": [
+      "median"
+    ],
+    "best_tiebreak_quantile": "median",
+    "best_abs_quantile": "median",
+    "best_abs_error": 0.013748943568063332,
+    "p90_p05_ratio": 3.8696463060065245,
+    "p90_p05_spread": 0.9443412384793204,
+    "iqr_p75_p25": 0.4345473867863764,
+    "median": 0.7137489435680633,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.2,
+      "p25": 0.6,
+      "median": 1.0,
+      "p75": 0.2,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 0.6868594470764702,
+      "p05": 0.37092068576441023,
+      "p10": 0.29169594396263754,
+      "p25": 0.14263707923422098,
+      "median": 0.013748943568063332,
+      "p75": 0.2919103075521554,
+      "p90": 0.5734205527149101
+    },
+    "predictions": {
+      "min": 0.013140552923529732,
+      "p05": 0.3290793142355897,
+      "p10": 0.4083040560373624,
+      "p25": 0.557362920765779,
+      "median": 0.7137489435680633,
+      "p75": 0.9919103075521554,
+      "p90": 1.27342055271491
+    }
+  },
+  {
+    "doc_id": 243,
+    "question": "Measuring from the closest point of each object, what is the distance between the washer and the refrigerator (in meters)?",
+    "objects": [
+      "washer",
+      "refrigerator"
+    ],
+    "ground_truth": 1.0,
+    "gt_bucket": "1-3m",
+    "best_mra": 1.0,
+    "best_mra_quantiles": [
+      "p75"
+    ],
+    "best_tiebreak_quantile": "p75",
+    "best_abs_quantile": "p75",
+    "best_abs_error": 0.01460999343235514,
+    "p90_p05_ratio": 1.5297733968542198,
+    "p90_p05_spread": 0.3739471778376421,
+    "iqr_p75_p25": 0.1879311946490947,
+    "median": 0.9176695547836073,
+    "scores": {
+      "min": 0.1,
+      "p05": 0.5,
+      "p10": 0.6,
+      "p25": 0.7,
+      "median": 0.9,
+      "p75": 1.0,
+      "p90": 0.9
+    },
+    "errors": {
+      "min": 0.462775597162583,
+      "p05": 0.29413749339221196,
+      "p10": 0.24810715180584508,
+      "p25": 0.17332120121673955,
+      "median": 0.08233044521639266,
+      "p75": 0.01460999343235514,
+      "p90": 0.07980968444543013
+    },
+    "predictions": {
+      "min": 0.537224402837417,
+      "p05": 0.705862506607788,
+      "p10": 0.7518928481941549,
+      "p25": 0.8266787987832604,
+      "median": 0.9176695547836073,
+      "p75": 1.0146099934323551,
+      "p90": 1.0798096844454301
+    }
+  },
+  {
+    "doc_id": 244,
+    "question": "Measuring from the closest point of each object, what is the distance between the stove and the washer (in meters)?",
+    "objects": [
+      "stove",
+      "washer"
+    ],
+    "ground_truth": 0.9,
+    "gt_bucket": "<1m",
+    "best_mra": 1.0,
+    "best_mra_quantiles": [
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 0.005505730736313108,
+    "p90_p05_ratio": 1.6300611461675594,
+    "p90_p05_spread": 0.3500015811740407,
+    "iqr_p75_p25": 0.19511122873792763,
+    "median": 0.6372471494387313,
+    "scores": {
+      "min": 0.2,
+      "p05": 0.3,
+      "p10": 0.3,
+      "p25": 0.3,
+      "median": 0.5,
+      "p75": 0.8,
+      "p90": 1.0
+    },
+    "errors": {
+      "min": 0.36844927790735627,
+      "p05": 0.34449585043772757,
+      "p10": 0.3395632172381887,
+      "p25": 0.3224195736747342,
+      "median": 0.26275285056126874,
+      "p75": 0.12730834493680654,
+      "p90": 0.005505730736313108
+    },
+    "predictions": {
+      "min": 0.5315507220926438,
+      "p05": 0.5555041495622725,
+      "p10": 0.5604367827618113,
+      "p25": 0.5775804263252658,
+      "median": 0.6372471494387313,
+      "p75": 0.7726916550631935,
+      "p90": 0.9055057307363131
+    }
+  },
+  {
+    "doc_id": 245,
+    "question": "Measuring from the closest point of each object, what is the distance between the stool and the stove (in meters)?",
+    "objects": [
+      "stool",
+      "stove"
+    ],
+    "ground_truth": 3.5,
+    "gt_bucket": ">=3m",
+    "best_mra": 0.0,
+    "best_mra_quantiles": [
+      "min",
+      "p05",
+      "p10",
+      "p25",
+      "median",
+      "p75",
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 2.481834962423143,
+    "p90_p05_ratio": 8.792276672964242,
+    "p90_p05_spread": 0.9023628312259517,
+    "iqr_p75_p25": 0.6057378160685798,
+    "median": 0.7633535977882019,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 3.4964519492977044,
+      "p05": 3.384197793649095,
+      "p10": 3.340633988969636,
+      "p25": 3.1391161186395573,
+      "median": 2.736646402211798,
+      "p75": 2.533378302570977,
+      "p90": 2.481834962423143
+    },
+    "predictions": {
+      "min": 0.0035480507022957993,
+      "p05": 0.1158022063509054,
+      "p10": 0.15936601103036419,
+      "p25": 0.3608838813604429,
+      "median": 0.7633535977882019,
+      "p75": 0.9666216974290227,
+      "p90": 1.0181650375768572
+    }
+  },
+  {
+    "doc_id": 246,
+    "question": "Measuring from the closest point of each object, what is the distance between the tv and the fireplace (in meters)?",
+    "objects": [
+      "tv",
+      "fireplace"
+    ],
+    "ground_truth": 0.4,
+    "gt_bucket": "<1m",
+    "best_mra": 0.7,
+    "best_mra_quantiles": [
+      "median"
+    ],
+    "best_tiebreak_quantile": "median",
+    "best_abs_quantile": "median",
+    "best_abs_error": 0.06964547396516263,
+    "p90_p05_ratio": 14.643591077351944,
+    "p90_p05_spread": 0.9333004218689831,
+    "iqr_p75_p25": 0.4974539331292257,
+    "median": 0.46964547396516265,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.6,
+      "median": 0.7,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 0.4,
+      "p05": 0.33159422496777696,
+      "p10": 0.2923897880109362,
+      "p25": 0.08179812100279726,
+      "median": 0.06964547396516263,
+      "p75": 0.41565581212642844,
+      "p90": 0.6017061969012062
+    },
+    "predictions": {
+      "min": 0.0,
+      "p05": 0.06840577503222307,
+      "p10": 0.10761021198906383,
+      "p25": 0.31820187899720276,
+      "median": 0.46964547396516265,
+      "p75": 0.8156558121264285,
+      "p90": 1.0017061969012062
+    }
+  },
+  {
+    "doc_id": 247,
+    "question": "Measuring from the closest point of each object, what is the distance between the toilet and the bed (in meters)?",
+    "objects": [
+      "toilet",
+      "bed"
+    ],
+    "ground_truth": 2.9,
+    "gt_bucket": "1-3m",
+    "best_mra": 0.0,
+    "best_mra_quantiles": [
+      "min",
+      "p05",
+      "p10",
+      "p25",
+      "median",
+      "p75",
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 2.02820504348212,
+    "p90_p05_ratio": 2.641525838629414,
+    "p90_p05_spread": 0.5417603440341268,
+    "iqr_p75_p25": 0.33848969041125876,
+    "median": 0.5429257448680858,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 2.646009009012604,
+      "p05": 2.5699653875162465,
+      "p10": 2.5478649757156377,
+      "p25": 2.4928340730009877,
+      "median": 2.357074255131914,
+      "p75": 2.154344382589729,
+      "p90": 2.02820504348212
+    },
+    "predictions": {
+      "min": 0.25399099098739614,
+      "p05": 0.33003461248375326,
+      "p10": 0.35213502428436194,
+      "p25": 0.4071659269990122,
+      "median": 0.5429257448680858,
+      "p75": 0.745655617410271,
+      "p90": 0.87179495651788
+    }
+  },
+  {
+    "doc_id": 248,
+    "question": "Measuring from the closest point of each object, what is the distance between the toilet and the table (in meters)?",
+    "objects": [
+      "toilet",
+      "table"
+    ],
+    "ground_truth": 1.4,
+    "gt_bucket": "1-3m",
+    "best_mra": 0.8,
+    "best_mra_quantiles": [
+      "p75"
+    ],
+    "best_tiebreak_quantile": "p75",
+    "best_abs_quantile": "p75",
+    "best_abs_error": 0.14299954567008832,
+    "p90_p05_ratio": 10.785718261987983,
+    "p90_p05_spread": 1.4939905188956895,
+    "iqr_p75_p25": 1.24326564121432,
+    "median": 1.163747832950062,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.7,
+      "p75": 0.8,
+      "p90": 0.7
+    },
+    "errors": {
+      "min": 1.3977596155172294,
+      "p05": 1.2473294980605558,
+      "p10": 1.2087368847016262,
+      "p25": 1.1002660955442316,
+      "median": 0.236252167049938,
+      "p75": 0.14299954567008832,
+      "p90": 0.24666102083513364
+    },
+    "predictions": {
+      "min": 0.0022403844827706297,
+      "p05": 0.15267050193944406,
+      "p10": 0.1912631152983737,
+      "p25": 0.2997339044557684,
+      "median": 1.163747832950062,
+      "p75": 1.5429995456700882,
+      "p90": 1.6466610208351335
+    }
+  },
+  {
+    "doc_id": 249,
+    "question": "Measuring from the closest point of each object, what is the distance between the chair and the bed (in meters)?",
+    "objects": [
+      "chair",
+      "bed"
+    ],
+    "ground_truth": 2.4,
+    "gt_bucket": "1-3m",
+    "best_mra": 0.5,
+    "best_mra_quantiles": [
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 0.7180430312176873,
+    "p90_p05_ratio": 3.862074587935058,
+    "p90_p05_spread": 1.24645088766294,
+    "iqr_p75_p25": 0.8343229898594741,
+    "median": 0.7882529402244168,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.2,
+      "p90": 0.5
+    },
+    "errors": {
+      "min": 2.1014530739320185,
+      "p05": 1.9644939188806274,
+      "p10": 1.9201042152241339,
+      "p25": 1.7953348171635648,
+      "median": 1.611747059775583,
+      "p75": 0.9610118273040906,
+      "p90": 0.7180430312176873
+    },
+    "predictions": {
+      "min": 0.29854692606798156,
+      "p05": 0.4355060811193725,
+      "p10": 0.479895784775866,
+      "p25": 0.6046651828364352,
+      "median": 0.7882529402244168,
+      "p75": 1.4389881726959093,
+      "p90": 1.6819569687823126
+    }
+  },
+  {
+    "doc_id": 250,
+    "question": "Measuring from the closest point of each object, what is the distance between the table and the bed (in meters)?",
+    "objects": [
+      "table",
+      "bed"
+    ],
+    "ground_truth": 3.7,
+    "gt_bucket": ">=3m",
+    "best_mra": 0.0,
+    "best_mra_quantiles": [
+      "min",
+      "p05",
+      "p10",
+      "p25",
+      "median",
+      "p75",
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 2.5217954629646417,
+    "p90_p05_ratio": 5.078325646558529,
+    "p90_p05_spread": 0.9461980413838239,
+    "iqr_p75_p25": 0.5407474476341,
+    "median": 0.7072859146294523,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 3.6978470911891486,
+      "p05": 3.4679935043484655,
+      "p10": 3.39645094736756,
+      "p25": 3.235588500536489,
+      "median": 2.992714085370548,
+      "p75": 2.6948410529023894,
+      "p90": 2.5217954629646417
+    },
+    "predictions": {
+      "min": 0.00215290881085163,
+      "p05": 0.23200649565153472,
+      "p10": 0.3035490526324402,
+      "p25": 0.464411499463511,
+      "median": 0.7072859146294523,
+      "p75": 1.005158947097611,
+      "p90": 1.1782045370353587
+    }
+  },
+  {
+    "doc_id": 251,
+    "question": "Measuring from the closest point of each object, what is the distance between the table and the chair (in meters)?",
+    "objects": [
+      "table",
+      "chair"
+    ],
+    "ground_truth": 1.2,
+    "gt_bucket": "1-3m",
+    "best_mra": 0.9,
+    "best_mra_quantiles": [
+      "median"
+    ],
+    "best_tiebreak_quantile": "median",
+    "best_abs_quantile": "median",
+    "best_abs_error": 0.09250223874213792,
+    "p90_p05_ratio": 8.28755936259169,
+    "p90_p05_spread": 2.08120069191709,
+    "iqr_p75_p25": 0.8894448241005012,
+    "median": 1.107497761257862,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.4,
+      "median": 0.9,
+      "p75": 0.2,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 1.179026800767186,
+      "p05": 0.914417325696137,
+      "p10": 0.8207489411115851,
+      "p25": 0.36460866202344644,
+      "median": 0.09250223874213792,
+      "p75": 0.5248361620770547,
+      "p90": 1.1667833662209526
+    },
+    "predictions": {
+      "min": 0.02097319923281388,
+      "p05": 0.2855826743038629,
+      "p10": 0.37925105888841476,
+      "p25": 0.8353913379765535,
+      "median": 1.107497761257862,
+      "p75": 1.7248361620770547,
+      "p90": 2.3667833662209525
+    }
+  },
+  {
+    "doc_id": 252,
+    "question": "Measuring from the closest point of each object, what is the distance between the tv and the washer (in meters)?",
+    "objects": [
+      "tv",
+      "washer"
+    ],
+    "ground_truth": 3.6,
+    "gt_bucket": ">=3m",
+    "best_mra": 0.3,
+    "best_mra_quantiles": [
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 1.360318507496605,
+    "p90_p05_ratio": 1.26627563961074,
+    "p90_p05_spread": 0.470965880796701,
+    "iqr_p75_p25": 0.2258563319135558,
+    "median": 1.9810678065509035,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.1,
+      "p25": 0.1,
+      "median": 0.2,
+      "p75": 0.2,
+      "p90": 0.3
+    },
+    "errors": {
+      "min": 1.996198394162367,
+      "p05": 1.831284388293306,
+      "p10": 1.7969563538129794,
+      "p25": 1.7224345643572814,
+      "median": 1.6189321934490966,
+      "p75": 1.4965782324437256,
+      "p90": 1.360318507496605
+    },
+    "predictions": {
+      "min": 1.603801605837633,
+      "p05": 1.768715611706694,
+      "p10": 1.8030436461870207,
+      "p25": 1.8775654356427187,
+      "median": 1.9810678065509035,
+      "p75": 2.1034217675562745,
+      "p90": 2.239681492503395
+    }
+  },
+  {
+    "doc_id": 253,
+    "question": "Measuring from the closest point of each object, what is the distance between the stool and the refrigerator (in meters)?",
+    "objects": [
+      "stool",
+      "refrigerator"
+    ],
+    "ground_truth": 2.6,
+    "gt_bucket": "1-3m",
+    "best_mra": 0.0,
+    "best_mra_quantiles": [
+      "min",
+      "p05",
+      "p10",
+      "p25",
+      "median",
+      "p75",
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 1.563075711629598,
+    "p90_p05_ratio": 3.511261156695608,
+    "p90_p05_spread": 0.7416103706365714,
+    "iqr_p75_p25": 0.46383010539741776,
+    "median": 0.5691429555238257,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 2.4839132155214805,
+      "p05": 2.3046860822661692,
+      "p10": 2.2513888334167262,
+      "p25": 2.1206599143232703,
+      "median": 2.0308570444761744,
+      "p75": 1.6568298089258526,
+      "p90": 1.563075711629598
+    },
+    "predictions": {
+      "min": 0.1160867844785196,
+      "p05": 0.29531391773383076,
+      "p10": 0.34861116658327385,
+      "p25": 0.4793400856767296,
+      "median": 0.5691429555238257,
+      "p75": 0.9431701910741473,
+      "p90": 1.0369242883704022
+    }
+  },
+  {
+    "doc_id": 254,
+    "question": "Measuring from the closest point of each object, what is the distance between the stool and the table (in meters)?",
+    "objects": [
+      "stool",
+      "table"
+    ],
+    "ground_truth": 3.5,
+    "gt_bucket": ">=3m",
+    "best_mra": 0.1,
+    "best_mra_quantiles": [
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 1.7376322075392505,
+    "p90_p05_ratio": 7.2041455616471435,
+    "p90_p05_spread": 1.5177353405787244,
+    "iqr_p75_p25": 1.0022201030892526,
+    "median": 0.8777078726478906,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.1
+    },
+    "errors": {
+      "min": 3.454619878596887,
+      "p05": 3.2553675481179747,
+      "p10": 3.187668065690768,
+      "p25": 2.973489115616586,
+      "median": 2.622292127352109,
+      "p75": 1.9712690125273333,
+      "p90": 1.7376322075392505
+    },
+    "predictions": {
+      "min": 0.04538012140311308,
+      "p05": 0.2446324518820251,
+      "p10": 0.3123319343092323,
+      "p25": 0.5265108843834141,
+      "median": 0.8777078726478906,
+      "p75": 1.5287309874726667,
+      "p90": 1.7623677924607495
+    }
+  },
+  {
+    "doc_id": 255,
+    "question": "Measuring from the closest point of each object, what is the distance between the refrigerator and the table (in meters)?",
+    "objects": [
+      "refrigerator",
+      "table"
+    ],
+    "ground_truth": 5.2,
+    "gt_bucket": ">=3m",
+    "best_mra": 0.0,
+    "best_mra_quantiles": [
+      "min",
+      "p05",
+      "p10",
+      "p25",
+      "median",
+      "p75",
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 3.101424802427852,
+    "p90_p05_ratio": 3.0168564182467823,
+    "p90_p05_spread": 1.4029586661126512,
+    "iqr_p75_p25": 0.8804544055452559,
+    "median": 1.041076236826049,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 4.665835993711402,
+      "p05": 4.504383468540503,
+      "p10": 4.465998254271582,
+      "p25": 4.2529418685632585,
+      "median": 4.158923763173951,
+      "p75": 3.372487463018003,
+      "p90": 3.101424802427852
+    },
+    "predictions": {
+      "min": 0.5341640062885987,
+      "p05": 0.695616531459497,
+      "p10": 0.7340017457284181,
+      "p25": 0.9470581314367412,
+      "median": 1.041076236826049,
+      "p75": 1.8275125369819971,
+      "p90": 2.0985751975721483
+    }
+  },
+  {
+    "doc_id": 256,
+    "question": "Measuring from the closest point of each object, what is the distance between the refrigerator and the stool (in meters)?",
+    "objects": [
+      "refrigerator",
+      "stool"
+    ],
+    "ground_truth": 1.0,
+    "gt_bucket": "1-3m",
+    "best_mra": 0.7,
+    "best_mra_quantiles": [
+      "median"
+    ],
+    "best_tiebreak_quantile": "median",
+    "best_abs_quantile": "median",
+    "best_abs_error": 0.17062262342325552,
+    "p90_p05_ratio": 3.066625275285772,
+    "p90_p05_spread": 1.280229606697982,
+    "iqr_p75_p25": 1.0514062925866936,
+    "median": 0.8293773765767445,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.3,
+      "p10": 0.4,
+      "p25": 0.5,
+      "median": 0.7,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 0.6160464770971741,
+      "p05": 0.3805216543086397,
+      "p10": 0.32529939886485715,
+      "p25": 0.2564060628791395,
+      "median": 0.17062262342325552,
+      "p75": 0.795000229707554,
+      "p90": 0.8997079523893423
+    },
+    "predictions": {
+      "min": 0.38395352290282597,
+      "p05": 0.6194783456913603,
+      "p10": 0.6747006011351429,
+      "p25": 0.7435939371208605,
+      "median": 0.8293773765767445,
+      "p75": 1.795000229707554,
+      "p90": 1.8997079523893423
+    }
+  },
+  {
+    "doc_id": 257,
+    "question": "Measuring from the closest point of each object, what is the distance between the tv and the refrigerator (in meters)?",
+    "objects": [
+      "tv",
+      "refrigerator"
+    ],
+    "ground_truth": 9.1,
+    "gt_bucket": ">=3m",
+    "best_mra": 0.0,
+    "best_mra_quantiles": [
+      "min",
+      "p05",
+      "p10",
+      "p25",
+      "median",
+      "p75",
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 7.6890606684327505,
+    "p90_p05_ratio": 5.752059835630167,
+    "p90_p05_spread": 1.1656464500802692,
+    "iqr_p75_p25": 0.697743267134204,
+    "median": 1.2244852210716184,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 9.035912360418502,
+      "p05": 8.85470711851302,
+      "p10": 8.688528400515098,
+      "p25": 8.430041505740823,
+      "median": 7.875514778928381,
+      "p75": 7.732298238606619,
+      "p90": 7.6890606684327505
+    },
+    "predictions": {
+      "min": 0.06408763958149864,
+      "p05": 0.24529288148698025,
+      "p10": 0.4114715994849016,
+      "p25": 0.6699584942591771,
+      "median": 1.2244852210716184,
+      "p75": 1.367701761393381,
+      "p90": 1.4109393315672496
+    }
+  },
+  {
+    "doc_id": 258,
+    "question": "Measuring from the closest point of each object, what is the distance between the tv and the stove (in meters)?",
+    "objects": [
+      "tv",
+      "stove"
+    ],
+    "ground_truth": 8.8,
+    "gt_bucket": ">=3m",
+    "best_mra": 0.0,
+    "best_mra_quantiles": [
+      "min",
+      "p05",
+      "p10",
+      "p25",
+      "median",
+      "p75",
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 7.840462520238511,
+    "p90_p05_ratio": 1.524202505647138,
+    "p90_p05_spread": 0.33000336194812585,
+    "iqr_p75_p25": 0.16350210580869384,
+    "median": 0.8814751399841506,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 8.241543821354531,
+      "p05": 8.170465882186637,
+      "p10": 8.145137051242262,
+      "p25": 8.023786253999033,
+      "median": 7.91852486001585,
+      "p75": 7.860284148190339,
+      "p90": 7.840462520238511
+    },
+    "predictions": {
+      "min": 0.5584561786454698,
+      "p05": 0.6295341178133638,
+      "p10": 0.6548629487577388,
+      "p25": 0.7762137460009679,
+      "median": 0.8814751399841506,
+      "p75": 0.9397158518096618,
+      "p90": 0.9595374797614896
+    }
+  },
+  {
+    "doc_id": 259,
+    "question": "Measuring from the closest point of each object, what is the distance between the chair and the tv (in meters)?",
+    "objects": [
+      "chair",
+      "tv"
+    ],
+    "ground_truth": 5.5,
+    "gt_bucket": ">=3m",
+    "best_mra": 0.0,
+    "best_mra_quantiles": [
+      "min",
+      "p05",
+      "p10",
+      "p25",
+      "median",
+      "p75",
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 2.9708296145993542,
+    "p90_p05_ratio": 10.302959731111198,
+    "p90_p05_spread": 2.283690401841798,
+    "iqr_p75_p25": 1.1066639464762078,
+    "median": 1.4398163235451598,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 5.456369781162379,
+      "p05": 5.254520016441153,
+      "p10": 5.030290899770095,
+      "p25": 4.501388201877904,
+      "median": 4.06018367645484,
+      "p75": 3.3947242554016963,
+      "p90": 2.9708296145993542
+    },
+    "predictions": {
+      "min": 0.04363021883762085,
+      "p05": 0.2454799835588476,
+      "p10": 0.4697091002299053,
+      "p25": 0.998611798122096,
+      "median": 1.4398163235451598,
+      "p75": 2.1052757445983037,
+      "p90": 2.5291703854006458
+    }
+  },
+  {
+    "doc_id": 260,
+    "question": "Measuring from the closest point of each object, what is the distance between the stool and the bed (in meters)?",
+    "objects": [
+      "stool",
+      "bed"
+    ],
+    "ground_truth": 1.0,
+    "gt_bucket": "1-3m",
+    "best_mra": 0.8,
+    "best_mra_quantiles": [
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 0.11561059373082139,
+    "p90_p05_ratio": 5.442663214631348,
+    "p90_p05_spread": 0.7218973740795511,
+    "iqr_p75_p25": 0.30957389525700696,
+    "median": 0.5813526369081277,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.2,
+      "p75": 0.5,
+      "p90": 0.8
+    },
+    "errors": {
+      "min": 0.9980604017488497,
+      "p05": 0.8375079678103725,
+      "p10": 0.7288269785531252,
+      "p25": 0.5770040694354724,
+      "median": 0.41864736309187234,
+      "p75": 0.2674301741784655,
+      "p90": 0.11561059373082139
+    },
+    "predictions": {
+      "min": 0.0019395982511503365,
+      "p05": 0.16249203218962752,
+      "p10": 0.2711730214468749,
+      "p25": 0.42299593056452756,
+      "median": 0.5813526369081277,
+      "p75": 0.7325698258215345,
+      "p90": 0.8843894062691786
+    }
+  },
+  {
+    "doc_id": 261,
+    "question": "Measuring from the closest point of each object, what is the distance between the table and the stool (in meters)?",
+    "objects": [
+      "table",
+      "stool"
+    ],
+    "ground_truth": 0.9,
+    "gt_bucket": "<1m",
+    "best_mra": 1.0,
+    "best_mra_quantiles": [
+      "median"
+    ],
+    "best_tiebreak_quantile": "median",
+    "best_abs_quantile": "median",
+    "best_abs_error": 0.039519835275900084,
+    "p90_p05_ratio": 18.048339971551457,
+    "p90_p05_spread": 0.969237084785115,
+    "iqr_p75_p25": 0.5986110408940268,
+    "median": 0.8604801647240999,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 1.0,
+      "p75": 0.9,
+      "p90": 0.8
+    },
+    "errors": {
+      "min": 0.9,
+      "p05": 0.8431477148858787,
+      "p10": 0.8069640573087892,
+      "p25": 0.530517783245993,
+      "median": 0.039519835275900084,
+      "p75": 0.06809325764803387,
+      "p90": 0.12608936989923636
+    },
+    "predictions": {
+      "min": 0.0,
+      "p05": 0.056852285114121354,
+      "p10": 0.09303594269121084,
+      "p25": 0.36948221675400705,
+      "median": 0.8604801647240999,
+      "p75": 0.9680932576480339,
+      "p90": 1.0260893698992364
+    }
+  },
+  {
+    "doc_id": 262,
+    "question": "Measuring from the closest point of each object, what is the distance between the stool and the bed (in meters)?",
+    "objects": [
+      "stool",
+      "bed"
+    ],
+    "ground_truth": 1.0,
+    "gt_bucket": "1-3m",
+    "best_mra": 0.6,
+    "best_mra_quantiles": [
+      "median"
+    ],
+    "best_tiebreak_quantile": "median",
+    "best_abs_quantile": "median",
+    "best_abs_error": 0.24449522121459055,
+    "p90_p05_ratio": 8.96685976114882,
+    "p90_p05_spread": 2.379126575568315,
+    "iqr_p75_p25": 0.9297025279602333,
+    "median": 0.7555047787854094,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.6,
+      "p75": 0.2,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 0.9941046669117032,
+      "p05": 0.7013721030749955,
+      "p10": 0.6211949457479569,
+      "p25": 0.505075817945795,
+      "median": 0.24449522121459055,
+      "p75": 0.4246267100144383,
+      "p90": 1.6777544724933193
+    },
+    "predictions": {
+      "min": 0.005895333088296773,
+      "p05": 0.2986278969250044,
+      "p10": 0.3788050542520431,
+      "p25": 0.494924182054205,
+      "median": 0.7555047787854094,
+      "p75": 1.4246267100144383,
+      "p90": 2.6777544724933193
+    }
+  },
+  {
+    "doc_id": 263,
+    "question": "Measuring from the closest point of each object, what is the distance between the stool and the table (in meters)?",
+    "objects": [
+      "stool",
+      "table"
+    ],
+    "ground_truth": 2.8,
+    "gt_bucket": "1-3m",
+    "best_mra": 0.0,
+    "best_mra_quantiles": [
+      "min",
+      "p05",
+      "p10",
+      "p25",
+      "median",
+      "p75",
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 1.7235077061817419,
+    "p90_p05_ratio": 5.002192733883376,
+    "p90_p05_spread": 0.8612882121109664,
+    "iqr_p75_p25": 0.5490312620451561,
+    "median": 0.6840383092546443,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 2.689295520198385,
+      "p05": 2.5847959182927083,
+      "p10": 2.555311360383309,
+      "p25": 2.4251224417778405,
+      "median": 2.1159616907453556,
+      "p75": 1.8760911797326845,
+      "p90": 1.7235077061817419
+    },
+    "predictions": {
+      "min": 0.11070447980161496,
+      "p05": 0.2152040817072915,
+      "p10": 0.24468863961669063,
+      "p25": 0.37487755822215924,
+      "median": 0.6840383092546443,
+      "p75": 0.9239088202673154,
+      "p90": 1.076492293818258
+    }
+  },
+  {
+    "doc_id": 264,
+    "question": "Measuring from the closest point of each object, what is the distance between the washer and the stove (in meters)?",
+    "objects": [
+      "washer",
+      "stove"
+    ],
+    "ground_truth": 0.5,
+    "gt_bucket": "<1m",
+    "best_mra": 0.9,
+    "best_mra_quantiles": [
+      "p25"
+    ],
+    "best_tiebreak_quantile": "p25",
+    "best_abs_quantile": "p25",
+    "best_abs_error": 0.035765317042732,
+    "p90_p05_ratio": 2.4094485579080214,
+    "p90_p05_spread": 0.530373894885251,
+    "iqr_p75_p25": 0.31308597247044967,
+    "median": 0.758533197994376,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.6,
+      "p10": 0.7,
+      "p25": 0.9,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 0.26060418587942397,
+      "p05": 0.12370113339045158,
+      "p10": 0.07804003113144109,
+      "p25": 0.035765317042732,
+      "median": 0.258533197994376,
+      "p75": 0.3488512895131817,
+      "p90": 0.40667276149479936
+    },
+    "predictions": {
+      "min": 0.23939581412057603,
+      "p05": 0.3762988666095484,
+      "p10": 0.4219599688685589,
+      "p25": 0.535765317042732,
+      "median": 0.758533197994376,
+      "p75": 0.8488512895131817,
+      "p90": 0.9066727614947994
+    }
+  },
+  {
+    "doc_id": 265,
+    "question": "Measuring from the closest point of each object, what is the distance between the refrigerator and the dishwasher (in meters)?",
+    "objects": [
+      "refrigerator",
+      "dishwasher"
+    ],
+    "ground_truth": 1.4,
+    "gt_bucket": "1-3m",
+    "best_mra": 0.9,
+    "best_mra_quantiles": [
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 0.13773433250514167,
+    "p90_p05_ratio": 7.855751067820909,
+    "p90_p05_spread": 1.101585211024514,
+    "iqr_p75_p25": 0.4623452618986541,
+    "median": 0.8576745060067926,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.3,
+      "p75": 0.6,
+      "p90": 0.9
+    },
+    "errors": {
+      "min": 1.3985508599172345,
+      "p05": 1.2393195435296556,
+      "p10": 1.1688290412844091,
+      "p25": 0.803561685742942,
+      "median": 0.5423254939932073,
+      "p75": 0.34121642384428785,
+      "p90": 0.13773433250514167
+    },
+    "predictions": {
+      "min": 0.0014491400827654417,
+      "p05": 0.1606804564703443,
+      "p10": 0.23117095871559082,
+      "p25": 0.596438314257058,
+      "median": 0.8576745060067926,
+      "p75": 1.058783576155712,
+      "p90": 1.2622656674948582
+    }
+  },
+  {
+    "doc_id": 266,
+    "question": "Measuring from the closest point of each object, what is the distance between the fireplace and the tv (in meters)?",
+    "objects": [
+      "fireplace",
+      "tv"
+    ],
+    "ground_truth": 0.9,
+    "gt_bucket": "<1m",
+    "best_mra": 0.7,
+    "best_mra_quantiles": [
+      "p75"
+    ],
+    "best_tiebreak_quantile": "p75",
+    "best_abs_quantile": "p75",
+    "best_abs_error": 0.15324521137695168,
+    "p90_p05_ratio": 3.8829721592087694,
+    "p90_p05_spread": 0.8758565096052056,
+    "iqr_p75_p25": 0.3663900625695058,
+    "median": 0.4454632024248036,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.7,
+      "p90": 0.4
+    },
+    "errors": {
+      "min": 0.6792652878038464,
+      "p05": 0.5961966813284857,
+      "p10": 0.57002067489645,
+      "p25": 0.5196352739464575,
+      "median": 0.45453679757519644,
+      "p75": 0.15324521137695168,
+      "p90": 0.27965982827671987
+    },
+    "predictions": {
+      "min": 0.22073471219615362,
+      "p05": 0.30380331867151433,
+      "p10": 0.32997932510355,
+      "p25": 0.38036472605354255,
+      "median": 0.4454632024248036,
+      "p75": 0.7467547886230483,
+      "p90": 1.17965982827672
+    }
+  },
+  {
+    "doc_id": 267,
+    "question": "Measuring from the closest point of each object, what is the distance between the stove and the tv (in meters)?",
+    "objects": [
+      "stove",
+      "tv"
+    ],
+    "ground_truth": 9.4,
+    "gt_bucket": ">=3m",
+    "best_mra": 0.0,
+    "best_mra_quantiles": [
+      "min",
+      "p05",
+      "p10",
+      "p25",
+      "median",
+      "p75",
+      "p90"
+    ],
+    "best_tiebreak_quantile": "p90",
+    "best_abs_quantile": "p90",
+    "best_abs_error": 7.0772933737987245,
+    "p90_p05_ratio": 4.337168726732562,
+    "p90_p05_spread": 1.7871714020618397,
+    "iqr_p75_p25": 1.6449935772553321,
+    "median": 0.7018611686634433,
+    "scores": {
+      "min": 0.0,
+      "p05": 0.0,
+      "p10": 0.0,
+      "p25": 0.0,
+      "median": 0.0,
+      "p75": 0.0,
+      "p90": 0.0
+    },
+    "errors": {
+      "min": 8.949473109823057,
+      "p05": 8.864464775860565,
+      "p10": 8.838908943092932,
+      "p25": 8.790470700381581,
+      "median": 8.698138831336557,
+      "p75": 7.14547712312625,
+      "p90": 7.0772933737987245
+    },
+    "predictions": {
+      "min": 0.4505268901769434,
+      "p05": 0.5355352241394362,
+      "p10": 0.5610910569070682,
+      "p25": 0.6095292996184185,
+      "median": 0.7018611686634433,
+      "p75": 2.2545228768737506,
+      "p90": 2.322706626201276
+    }
+  }
+]
