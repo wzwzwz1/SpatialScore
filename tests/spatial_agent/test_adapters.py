@@ -78,6 +78,7 @@ def test_react_system_prompt_forbids_invented_image_paths():
 
     assert "Do not invent image file names or file paths" in prompt
     assert "runtime binds real sampled frames automatically" in prompt
+    assert "Do not pass images" in prompt
     assert "CountObjects" in prompt
     assert "CountVideoObjects3D" in prompt
 

@@ -410,11 +410,15 @@ def _attach_sam2_tracks(
                 next_obj_id += 1
                 obj_to_view[obj_id] = view
                 box = torch.tensor(view["bbox"], dtype=torch.float32, device=device)
+                points = torch.zeros((0, 2), dtype=torch.float32, device=device)
+                labels = torch.zeros((0,), dtype=torch.int32, device=device)
                 sam_video_predictor.add_new_points_or_box(
                     inference_state=inference_state,
                     frame_idx=start_frame,
                     obj_id=obj_id,
                     box=box,
+                    points=points,
+                    labels=labels,
                 )
 
             seen_frames: Dict[int, List[int]] = {obj_id: [] for obj_id in obj_to_view}

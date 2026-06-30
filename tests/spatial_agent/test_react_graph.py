@@ -50,6 +50,29 @@ class CountFramesTool(BaseSpatialTool):
         )
 
 
+class CountVideoFrames3DTool(BaseSpatialTool):
+    name = "CountVideoObjects3D"
+    description = "Returns a synthetic video counting result for testing orchestration."
+    args_schema = {
+        "type": "object",
+        "properties": {
+            "images": {"type": "array", "items": {"type": "string"}},
+            "objects": {"type": "string"},
+        },
+        "required": ["images", "objects"],
+    }
+    returns_schema = {"type": "object"}
+
+    def invoke(self, **kwargs):
+        return self.success(
+            payload={
+                "instance_count": 4,
+                "objects": kwargs["objects"],
+                "frame_count": len(kwargs["images"]),
+            }
+        )
+
+
 class FailingCountFramesTool(BaseSpatialTool):
     name = "CountObjects"
     description = "Fails on the second call to test queue invalidation."
@@ -423,6 +446,22 @@ def test_normalize_tool_arguments_resolves_exact_absolute_image_path_from_refere
     assert normalized["image"] == "/tmp/frame2.jpg"
 
 
+def test_normalize_tool_arguments_replaces_video_tool_image_lists():
+    state = {"image_paths": ["/tmp/frame0.jpg", "/tmp/frame1.jpg", "/tmp/frame2.jpg"]}
+
+    normalized = normalize_tool_arguments(
+        state=state,
+        tool_name="CountVideoObjects3D",
+        arguments={
+            "images": ["/tmp/model-generated-frame-list-that-should-not-be-used.jpg"],
+            "objects": ["chair"],
+        },
+    )
+
+    assert normalized["images"] == state["image_paths"]
+    assert normalized["objects"] == ["chair"]
+
+
 def test_default_runtime_config_aligns_react_max_steps_to_paper():
     config = SpatialAgentConfig()
 
@@ -537,6 +576,46 @@ def test_graph_requires_multiple_representative_frames_before_finishing_video_co
     ]
     repair_messages = [message["content"] for message in result["messages"] if message["role"] == "system"]
     assert any("inspect another representative frame" in message for message in repair_messages)
+
+
+def test_graph_allows_finish_after_successful_video_counting_3d():
+    adapter = MockLLMAdapter(
+        responses=[
+            {
+                "thought": "Use the full video counter.",
+                "action": {"name": "CountVideoObjects3D", "arguments": {"objects": "table"}},
+                "finish": None,
+            },
+            {"thought": "The video counter inspected all sampled frames.", "action": None, "finish": {"answer": "4"}},
+        ]
+    )
+    registry = ToolRegistry()
+    registry.register(CountVideoFrames3DTool())
+    agent = SpatialAgent(
+        llm_adapter=adapter,
+        tool_registry=registry,
+        config=SpatialAgentConfig(),
+    )
+
+    result = agent.invoke(
+        {
+            "task_id": "task-video-counting-3d-finish",
+            "question": "How many table(s) are in this room?",
+            "question_type": "open_ended",
+            "input_modality": "video",
+            "image_paths": ["/tmp/frame0.jpg", "/tmp/frame1.jpg", "/tmp/frame2.jpg"],
+            "metadata": {
+                "source_benchmark": "vsibench",
+                "vsibench_question_type": "object_counting",
+            },
+        }
+    )
+
+    assert result["status"] == "success"
+    assert result["final_answer"] == "4"
+    assert [call["tool_name"] for call in result["tool_calls"]] == ["CountVideoObjects3D"]
+    repair_messages = [message["content"] for message in result["messages"] if message["role"] == "system"]
+    assert not any("inspect another representative frame" in message for message in repair_messages)
 
 
 def test_graph_serializes_multi_step_react_output_without_extra_llm_call():

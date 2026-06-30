@@ -50,6 +50,9 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 .artifacts/
+logs/
+runs/
+download_shards.pid
 docs/superpowers/
 cover/
 

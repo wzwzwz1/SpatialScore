@@ -32,6 +32,8 @@
   - 后端：**SAM2**
 - `GetCameraParametersVGGT`
   - 后端：**VGGT**
+- `Get3DDistance`
+  - 后端：**VGGT world-points reconstruction**
 - `GetObjectOrientation`
   - 后端：**Orient Anything**
 - `EstimateObjectMotion`
@@ -49,6 +51,7 @@
 - `GetObjectMask`
 - `GetCameraParametersVGGT`
 - `GetObjectOrientation`
+- `Get3DDistance`
 - `LocalizeObjects`
 - `EstimateObjectMotion`
 
@@ -139,6 +142,17 @@ python3 -m spatial_agent \
   - `hf_model_id`（默认 `facebook/VGGT-1B`）
   - 或 `checkpoint_path`
   - `preprocess_mode`（`pad|crop`）
+- `Get3DDistance` / `distance`
+  - `hf_model_id`（默认 `facebook/VGGT-1B`）
+  - 或 `checkpoint_path`
+  - `preprocess_mode`（`pad|crop`）
+  - `neighbor_search_radius`
+- `EstimateObjectDistance3D` / `object_distance_3d`
+  - `hf_model_id` / `checkpoint_path`
+  - `preprocess_mode`（`pad|crop`）
+  - `top_distance_frames`（默认 6）
+  - `pointcloud_aggregate`（默认 `adaptive_p05_p90`，在 `p05`/`p90` 间按点云距离分布选择）
+  - `mask_max_points`（默认 128）
 - `GetObjectOrientation` / `orientation`
   - `checkpoint_repo_id`（默认 `Viglong/Orient-Anything`）
   - `checkpoint_filename`（默认 `croplargeEX2/dino_weight.pt`）

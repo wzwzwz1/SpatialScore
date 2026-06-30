@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -16,6 +17,56 @@ from spatial_agent.tools.backends import (
     save_bbox_overlay,
 )
 from spatial_agent.tools.base import BaseSpatialTool
+
+
+OBJECT_ALIASES: Dict[str, List[str]] = {
+    "trash bin": [
+        "trash bin",
+        "trash can",
+        "garbage can",
+        "garbage bin",
+        "waste bin",
+        "wastebasket",
+        "dustbin",
+        "bin",
+        "recycling bin",
+    ],
+    "trash can": [
+        "trash can",
+        "trash bin",
+        "garbage can",
+        "garbage bin",
+        "waste bin",
+        "wastebasket",
+        "dustbin",
+        "bin",
+        "recycling bin",
+    ],
+    "couch": ["couch", "sofa"],
+    "sofa": ["sofa", "couch"],
+    "tv": ["tv", "television", "monitor", "screen"],
+    "television": ["television", "tv", "monitor", "screen"],
+    "plant": ["plant", "potted plant", "houseplant"],
+}
+
+
+def _aliases_for_object(object_name: str) -> List[str]:
+    aliases = OBJECT_ALIASES.get(object_name.lower(), [object_name])
+    values: List[str] = []
+    seen = set()
+    for alias in [object_name, *aliases]:
+        key = alias.strip().lower()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        values.append(alias.strip())
+    return values
+
+
+def _label_matches_query(label_text: str, query: str) -> bool:
+    label = label_text.lower().strip()
+    target = query.lower().strip()
+    return bool(label and target) and (target in label or label in target)
 
 
 class LocalizeObjectsTool(BaseSpatialTool):
@@ -56,6 +107,7 @@ class LocalizeObjectsTool(BaseSpatialTool):
             text_threshold = float(settings.get("text_threshold", 0.25))
             backend = get_grounding_backend(model_id, device)
             image = load_pil_image(image_path)
+            query_to_object: Dict[str, str] = {name.lower(): name for name in objects}
             prompt = ". ".join(objects) + "."
             processor = backend["processor"]
             model = backend["model"]
@@ -75,7 +127,6 @@ class LocalizeObjectsTool(BaseSpatialTool):
             )[0]
 
             width, height = image.size
-            normalized_objects = {name.lower(): name for name in objects}
             per_object: Dict[str, List[Dict[str, Any]]] = {name: [] for name in objects}
             regions: List[Dict[str, Any]] = []
 
@@ -84,12 +135,52 @@ class LocalizeObjectsTool(BaseSpatialTool):
                 bbox = clamp_bbox(box.tolist(), width, height)
                 region = {"label": label_text, "bbox": bbox, "score": float(score)}
                 matched = False
-                for object_name in objects:
-                    if object_name.lower() in label_text.lower() or label_text.lower() in object_name.lower():
-                        per_object[object_name].append(region)
+                for query, object_name in query_to_object.items():
+                    if _label_matches_query(label_text, query):
+                        per_object[object_name].append({**region, "matched_alias": query, "detector_label": label_text})
                         matched = True
-                if matched or label_text.lower() in normalized_objects:
+                if matched:
                     regions.append(region)
+
+            alias_queries_by_object = {
+                object_name: [
+                    alias
+                    for alias in _aliases_for_object(object_name)
+                    if alias.lower() != object_name.lower()
+                ]
+                for object_name in objects
+            }
+            for object_name in objects:
+                if per_object[object_name] or not alias_queries_by_object[object_name]:
+                    continue
+                alias_prompt = ". ".join(alias_queries_by_object[object_name]) + "."
+                alias_inputs = processor(images=image, text=alias_prompt, return_tensors="pt")
+                alias_inputs = {key: value.to(device) if hasattr(value, "to") else value for key, value in alias_inputs.items()}
+                with torch.no_grad():
+                    alias_outputs = model(**alias_inputs)
+                alias_processed = processor.post_process_grounded_object_detection(
+                    alias_outputs,
+                    alias_inputs["input_ids"],
+                    box_threshold=box_threshold,
+                    text_threshold=text_threshold,
+                    target_sizes=[image.size[::-1]],
+                )[0]
+                for box, score, label in zip(alias_processed["boxes"], alias_processed["scores"], alias_processed["labels"]):
+                    label_text = str(label)
+                    for alias in alias_queries_by_object[object_name]:
+                        if not _label_matches_query(label_text, alias):
+                            continue
+                        bbox = clamp_bbox(box.tolist(), width, height)
+                        region = {
+                            "label": label_text,
+                            "bbox": bbox,
+                            "score": float(score),
+                            "matched_alias": alias.lower(),
+                            "detector_label": label_text,
+                        }
+                        per_object[object_name].append(region)
+                        regions.append(region)
+                        break
 
             for object_name in objects:
                 if per_object[object_name]:
@@ -133,7 +224,8 @@ class LocalizeObjectsTool(BaseSpatialTool):
 
             if not deduped:
                 return self.error("Object grounding produced no candidate regions.", payload=payload)
-            artifact_path = artifact_dir_for_tool(self.config, self.name) / f"{Path(image_path).stem}_bbox.png"
+            prompt_hash = hashlib.sha1("|".join(name.lower() for name in objects).encode("utf-8")).hexdigest()[:10]
+            artifact_path = artifact_dir_for_tool(self.config, self.name) / f"{Path(image_path).stem}_{prompt_hash}_bbox.png"
             artifact = save_bbox_overlay(image, deduped, artifact_path)
             payload["artifact_descriptions"] = [
                 {

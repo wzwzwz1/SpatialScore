@@ -49,6 +49,8 @@ def build_text_prompt_from_state(state: Mapping[str, Any]) -> str:
                 "because it uses 3D object views and tracking to count unique object instances across frames. "
                 "If CountVideoObjects3D is unavailable, use CountVideoObjects. "
                 "Use CountObjects only for single-image counting. "
+                "For CountVideoObjects3D, pass objects only and do not pass images; "
+                "the runtime supplies all sampled frames and fixed counting parameters. "
                 "Base the final answer on the instance_count from the tool output, "
                 "and return a pure Arabic numeral only."
             )
@@ -57,6 +59,18 @@ def build_text_prompt_from_state(state: Mapping[str, Any]) -> str:
                 "Counting rule: use CountObjects first. Base the final answer on the number of returned points, "
                 "and return a pure Arabic numeral only."
             )
+    if str((metadata.get("vsibench_question_type") or "")).lower() == "object_rel_distance":
+        sections.append(
+            "Relative distance rule: use CompareObjectDistance3D when available. "
+            "Parse the reference object after 'closest to' or 'farthest from', pass the listed options as candidate_objects, "
+            "and return the selected option letter only."
+        )
+    if str((metadata.get("vsibench_question_type") or "")).lower() == "object_size_estimation":
+        sections.append(
+            "Object size rule: use EstimateObjectSize3D when available. "
+            "Parse the object after 'longest dimension (length, width, or height) of the', pass object only, "
+            "and return the numeric size_centimeters value only."
+        )
 
     options = state.get("options") or []
     if options:

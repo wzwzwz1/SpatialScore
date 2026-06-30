@@ -5,10 +5,14 @@ from PIL import Image
 
 from spatial_agent.runtime.config import SpatialAgentConfig
 from spatial_agent.tools.counting import CountObjectsTool
+from spatial_agent.tools.distance import Get3DDistanceTool
 from spatial_agent.tools.localization import LocalizeObjectsTool
+from spatial_agent.tools.object_distance_3d import CompareObjectDistance3DTool, EstimateObjectDistance3DTool
+from spatial_agent.tools.object_size_3d import EstimateObjectSize3DTool
 from spatial_agent.tools.placeholders import PlaceholderTool
 from spatial_agent.tools.registry import build_default_tool_registry
 from spatial_agent.tools.countvid_backend import run_countvid_subprocess
+from spatial_agent.tools import video_counting_3d
 from spatial_agent.tools.video_counting_3d import CountVideoObjects3DTool
 from spatial_agent.tools.video_counting_3d_utils import constrained_greedy_cluster
 from spatial_agent.tools.video_counting import CountVideoObjectsTool
@@ -29,7 +33,56 @@ def test_placeholder_tool_returns_unavailable_status():
     assert "current release" in result["error"]
 
 
-def test_default_registry_tools_return_structured_results():
+def test_default_registry_tools_return_structured_results(monkeypatch):
+    class FakeTensor:
+        def __init__(self, value):
+            self.value = value
+
+        def to(self, _device):
+            return self
+
+        def detach(self):
+            return self
+
+        def cpu(self):
+            return self
+
+        def numpy(self):
+            return self.value
+
+    class FakeTorch:
+        class _NoGrad:
+            def __enter__(self):
+                return None
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+        @staticmethod
+        def no_grad():
+            return FakeTorch._NoGrad()
+
+    class FakeModel:
+        def __call__(self, _images):
+            import numpy as np
+
+            world_points = np.zeros((1, 1, 28, 28, 3), dtype=float)
+            return {"world_points": FakeTensor(world_points)}
+
+    def fake_preprocess(_paths, mode):
+        import numpy as np
+
+        return FakeTensor(np.zeros((1, 3, 28, 28), dtype=float))
+
+    monkeypatch.setattr(
+        "spatial_agent.tools.distance.get_vggt_backend",
+        lambda **kwargs: {
+            "torch": FakeTorch,
+            "model": FakeModel(),
+            "load_and_preprocess_images": fake_preprocess,
+        },
+    )
+
     registry = build_default_tool_registry(SpatialAgentConfig())
     assert "CountObjects" in registry.list_names()
 
@@ -37,6 +90,10 @@ def test_default_registry_tools_return_structured_results():
         "CountObjects": {"image": "missing.jpg", "objects": ["cat"]},
         "CountVideoObjects3D": {"images": ["missing.jpg"], "objects": ["cat"]},
         "EstimateObjectDepth": {"image": "missing.jpg", "objects": ["cat"]},
+        "CompareObjectDistance3D": {"images": [], "reference_object": "cat", "candidate_objects": ["dog"]},
+        "EstimateObjectDistance3D": {"images": [], "objects": ["cat", "dog"]},
+        "EstimateObjectSize3D": {"images": [], "object": "cat"},
+        "Get3DDistance": {"image": "missing.jpg", "point_1": [0, 0], "point_2": [10, 10]},
         "GetObjectMask": {"image": "missing.jpg", "objects": ["cat"]},
         "EstimateOpticalFlow": {"images": ["missing-a.jpg", "missing-b.jpg"]},
         "GetCameraParametersVGGT": {"image": ["missing.jpg"]},
@@ -107,6 +164,520 @@ def test_count_objects_returns_unavailable_when_rex_omni_missing(tmp_path, monke
 
     assert result["status"] == "unavailable"
     assert "rex_omni" in result["error"].lower()
+
+
+def test_get_3d_distance_uses_vggt_world_points(tmp_path, monkeypatch):
+    image_path = tmp_path / "frame.jpg"
+    Image.new("RGB", (28, 28), "white").save(image_path)
+
+    class FakeTensor:
+        def __init__(self, value):
+            self.value = value
+
+        def to(self, _device):
+            return self
+
+        @property
+        def shape(self):
+            return self.value.shape
+
+        def detach(self):
+            return self
+
+        def cpu(self):
+            return self
+
+        def numpy(self):
+            return self.value
+
+    class FakeTorch:
+        class _NoGrad:
+            def __enter__(self):
+                return None
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+        @staticmethod
+        def no_grad():
+            return FakeTorch._NoGrad()
+
+    class FakeModel:
+        def __call__(self, _images):
+            import numpy as np
+
+            world_points = np.zeros((1, 1, 28, 28, 3), dtype=float)
+            for y in range(28):
+                for x in range(28):
+                    world_points[0, 0, y, x] = [float(x), float(y), 0.0]
+            return {"world_points": FakeTensor(world_points)}
+
+    def fake_preprocess(_paths, mode):
+        import numpy as np
+
+        assert mode == "crop"
+        return FakeTensor(np.zeros((1, 3, 28, 28), dtype=float))
+
+    monkeypatch.setattr(
+        "spatial_agent.tools.distance.get_vggt_backend",
+        lambda **kwargs: {
+            "torch": FakeTorch,
+            "model": FakeModel(),
+            "load_and_preprocess_images": fake_preprocess,
+        },
+    )
+
+    tool = Get3DDistanceTool(
+        SpatialAgentConfig(
+            artifact_dir=str(tmp_path),
+            tool_config={"distance": {"preprocess_mode": "crop", "device": "cpu"}},
+        )
+    )
+    result = tool.invoke(image=str(image_path), point_1=[0, 0], point_2=[3, 4])
+
+    assert result["status"] == "success"
+    assert result["payload"]["distance_meters"] == 5.0
+    assert result["payload"]["point_1_3d"] == [0.0, 0.0, 0.0]
+    assert result["payload"]["point_2_3d"] == [3.0, 4.0, 0.0]
+    assert result["payload"]["backend"] == "vggt"
+    assert Path(result["artifacts"][0]).exists()
+
+
+def test_estimate_object_distance_3d_uses_multiframe_pointcloud(tmp_path, monkeypatch):
+    frame_paths = []
+    for index in range(2):
+        path = tmp_path / f"frame_{index}.jpg"
+        Image.new("RGB", (20, 20), "white").save(path)
+        frame_paths.append(str(path))
+
+    class FakeTensor:
+        def __init__(self, value):
+            self.value = value
+
+        def to(self, _device):
+            return self
+
+        def detach(self):
+            return self
+
+        def cpu(self):
+            return self
+
+        def numpy(self):
+            return self.value
+
+    class FakeTorch:
+        class _NoGrad:
+            def __enter__(self):
+                return None
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+        @staticmethod
+        def no_grad():
+            return FakeTorch._NoGrad()
+
+    class FakeModel:
+        def __call__(self, _images):
+            import numpy as np
+
+            world_points = np.zeros((1, 2, 20, 20, 3), dtype=float)
+            world_points[0, :, :, :10, :] = [0.0, 0.0, 0.0]
+            world_points[0, :, :, 10:, :] = [2.0, 0.0, 0.0]
+            return {"world_points": FakeTensor(world_points)}
+
+    class FakePredictor:
+        def set_image(self, _image):
+            return None
+
+        def predict(self, *, box, multimask_output):
+            import numpy as np
+
+            mask = np.zeros((20, 20), dtype=bool)
+            if float(box[0]) < 10:
+                mask[:, :10] = True
+            else:
+                mask[:, 10:] = True
+            return np.asarray([mask]), np.asarray([0.9]), None
+
+    def fake_preprocess(paths, mode):
+        import numpy as np
+
+        return FakeTensor(np.zeros((len(paths), 3, 20, 20), dtype=float))
+
+    def fake_localize(self, **kwargs):
+        image_path = kwargs["image"]
+        frame_index = frame_paths.index(image_path)
+        score = 0.9 - frame_index * 0.1
+        return {
+            "status": "success",
+            "payload": {
+                "regions": [
+                    {"label": "chair", "bbox": [1, 1, 8, 18], "score": score},
+                    {"label": "table", "bbox": [12, 1, 18, 18], "score": score},
+                ]
+            },
+            "artifacts": [],
+            "error": None,
+        }
+
+    monkeypatch.setattr("spatial_agent.tools.object_distance_3d.LocalizeObjectsTool.invoke", fake_localize)
+    monkeypatch.setattr("spatial_agent.tools.object_distance_3d.get_sam2_predictor", lambda **kwargs: FakePredictor())
+    monkeypatch.setattr(
+        "spatial_agent.tools.object_distance_3d.get_vggt_backend",
+        lambda **kwargs: {
+            "torch": FakeTorch,
+            "model": FakeModel(),
+            "load_and_preprocess_images": fake_preprocess,
+        },
+    )
+
+    config = SpatialAgentConfig(
+        artifact_dir=str(tmp_path),
+        tool_config={
+            "object_distance_3d": {
+                "device": "cpu",
+                "top_distance_frames": 2,
+                "pointcloud_aggregate": "p90",
+                "mask_max_points": 16,
+            }
+        },
+    )
+    result = EstimateObjectDistance3DTool(config).invoke(images=frame_paths, objects=["chair", "table"])
+
+    assert result["status"] == "success"
+    assert result["payload"]["distance_meters"] == 2.0
+    assert result["payload"]["selected_frame_positions"] == [0, 1]
+    assert result["payload"]["backend"] == "grounding_dino+sam2+vggt_object_pointcloud"
+
+
+def test_compare_object_distance_3d_selects_closest(tmp_path, monkeypatch):
+    frame_path = tmp_path / "frame.jpg"
+    Image.new("RGB", (20, 20), "white").save(frame_path)
+
+    class FakeTensor:
+        def __init__(self, value):
+            self.value = value
+
+        def to(self, _device):
+            return self
+
+        def detach(self):
+            return self
+
+        def cpu(self):
+            return self
+
+        def numpy(self):
+            return self.value
+
+    class FakeTorch:
+        class _NoGrad:
+            def __enter__(self):
+                return None
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+        @staticmethod
+        def no_grad():
+            return FakeTorch._NoGrad()
+
+    class FakeModel:
+        def __call__(self, _images):
+            import numpy as np
+
+            world_points = np.zeros((1, 1, 20, 20, 3), dtype=float)
+            world_points[0, 0, :, :5, :] = [0.0, 0.0, 0.0]  # tv
+            world_points[0, 0, :, 5:10, :] = [0.5, 0.0, 0.0]  # table
+            world_points[0, 0, :, 10:15, :] = [1.0, 0.0, 0.0]  # sofa
+            world_points[0, 0, :, 15:, :] = [2.0, 0.0, 0.0]  # chair
+            return {"world_points": FakeTensor(world_points)}
+
+    class FakePredictor:
+        def set_image(self, _image):
+            return None
+
+        def predict(self, *, box, multimask_output):
+            import numpy as np
+
+            mask = np.zeros((20, 20), dtype=bool)
+            x1 = int(box[0])
+            x2 = int(box[2])
+            mask[:, x1:x2] = True
+            return np.asarray([mask]), np.asarray([0.9]), None
+
+    def fake_preprocess(paths, mode):
+        import numpy as np
+
+        return FakeTensor(np.zeros((len(paths), 3, 20, 20), dtype=float))
+
+    def fake_localize(self, **kwargs):
+        return {
+            "status": "success",
+            "payload": {
+                "regions": [
+                    {"label": "tv", "bbox": [0, 0, 5, 20], "score": 0.9},
+                    {"label": "table", "bbox": [5, 0, 10, 20], "score": 0.9},
+                    {"label": "sofa", "bbox": [10, 0, 15, 20], "score": 0.9},
+                    {"label": "chair", "bbox": [15, 0, 20, 20], "score": 0.9},
+                ]
+            },
+            "artifacts": [],
+            "error": None,
+        }
+
+    monkeypatch.setattr("spatial_agent.tools.object_distance_3d.LocalizeObjectsTool.invoke", fake_localize)
+    monkeypatch.setattr("spatial_agent.tools.object_distance_3d.get_sam2_predictor", lambda **kwargs: FakePredictor())
+    monkeypatch.setattr(
+        "spatial_agent.tools.object_distance_3d.get_vggt_backend",
+        lambda **kwargs: {
+            "torch": FakeTorch,
+            "model": FakeModel(),
+            "load_and_preprocess_images": fake_preprocess,
+        },
+    )
+
+    result = CompareObjectDistance3DTool(
+        SpatialAgentConfig(
+            artifact_dir=str(tmp_path),
+            tool_config={
+                "compare_object_distance_3d": {
+                    "device": "cpu",
+                    "frames_per_candidate": 1,
+                    "max_compare_frames": 1,
+                    "pointcloud_aggregate": "p90",
+                    "mask_max_points": 16,
+                    "min_mask_pixels": 1,
+                }
+            },
+        )
+    ).invoke(
+        images=[str(frame_path)],
+        reference_object="tv",
+        candidate_objects=["chair", "table", "sofa"],
+        mode="closest",
+    )
+
+    assert result["status"] == "success"
+    assert result["payload"]["selected_object"] == "table"
+    assert result["payload"]["selected_distance_meters"] == 0.5
+    assert result["payload"]["shortcut"] is None
+    assert len(result["payload"]["comparisons"]) == 3
+    assert result["payload"]["backend"] == "shared_grounding_dino+sam2+vggt_object_pointcloud"
+
+
+def test_estimate_object_size_3d_returns_longest_dimension_in_centimeters(tmp_path, monkeypatch):
+    frame_path = tmp_path / "frame.jpg"
+    Image.new("RGB", (20, 20), "white").save(frame_path)
+
+    class FakeTensor:
+        def __init__(self, value):
+            self.value = value
+
+        def to(self, _device):
+            return self
+
+        def detach(self):
+            return self
+
+        def cpu(self):
+            return self
+
+        def numpy(self):
+            return self.value
+
+    class FakeTorch:
+        class _NoGrad:
+            def __enter__(self):
+                return None
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+        @staticmethod
+        def no_grad():
+            return FakeTorch._NoGrad()
+
+    class FakeModel:
+        def __call__(self, _images):
+            import numpy as np
+
+            world_points = np.zeros((1, 1, 20, 20, 3), dtype=float)
+            for y in range(20):
+                for x in range(20):
+                    world_points[0, 0, y, x] = [float(x) / 10.0, float(y) / 100.0, 0.0]
+            return {"world_points": FakeTensor(world_points)}
+
+    class FakePredictor:
+        def set_image(self, _image):
+            return None
+
+        def predict(self, *, box, multimask_output):
+            import numpy as np
+
+            mask = np.zeros((20, 20), dtype=bool)
+            x1, y1, x2, y2 = [int(value) for value in box]
+            mask[y1:y2, x1:x2] = True
+            return np.asarray([mask]), np.asarray([0.9]), None
+
+    def fake_preprocess(paths, mode):
+        import numpy as np
+
+        return FakeTensor(np.zeros((len(paths), 3, 20, 20), dtype=float))
+
+    def fake_localize(self, **kwargs):
+        return {
+            "status": "success",
+            "payload": {
+                "regions": [
+                    {"label": "table", "bbox": [0, 0, 10, 20], "score": 0.9},
+                ]
+            },
+            "artifacts": [],
+            "error": None,
+        }
+
+    monkeypatch.setattr("spatial_agent.tools.object_size_3d.LocalizeObjectsTool.invoke", fake_localize)
+    monkeypatch.setattr("spatial_agent.tools.object_size_3d.get_sam2_predictor", lambda **kwargs: FakePredictor())
+    monkeypatch.setattr(
+        "spatial_agent.tools.object_size_3d.get_vggt_backend",
+        lambda **kwargs: {
+            "torch": FakeTorch,
+            "model": FakeModel(),
+            "load_and_preprocess_images": fake_preprocess,
+        },
+    )
+
+    result = EstimateObjectSize3DTool(
+        SpatialAgentConfig(
+            artifact_dir=str(tmp_path),
+            tool_config={
+                "object_size_3d": {
+                    "device": "cpu",
+                    "top_size_frames": 1,
+                    "size_aggregate": "p90",
+                    "extent_policy": "p05_p95",
+                    "mask_max_points": 400,
+                    "min_mask_pixels": 1,
+                }
+            },
+        )
+    ).invoke(images=[str(frame_path)], object="table")
+
+    assert result["status"] == "success"
+    assert result["payload"]["unit"] == "centimeters"
+    assert result["payload"]["target_dimension"] == "longest_dimension"
+    assert 70.0 <= result["payload"]["size_centimeters"] <= 100.0
+    assert result["payload"]["backend"] == "grounding_dino+sam2+vggt_object_extent"
+
+
+def test_compare_object_distance_3d_ignores_weak_bbox_contact(tmp_path, monkeypatch):
+    frame_path = tmp_path / "frame.jpg"
+    Image.new("RGB", (40, 30), "white").save(frame_path)
+
+    class FakeTensor:
+        def __init__(self, value):
+            self.value = value
+
+        def to(self, _device):
+            return self
+
+        def detach(self):
+            return self
+
+        def cpu(self):
+            return self
+
+        def numpy(self):
+            return self.value
+
+    class FakeTorch:
+        class _NoGrad:
+            def __enter__(self):
+                return None
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+        @staticmethod
+        def no_grad():
+            return FakeTorch._NoGrad()
+
+    class FakeModel:
+        def __call__(self, _images):
+            import numpy as np
+
+            world_points = np.zeros((1, 1, 30, 40, 3), dtype=float)
+            world_points[0, 0, :, :, :] = [10.0, 0.0, 0.0]
+            world_points[0, 0, :, :8, :] = [0.0, 0.0, 0.0]  # reference
+            world_points[0, 0, :, 8:16, :] = [3.0, 0.0, 0.0]  # touching table, farther in 3D
+            world_points[0, 0, :, 24:, :] = [0.5, 0.0, 0.0]  # non-touching chair, closer in 3D
+            return {"world_points": FakeTensor(world_points)}
+
+    class FakePredictor:
+        def set_image(self, _image):
+            return None
+
+        def predict(self, *, box, multimask_output):
+            import numpy as np
+
+            mask = np.zeros((30, 40), dtype=bool)
+            x1, y1, x2, y2 = [int(value) for value in box]
+            mask[y1:y2, x1:x2] = True
+            return np.asarray([mask]), np.asarray([0.9]), None
+
+    def fake_preprocess(paths, mode):
+        import numpy as np
+
+        return FakeTensor(np.zeros((len(paths), 3, 30, 40), dtype=float))
+
+    def fake_localize(self, **kwargs):
+        return {
+            "status": "success",
+            "payload": {
+                "regions": [
+                    {"label": "tv", "bbox": [0, 0, 10, 20], "score": 0.9},
+                    {"label": "table", "bbox": [8, 12, 24, 29], "score": 0.8},
+                    {"label": "chair", "bbox": [28, 0, 39, 20], "score": 0.8},
+                ]
+            },
+            "artifacts": [],
+            "error": None,
+        }
+
+    monkeypatch.setattr("spatial_agent.tools.object_distance_3d.LocalizeObjectsTool.invoke", fake_localize)
+    monkeypatch.setattr("spatial_agent.tools.object_distance_3d.get_sam2_predictor", lambda **kwargs: FakePredictor())
+    monkeypatch.setattr(
+        "spatial_agent.tools.object_distance_3d.get_vggt_backend",
+        lambda **kwargs: {
+            "torch": FakeTorch,
+            "model": FakeModel(),
+            "load_and_preprocess_images": fake_preprocess,
+        },
+    )
+
+    result = CompareObjectDistance3DTool(
+        SpatialAgentConfig(
+            artifact_dir=str(tmp_path),
+            tool_config={
+                "compare_object_distance_3d": {
+                    "device": "cpu",
+                    "frames_per_candidate": 1,
+                    "max_compare_frames": 1,
+                    "pointcloud_aggregate": "p90",
+                    "mask_max_points": 16,
+                    "min_mask_pixels": 1,
+                }
+            },
+        )
+    ).invoke(images=[str(frame_path)], reference_object="tv", candidate_objects=["chair", "table"], mode="closest")
+
+    assert result["status"] == "success"
+    assert result["payload"]["selected_object"] == "chair"
+    assert result["payload"]["selected_distance_meters"] > 0.0
+    assert result["payload"]["shortcut"] is None
 
 
 def test_localize_objects_returns_instance_count_and_bbox_artifact(tmp_path, monkeypatch):
@@ -459,6 +1030,7 @@ def test_count_video_objects_3d_success_with_mock_backends(tmp_path, monkeypatch
     assert result["payload"]["instance_count"] == 2
     assert result["payload"]["pipeline_stats"]["sampled_frame_count"] == 3
     assert result["payload"]["pipeline_stats"]["view_count"] == 3
+    assert result["payload"]["pipeline_stats"]["cg_distance_threshold"] == 0.35
     assert Path(result["artifacts"][0]).exists()
 
 
@@ -489,6 +1061,76 @@ def test_constrained_greedy_cluster_uses_tracking_prior():
     assert sorted(view["track_id"] for view in result[0]["views"] if view["track_id"]) == ["t1", "t1"]
 
 
+def test_sam2_tracking_box_prompt_uses_matching_point_label_device(tmp_path):
+    frame_paths = []
+    for index in range(2):
+        path = tmp_path / f"frame_{index}.jpg"
+        Image.new("RGB", (20, 20), "white").save(path)
+        frame_paths.append(str(path))
+
+    class FakeTensor:
+        def __init__(self, value, device=None):
+            self.value = value
+            self.device = device
+
+    class FakeTorch:
+        float32 = "float32"
+        int32 = "int32"
+
+        @staticmethod
+        def tensor(value, dtype=None, device=None):
+            return FakeTensor(value, device=device)
+
+        @staticmethod
+        def zeros(shape, dtype=None, device=None):
+            return FakeTensor([], device=device)
+
+    class FakePredictor:
+        def __init__(self):
+            self.calls = []
+
+        def init_state(self, video_path):
+            return {"video_path": video_path}
+
+        def reset_state(self, inference_state):
+            return None
+
+        def add_new_points_or_box(self, *, box, points, labels, **kwargs):
+            self.calls.append({"box": box, "points": points, "labels": labels})
+
+        def propagate_in_video(self, inference_state):
+            return iter(())
+
+    predictor = FakePredictor()
+    original_import_torch = video_counting_3d._import_torch
+    video_counting_3d._import_torch = lambda: FakeTorch
+    try:
+        video_counting_3d._attach_sam2_tracks(
+            sam_video_predictor=predictor,
+            frame_paths=frame_paths,
+            views=[
+                {
+                    "view_id": "f000_d000",
+                    "object": "table",
+                    "frame_index": 0,
+                    "bbox": [1.0, 2.0, 10.0, 12.0],
+                    "center_3d": [0.0, 0.0, 0.0],
+                }
+            ],
+            max_frames=2,
+            absent_patience=2,
+            device="cuda",
+        )
+    finally:
+        video_counting_3d._import_torch = original_import_torch
+
+    assert predictor.calls
+    call = predictor.calls[0]
+    assert call["box"].device == "cuda"
+    assert call["points"].device == "cuda"
+    assert call["labels"].device == "cuda"
+
+
 def test_count_video_objects_3d_registered_when_configured():
     registry = build_default_tool_registry(
         SpatialAgentConfig(tool_config={"video_counting_3d": {"num_frames": 64}})
@@ -496,7 +1138,9 @@ def test_count_video_objects_3d_registered_when_configured():
 
     names = registry.list_names()
     assert "CountVideoObjects3D" in names
+    assert "EstimateObjectSize3D" in names
     assert registry.get("CountVideoObjects3D").name == "CountVideoObjects3D"
+    assert registry.get("EstimateObjectSize3D").name == "EstimateObjectSize3D"
 
 
 def test_count_video_objects_defaults_to_official_count(tmp_path, monkeypatch):
@@ -683,8 +1327,8 @@ def test_count_video_objects_registered_with_backend_config(tmp_path):
     assert tool is not None
     assert tool.name == "CountVideoObjects"
     names = registry.list_names()
-    assert names[0] == "CountObjects"
-    assert names[1] == "CountVideoObjects"
+    assert "CountObjects" in names
+    assert "CountVideoObjects" in names
 
 
 def test_count_video_objects_not_registered_when_repo_missing(tmp_path):

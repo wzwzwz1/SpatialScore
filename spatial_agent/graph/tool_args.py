@@ -155,6 +155,15 @@ def get_observed_counting_frames(state: Mapping[str, Any]) -> List[str]:
     return observed
 
 
+def has_successful_video_counting_result(state: Mapping[str, Any]) -> bool:
+    for observation in state.get("tool_observations", []) or []:
+        if observation.get("tool_name") not in {"CountVideoObjects", "CountVideoObjects3D"}:
+            continue
+        if observation.get("status") == "success":
+            return True
+    return False
+
+
 def get_next_counting_frame(state: Mapping[str, Any]) -> str | None:
     representative_frames = get_representative_counting_frames(state)
     if len(representative_frames) <= 1:
@@ -176,7 +185,16 @@ def normalize_tool_arguments(state: Mapping[str, Any], tool_name: str | None, ar
         if key in {"image", "images", "other_images", "image_paths"}:
             args[key] = _normalize_image_value(key, args[key], image_paths)
 
-    if tool_name in {"CountVideoObjects", "CountVideoObjects3D"}:
+    if tool_name in {
+        "CountVideoObjects",
+        "CountVideoObjects3D",
+        "CompareObjectDistance3D",
+        "EstimateObjectDistance3D",
+        "EstimateObjectSize3D",
+    }:
+        # Video tools receive the sampled frames from runtime state. Dropping explicit
+        # image lists prevents long LLM JSON outputs from being truncated.
+        args.pop("images", None)
         if "images" not in args or not args.get("images"):
             args["images"] = image_paths
 

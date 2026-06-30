@@ -6,10 +6,13 @@ from spatial_agent.tools.base import BaseSpatialTool
 from spatial_agent.tools.camera import GetCameraParametersVGGTTool
 from spatial_agent.tools.counting import CountObjectsTool
 from spatial_agent.tools.depth import EstimateObjectDepthTool
+from spatial_agent.tools.distance import Get3DDistanceTool
 from spatial_agent.tools.homography import EstimateHomographyMatrixTool
 from spatial_agent.tools.localization import LocalizeObjectsTool
 from spatial_agent.tools.mask import GetObjectMaskTool
 from spatial_agent.tools.motion import EstimateObjectMotionTool
+from spatial_agent.tools.object_distance_3d import CompareObjectDistance3DTool, EstimateObjectDistance3DTool
+from spatial_agent.tools.object_size_3d import EstimateObjectSize3DTool
 from spatial_agent.tools.optical_flow import EstimateOpticalFlowTool
 from spatial_agent.tools.orientation import GetObjectOrientationTool
 from spatial_agent.tools.video_counting_3d import CountVideoObjects3DTool
@@ -73,6 +76,10 @@ def build_default_tool_registry(config) -> ToolRegistry:
     tools = [
         CountObjectsTool(config),
         EstimateObjectDepthTool(config),
+        CompareObjectDistance3DTool(config),
+        EstimateObjectDistance3DTool(config),
+        EstimateObjectSize3DTool(config),
+        Get3DDistanceTool(config),
         GetObjectMaskTool(config),
         EstimateOpticalFlowTool(config),
         GetCameraParametersVGGTTool(config),

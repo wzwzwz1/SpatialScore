@@ -1,6 +1,6 @@
 {
   "raft": {
-    "checkpoint_path": "/data/models/raft/raft-things.pth",
+    "checkpoint_path": "/disk/wangzhe/models/raft/raft-things.pth",
     "small": false,
     "mixed_precision": true,
     "alternate_corr": false,
@@ -8,7 +8,7 @@
     "device": "cuda"
   },
   "depth": {
-    "checkpoint_path": "/data/models/depth_anything/depth_anything_v2_metric_hypersim_vitl.pth",
+    "checkpoint_path": "/disk/wangzhe/models/depth_anything/depth_anything_v2_metric_hypersim_vitl.pth",
     "encoder": "vitl",
     "max_depth": 20,
     "input_size": 518,
@@ -32,6 +32,52 @@
   },
   "camera": {
     "hf_model_id": "facebook/VGGT-1B",
+    "checkpoint_path": "/disk/wangzhe/models/VGGT-1B/model.pt",
+    "preprocess_mode": "pad",
+    "device": "cuda"
+  },
+  "distance": {
+    "hf_model_id": "facebook/VGGT-1B",
+    "checkpoint_path": "/disk/wangzhe/models/VGGT-1B/model.pt",
+    "preprocess_mode": "pad",
+    "device": "cuda",
+    "neighbor_search_radius": 3
+  },
+  "object_distance_3d": {
+    "hf_model_id": "facebook/VGGT-1B",
+    "checkpoint_path": "/disk/wangzhe/models/VGGT-1B/model.pt",
+    "preprocess_mode": "pad",
+    "device": "cuda",
+    "top_distance_frames": 6,
+    "pointcloud_aggregate": "adaptive_p05_p90",
+    "mask_max_points": 128
+  },
+  "compare_object_distance_3d": {
+    "hf_model_id": "facebook/VGGT-1B",
+    "checkpoint_path": "/disk/wangzhe/models/VGGT-1B/model.pt",
+    "preprocess_mode": "pad",
+    "device": "cuda",
+    "frames_per_candidate": 1,
+    "max_compare_frames": 4,
+    "pointcloud_aggregate": "p75",
+    "mask_max_points": 128,
+    "min_mask_pixels": 1000,
+    "duplicate_bbox_iou_threshold": 0.95
+  },
+  "object_size_3d": {
+    "hf_model_id": "facebook/VGGT-1B",
+    "checkpoint_path": "/disk/wangzhe/models/VGGT-1B/model.pt",
+    "preprocess_mode": "pad",
+    "device": "cuda",
+    "top_size_frames": 6,
+    "size_aggregate": "p90",
+    "extent_policy": "p05_p95",
+    "mask_max_points": 256,
+    "min_mask_pixels": 1000
+  },
+  "motion": {
+    "hf_model_id": "facebook/VGGT-1B",
+    "checkpoint_path": "/disk/wangzhe/models/VGGT-1B/model.pt",
     "preprocess_mode": "pad",
     "device": "cuda"
   },
@@ -43,15 +89,10 @@
     "device": "cuda"
   },
   "localization": {
-    "model_id": "IDEA-Research/grounding-dino-base",
+    "model_id": "/disk/wangzhe/.cache/huggingface/hub/models--IDEA-Research--grounding-dino-base/snapshots/12bdfa3120f3e7ec7b434d90674b3396eccf88eb",
     "box_threshold": 0.3,
     "text_threshold": 0.25,
     "enable_ram_tags": false,
-    "device": "cuda"
-  },
-  "motion": {
-    "hf_model_id": "facebook/VGGT-1B",
-    "preprocess_mode": "pad",
     "device": "cuda"
   },
   "video_counting_3d": {
@@ -71,11 +112,11 @@
     "sam2_model_id": "facebook/sam2.1-hiera-large",
     "vggt_model_id": "facebook/VGGT-1B",
     "vggt_checkpoint_path": "/disk/wangzhe/models/VGGT-1B/model.pt",
-    "use_sam_masks": true,
-    "use_tracking": true,
+    "use_sam_masks": false,
+    "use_tracking": false,
     "tracking_max_frames": 50,
     "tracking_absent_patience": 2,
-    "cg_distance_threshold": 0.35,
+    "cg_distance_threshold": 0.7,
     "bbox_point_stride": 8,
     "max_detections_per_frame": 20
   },

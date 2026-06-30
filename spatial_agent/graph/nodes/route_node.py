@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from spatial_agent.graph.tool_args import (
     get_next_counting_frame,
+    has_successful_video_counting_result,
     normalize_tool_arguments,
     is_video_counting_task,
 )
@@ -25,7 +26,7 @@ def route_node(runtime):
         action = decision.get("action")
 
         if finish:
-            if is_video_counting_task(state):
+            if is_video_counting_task(state) and not has_successful_video_counting_result(state):
                 next_frame = get_next_counting_frame(state)
                 if next_frame:
                     state["pending_decision_queue"] = []
